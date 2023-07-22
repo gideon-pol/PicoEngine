@@ -13,7 +13,7 @@ class BoundingBox2D {
         vec<T, 2> Min;
         vec<T, 2> Max;
 
-        constexpr BoundingBox2D(const vec<T, 2>& min, const vec<T, 2>& max) : Min(min), Max(max) {};
+        BoundingBox2D(const vec<T, 2>& min, const vec<T, 2>& max) : Min(min), Max(max) {};
 
         constexpr BoundingBox2D Intersect(const BoundingBox2D& other) const {
             return BoundingBox2D (
@@ -28,6 +28,14 @@ class BoundingBox2D {
                 vec<T, 2>({ max(a(0), max(b(0), c(0))), max(a(1), max(b(1), c(1))) })
             );
         };
+};
+
+class BoundingBox2Di : BoundingBox2D<int16_t> {
+    public:
+        vec2i16 Min;
+        vec2i16 Max;
+
+        BoundingBox2Di(const vec2i16& min, const vec2i16& max) : BoundingBox2D<int16_t>(min, max) {};
 };
 
 // function that checks if a point is inside a triangle
