@@ -109,11 +109,32 @@ struct mat4f : public mat<float, 4, 4> {
         mat4f result = mat4f(0);
         mat4f trans = ~other;
 
+        // print current matrix
+        printf("Current matrix:\n");
+        for (int i = 0; i < 4; i++) {
+            printf("%f %f %f %f\n", data[i](0), data[i](1), data[i](2), data[i](3));
+        }
+
+        // print the other matrix
+        printf("Other matrix:\n");
+        for (int i = 0; i < 4; i++) {
+            printf("%f %f %f %f\n", trans[i](0), trans[i](1), trans[i](2), trans[i](3));
+        }
+
+
+
+
         for (int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++){
                 result[j][i] = data[j] * trans[i];
             }
 
+        }
+
+        // print the other matrix
+        printf("Resulting matrix:\n");
+        for (int i = 0; i < 4; i++) {
+            printf("%f %f %f %f\n", result[i](0), result[i](1), result[i](2), result[i](3));
         }
         return result;
     };
@@ -144,7 +165,7 @@ struct mat4f : public mat<float, 4, 4> {
     };
 
     constexpr static mat4f rotate(float angle, const vec<float, 3>& axis) {
-        mat4f result = mat4f(0);
+        mat4f result = mat4f::identity();
         float c = cos(angle);
         float s = sin(angle);
         float t = 1 - c;
