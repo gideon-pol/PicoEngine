@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <cfloat>
 #include "mathematics.h"
 #include "rendering/font.h"
 
@@ -12,11 +13,23 @@ class Frame {
         BoundingBox2D Bounds;
 
         Frame(uint32_t* pixels, vec2i16 size) : 
-            Pixels(pixels), Size(size), Bounds(BoundingBox2D(vec2f(0.0f), vec2f(size.x(), size.y()))) {};
+            Pixels(pixels),
+            Size(size),
+            Bounds(BoundingBox2D(vec2f(0.0f), vec2f(size.x(), size.y()))){
+                zbuffer = (float*)malloc(size.x() * size.y() * sizeof(float));
 
-        void Fill(uint32_t color){
+                // TODO: if zbuffer is null, panic
+
+                // set zbuffer to highest possible floating point value
+                for(int i = 0; i < size.x() * size.y(); i++){
+                    zbuffer[i] = FLT_MAX;
+                }
+            };
+
+        void Clear(uint32_t color){
             for(int i = 0; i < Size.x() * Size.y(); i++){
                 Pixels[i] = color;
+                zbuffer[i] = FLT_MAX;
             }
         }
 
@@ -106,8 +119,8 @@ class Frame {
             }
         }
 
-        void DrawTriangle(vec3f p1, vec3f p2, vec3f p3, uint32_t color){
-            BoundingBox2D bb = BoundingBox2D::FromTriangle(p1.xy(), p2.xy(), p3.xy());
+        void DrawTriangle(vec3f t1, vec3f t2, vec3f t3, uint32_t color){
+            BoundingBox2D bb = BoundingBox2D::FromTriangle(t1.xy(), t2.xy(), t3.xy());
             BoundingBox2D bbi = Bounds.Intersect(bb);
 
             DrawBorder(bbi, 2, 0xFFFF0000);
@@ -123,8 +136,16 @@ class Frame {
 
             for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
                 for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
-                    if(pointInTriangle(vec3f(x, y, 0), p1, p2, p3)){
-                        Pixels[y * Size.x() + x] = color;
+                    if(pointInTriangle(vec3f(x, y, 0), t1, t2, t3)){
+                        // calculate a mock uv for the pixel
+                        vec3f uvw = barycentric(vec2f(x, y), t1.xy(), t2.xy(), t3.xy());
+                        // calculate the z-coordinate of the pixel
+                        float z = t1.z() * uvw.x() + t2.z() * uvw.y() + t3.z() * uvw.z();
+                        if(z < zbuffer[y * Size.x() + x]){
+                            Pixels[y * Size.x() + x] = 0xFF << 24 | static_cast<uint8_t>(uvw.x() * 255) << 16 | static_cast<uint8_t>(uvw.y() * 255) << 8 | static_cast<uint8_t>(uvw.z() * 255);
+                            zbuffer[y * Size.x() + x] = z;
+                            // Pixels[y * Size.x() + x] = 0xFF << 24 | static_cast<uint8_t>(z/0.1 * 255) << 16;
+                        }
                     }
                 }
             }
@@ -152,4 +173,7 @@ class Frame {
                 text++;
             }
         }
+
+    private:
+        float* zbuffer;
 };

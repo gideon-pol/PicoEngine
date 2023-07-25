@@ -55,6 +55,21 @@ bool pointInTriangle(vec3f p, vec3f a, vec3f b, vec3f c){
     }
 }
 
+vec3f barycentric(vec2f p, vec2f t1, vec2f t2, vec2f t3){
+    vec2f v0 = t2 - t1, v1 = t3 - t1, v2 = p - t1;
+    float d00 = v0.dot(v0);
+    float d01 = v0.dot(v1);
+    float d11 = v1.dot(v1);
+    float d20 = v2.dot(v0);
+    float d21 = v2.dot(v1);
+    float denom = d00 * d11 - d01 * d01;
+    float v = (d11 * d20 - d01 * d21) / denom;
+    float w = (d00 * d21 - d01 * d20) / denom;
+    float u = 1.0f - v - w;
+
+    return vec3f(u, v, w);
+}
+
 // bool pointInTriangle(vec2i16 p, vec2i16 a, vec2i16 b, vec2i16 c){
 //     vec2i16 ab = b - a;
 //     vec2i16 bc = c - b;

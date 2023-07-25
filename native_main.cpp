@@ -20,20 +20,33 @@ int main(int argc, char** argv){
     vec3f p2 = vec3f(60, 60, 0);
     vec3f p3 = vec3f(-60, 60, 0);
 
-    frame.Fill(0xFF0000FF);
+
+    frame.Clear(0xFF0000FF);
     // frame.DrawLine(vec2i16(0), vec2i16(120), 0xFFFFFFFF);
     // frame.DrawText("Hello world!", vec2i16(0), font, 0xFFFFFFFF);
 
     mat4f m = mat4f::rotate(0.5f, vec3f(0,0,1));
     mat4f m2 = mat4f::translate(vec3f(100, 100, 0));
-    mat4f m3 = mat4f::scale(vec3f(2, 1, 0));
+    mat4f m3 = mat4f::scale(vec3f(1, 1, 0));
     mat4f mm = m2 * m * m3;
 
     p1 = (mm * vec4f(p1, 1)).xyz();
     p2 = (mm * vec4f(p2, 1)).xyz();
     p3 = (mm * vec4f(p3, 1)).xyz();
+    p3.z() = 0.1;
 
     frame.DrawTriangle(p1, p2, p3, 0xFFFFFFFF);
+
+    p3.z() = 0;
+
+    p1.z() = 0.1;
+
+    p1 = (m * vec4f(p1, 1)).xyz();
+    p2 = (m * vec4f(p2, 1)).xyz();
+    p3 = (m * vec4f(p3, 1)).xyz();
+
+    frame.DrawTriangle(p1, p2, p3, 0xFFFFFFFF);
+
 
     BoundingBox2D b1 = BoundingBox2D(vec2f(10, 10), vec2f(130, 130));
     BoundingBox2D b2 = BoundingBox2D(vec2f(110, 110), vec2f(230, 230));
