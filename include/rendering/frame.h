@@ -3,17 +3,16 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "mathematics.h"
-
-
+#include "rendering/font.h"
 
 class Frame {
     public:
         uint32_t* Pixels;
         vec2i16 Size;
-        BoundingBox2Di Bounds;
+        BoundingBox2D Bounds;
 
         Frame(uint32_t* pixels, vec2i16 size) : 
-            Pixels(pixels), Size(size), Bounds(BoundingBox2Di(vec2i16(0,0), size)) {};
+            Pixels(pixels), Size(size), Bounds(BoundingBox2D(vec2f(0.0f), vec2f(size.x(), size.y()))) {};
 
         void Fill(uint32_t color){
             for(int i = 0; i < Size.x() * Size.y(); i++){
@@ -27,10 +26,48 @@ class Frame {
             }
         }
 
-        void DrawBox(BoundingBox2Di box, uint32_t color){
-            for(int y = box.Min.y(); y < box.Max.y(); y++){
-                for(int x = box.Min.x(); x < box.Max.x(); x++){
+        void DrawBox(BoundingBox2D box, uint32_t color){
+            BoundingBox2D bbi = Bounds.Intersect(box);
+
+            for(int y = bbi.Min.y(); y < static_cast<int>(bbi.Max.y()); y++){
+                for(int x = bbi.Min.x(); x < static_cast<int>(bbi.Max.x()); x++){
+                    Pixels[y * Size.x() + x] = color;
+                }
+            }
+        }
+
+        void DrawBorder(BoundingBox2D box, uint8_t width, uint32_t color){
+            BoundingBox2D bbi = box;// Bounds.Intersect(box);
+
+            int16_t startX = static_cast<int16_t>(bbi.Min.x());
+            int16_t startY = static_cast<int16_t>(bbi.Min.y());
+            int16_t endX = std::ceil(bbi.Max.x());
+            int16_t endY = std::ceil(bbi.Max.y());
+
+            for(int y = startY; y < startY + width; y++){
+                for(int x = startX; x < endX; x++){
+                    // Pixels[y * Size.x() + x] = color;
                     PutPixel(vec2i16(x, y), color);
+                }
+            }
+
+            for(int y = startY + width; y < endY - width; y++){
+                for(int x = startX; x < startX + width; x++){
+                    // Pixels[y * Size.x() + x] = color;
+                    PutPixel(vec2i16(x, y), color);
+                }
+
+                for(int x = endX - width; x < endX; x++){
+                    // Pixels[y * Size.x() + x] = color;
+                    PutPixel(vec2i16(x, y), color);
+                }
+            }
+
+            for(int y = endY - width; y < endY; y++){
+                for(int x = startX; x < endX; x++){
+                    // Pixels[y * Size.x() + x] = color;
+                    PutPixel(vec2i16(x, y), color);
+
                 }
             }
         }
@@ -66,6 +103,53 @@ class Frame {
                     err += dx;
                     y0 += sy;
                 }
+            }
+        }
+
+        void DrawTriangle(vec3f p1, vec3f p2, vec3f p3, uint32_t color){
+            BoundingBox2D bb = BoundingBox2D::FromTriangle(p1.xy(), p2.xy(), p3.xy());
+            BoundingBox2D bbi = Bounds.Intersect(bb);
+
+            DrawBorder(bbi, 2, 0xFFFF0000);
+
+            printf("Screen bounding box: %f, %f, %f, %f\n", Bounds.Min.x(), Bounds.Min.y(), Bounds.Max.x(), Bounds.Max.y());
+            printf("Triangle bounding box: %f, %f, %f, %f\n", bb.Min.x(), bb.Min.y(), bb.Max.x(), bb.Max.y());
+            printf("Bounding intersection: %f, %f, %f, %f\n", bbi.Min.x(), bbi.Min.y(), bbi.Max.x(), bbi.Max.y());
+
+            if(bbi.IsEmpty()) {
+                printf("Triangle is offscreen");
+                return;
+            }
+
+            for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
+                for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
+                    if(pointInTriangle(vec3f(x, y, 0), p1, p2, p3)){
+                        Pixels[y * Size.x() + x] = color;
+                    }
+                }
+            }
+        }
+
+        void DrawText(const char* text, vec2i16 pos, Font* font, uint32_t color){
+            // use the font to draw the text
+            int x = pos.x();
+            int y = pos.y();
+
+            while(*text){
+                uint8_t* glyph = font->GetGlyph(*text);
+
+                if(glyph){
+                    for(int i = 0; i < font->GlyphSize.y(); i++){
+                        for(int j = 0; j < font->GlyphSize.x(); j++){
+                            if(glyph[i] & (0x80 >> j)){
+                                PutPixel(vec2i16(x + j, y + i), color);
+                            }
+                        }
+                    }
+                }
+
+                x += font->GlyphSize.x();
+                text++;
             }
         }
 };

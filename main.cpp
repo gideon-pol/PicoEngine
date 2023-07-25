@@ -33,7 +33,7 @@ int main() {
         absolute_time_t time = get_absolute_time();
         gpio_put(25, 1);
 
-        mat4 m4 = mat4::rotate(90.0/180*PI, vec3f::up);
+        mat4f m4 = mat4f::rotate(90.0/180*PI, vec3f::up);
 
         printf("Rotational matrix had %d rows and %d columns\n", m4.rows(), m4.columns());
         for (int i = 0; i < m4.rows(); i++) {

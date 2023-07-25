@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 FILE* open_or_exit(const char* fname, const char* mode)
 {
@@ -20,15 +21,16 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  const char* sym = argv[1];
-  FILE* in = open_or_exit(argv[2], "r");
+  const char* path = argv[1];
+  const char* sym = argv[2];
+  FILE* in = open_or_exit(argv[3], "r");
 
   char symfile[256];
-  snprintf(symfile, sizeof(symfile), "%s.cpp", sym);
+  snprintf(symfile, sizeof(symfile), "%s/%s.c", path, sym);
 
   FILE* out = open_or_exit(symfile,"w");
-  fprintf(out, "#include <stdlib.h>\n");
-  fprintf(out, "const char %s[] = {\n", sym);
+  fprintf(out, "#include <stdlib.h>\n#include <stdint.h>\n");
+  fprintf(out, "const uint8_t %s[] = {\n", sym);
 
   unsigned char buf[256];
   size_t nread = 0;

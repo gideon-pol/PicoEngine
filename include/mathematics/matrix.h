@@ -7,9 +7,7 @@ template<typename T, int C, int R>
 struct mat {
     vec<T, C> data[R];
 
-    constexpr mat() = default;
-
-    constexpr mat(const T val){
+    constexpr mat(const T val) {
         for (int i = 0; i < R; i++) {
             data[i] = vec<T, C>(val);
         }
@@ -49,7 +47,7 @@ struct mat {
     };
 
     constexpr mat<T, R, C> operator~() const {
-        mat<T, R, C> result;
+        mat<T, R, C> result = mat<T, R, C>(0);
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
                 result[j][i] = data[i](j);
@@ -60,7 +58,7 @@ struct mat {
 
     template<int C2>
     constexpr mat<T, C2, R> operator*(const mat<T, C2, C>& other) const {
-        mat<T, C2, R> result;
+        mat<T, C2, R> result = mat<T, C2, R>(0);
         mat<T, C, C2> trans = ~other;
 
         for (int i = 0; i < C2; i++) {
@@ -73,7 +71,7 @@ struct mat {
     };
 
     constexpr vec<T, R> operator*(const vec<T, C>& other) const {
-        vec<T, R> result;
+        vec<T, R> result = vec<T, R>(0);
         for (int i = 0; i < R; i++) {
             result[i] = data[i] * other;
         }
@@ -89,7 +87,7 @@ struct mat {
     };
 
     static constexpr mat<T, C, R> identity() {
-        mat<T, C, R> result;
+        mat<T, C, R> result = mat<T, C, R>(0);
         for (int i = 0; i < R; i++) {
             for(int j = 0; j < C; j++){
                 result[i][j] = i == j ? 1 : 0;
@@ -103,28 +101,50 @@ typedef mat<float, 2, 2> mat2;
 typedef mat<float, 3, 3> mat3;
 
 
-struct mat4 : mat<float, 4, 4> {
-    constexpr mat4(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
-    using mat<float, 4, 4>::mat;
+struct mat4f : public mat<float, 4, 4> {
+    constexpr mat4f(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
 
-    constexpr mat4 translate(const vec<float, 3>& v) const {
-        mat4 result = mat4::identity();
-        result[3][0] = v(0);
-        result[3][1] = v(1);
-        result[3][2] = v(2);
+    // TODO: figure out why this doesn't work by default
+    constexpr mat4f operator*(const mat4f& other) const {
+        mat4f result = mat4f(0);
+        mat4f trans = ~other;
+
+        for (int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++){
+                result[j][i] = data[j] * trans[i];
+            }
+
+        }
         return result;
     };
 
-    constexpr mat4 scale(const vec<float, 3>& v) const {
-        mat4 result = mat4::identity();
+    constexpr vec4f operator*(const vec4f& other) const {
+        vec4f result = vec4f(0);
+        for (int i = 0; i < 4; i++) {
+            result[i] = data[i] * other;
+            printf("%f\n", result[i]);
+        }
+        return result;
+    };
+
+    constexpr static mat4f translate(const vec<float, 3>& v) {
+        mat4f result = mat4f::identity();
+        result[0][3] = v(0);
+        result[1][3] = v(1);
+        result[2][3] = v(2);
+        return result;
+    };
+
+    constexpr static mat4f scale(const vec<float, 3>& v) {
+        mat4f result = mat4f::identity();
         result[0][0] = v(0);
         result[1][1] = v(1);
         result[2][2] = v(2);
         return result;
     };
 
-    constexpr static mat4 rotate(float angle, const vec<float, 3>& axis) {
-        mat4 result = mat4(0);
+    constexpr static mat4f rotate(float angle, const vec<float, 3>& axis) {
+        mat4f result = mat4f(0);
         float c = cos(angle);
         float s = sin(angle);
         float t = 1 - c;

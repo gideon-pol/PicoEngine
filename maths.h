@@ -250,28 +250,28 @@ typedef mat<float, 2, 2> mat2;
 typedef mat<float, 3, 3> mat3;
 
 
-struct mat4 : mat<float, 4, 4> {
-    constexpr mat4(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
+struct mat4f : mat<float, 4, 4> {
+    constexpr mat4f(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
     using mat<float, 4, 4>::mat;
 
-    constexpr mat4 translate(const vec<float, 3>& v) const {
-        mat4 result = mat4::identity();
+    constexpr mat4f translate(const vec<float, 3>& v) const {
+        mat4f result = mat4f::identity();
         result[3][0] = v(0);
         result[3][1] = v(1);
         result[3][2] = v(2);
         return result;
     };
 
-    constexpr mat4 scale(const vec<float, 3>& v) const {
-        mat4 result = mat4::identity();
+    constexpr mat4f scale(const vec<float, 3>& v) const {
+        mat4f result = mat4f::identity();
         result[0][0] = v(0);
         result[1][1] = v(1);
         result[2][2] = v(2);
         return result;
     };
 
-    constexpr static mat4 rotate(float angle, const vec<float, 3>& axis) {
-        mat4 result = mat4(0);
+    constexpr static mat4f rotate(float angle, const vec<float, 3>& axis) {
+        mat4f result = mat4f(0);
         float c = cos(angle);
         float s = sin(angle);
         float t = 1 - c;

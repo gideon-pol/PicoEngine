@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 
+set(RSRC_DIR ${CMAKE_CURRENT_LIST_DIR}/res)
+set(RSRC_BUILD_DIR ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/res)
+
 # set(GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 
@@ -13,21 +16,22 @@ set( RESOURCES "" )
 add_executable(embed embed.cpp)
 
 function( add_resource input )
-    
-
     string( MAKE_C_IDENTIFIER ${input} input_identifier )
-    set( output "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/res/${input_identifier}" )
+    set( output "res/${input_identifier}.c" )
     add_custom_command(
-        OUTPUT ${output}.cpp
+        OUTPUT ${output}
         COMMAND mkdir -p res
-        COMMAND embed res/${input_identifier} ${CMAKE_CURRENT_LIST_DIR}/res/${input}
-        DEPENDS ${CMAKE_CURRENT_LIST_DIR}/res/${input}
+        COMMAND embed res ${input_identifier} ${RSRC_DIR}/${input}
+        DEPENDS res/${input}
     )
 
-    set( RESOURCES ${RESOURCES} ${output}.cpp PARENT_SCOPE )
+    set( RESOURCES ${RESOURCES} ${output} PARENT_SCOPE )
 endfunction()
 
 add_resource("main.font")
+
+# print the resources set
+message(STATUS "Resources: ${RESOURCES}")
 
 
 # include(pico-sdk/pico_sdk_init.cmake)
@@ -62,9 +66,6 @@ add_resource("main.font")
 # endif()
 
 
-
-# Resource file list
-
 project(game-engine CXX C ASM)
 
 include_directories(include)
@@ -76,10 +77,7 @@ add_executable(native
     native_main.cpp
     ${SOURCES}
     ${RESOURCES}
-    # data.c
 )
-
-
 
 target_include_directories(native PUBLIC lodepng)
 
