@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "mathematics.h"
 #include "component.h"
 
 #define MAX_COMPONENTS 8
@@ -9,6 +10,10 @@ class Entity {
     public:
         Entity();
         ~Entity();
+
+        vec3f Position;
+        vec3f Rotation;
+        vec3f Scale;
 
         template<typename T>
         T* GetComponent();

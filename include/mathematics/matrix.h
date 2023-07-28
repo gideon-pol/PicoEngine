@@ -1,11 +1,18 @@
 #pragma once
 
 #include <math.h>
+#include "mathematics/basic.h"
 #include "mathematics/vector.h"
 
 template<typename T, int C, int R>
 struct mat {
     vec<T, C> data[R];
+
+    constexpr mat() {
+        for (int i = 0; i < R; i++) {
+            data[i] = vec<T, C>();
+        }
+    };
 
     constexpr mat(const T val) {
         for (int i = 0; i < R; i++) {
@@ -29,7 +36,7 @@ struct mat {
         return data[i];
     };
 
-    constexpr vec<T, C> operator()(int y, int x) const {
+    constexpr T operator()(int y, int x) const {
         return data[y](x);
     };
 
@@ -37,7 +44,7 @@ struct mat {
         return data[i];
     };
 
-    constexpr mat<T, C, R>& operator=(const mat<T, C, R>& other) const {
+    constexpr mat<T, C, R>& operator=(const mat<T, C, R>& other) {
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
                 data[i][j] = other(i,j);
@@ -102,6 +109,7 @@ typedef mat<float, 3, 3> mat3;
 
 
 struct mat4f : public mat<float, 4, 4> {
+    using mat<float, 4, 4>::mat;
     constexpr mat4f(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
 
     // TODO: figure out why this doesn't work by default
@@ -109,33 +117,26 @@ struct mat4f : public mat<float, 4, 4> {
         mat4f result = mat4f(0);
         mat4f trans = ~other;
 
-        // print current matrix
-        printf("Current matrix:\n");
-        for (int i = 0; i < 4; i++) {
-            printf("%f %f %f %f\n", data[i](0), data[i](1), data[i](2), data[i](3));
-        }
+        // printf("Current matrix:\n");
+        // for (int i = 0; i < 4; i++) {
+        //     printf("%f %f %f %f\n", data[i](0), data[i](1), data[i](2), data[i](3));
+        // }
 
-        // print the other matrix
-        printf("Other matrix:\n");
-        for (int i = 0; i < 4; i++) {
-            printf("%f %f %f %f\n", trans[i](0), trans[i](1), trans[i](2), trans[i](3));
-        }
-
-
-
+        // printf("Other matrix:\n");
+        // for (int i = 0; i < 4; i++) {
+        //     printf("%f %f %f %f\n", trans[i](0), trans[i](1), trans[i](2), trans[i](3));
+        // }
 
         for (int i = 0; i < 4; i++) {
             for(int j = 0; j < 4; j++){
                 result[j][i] = data[j] * trans[i];
             }
-
         }
 
-        // print the other matrix
-        printf("Resulting matrix:\n");
-        for (int i = 0; i < 4; i++) {
-            printf("%f %f %f %f\n", result[i](0), result[i](1), result[i](2), result[i](3));
-        }
+        // printf("Resulting matrix:\n");
+        // for (int i = 0; i < 4; i++) {
+        //     printf("%f %f %f %f\n", result[i](0), result[i](1), result[i](2), result[i](3));
+        // }
         return result;
     };
 
@@ -143,7 +144,6 @@ struct mat4f : public mat<float, 4, 4> {
         vec4f result = vec4f(0);
         for (int i = 0; i < 4; i++) {
             result[i] = data[i] * other;
-            printf("%f\n", result[i]);
         }
         return result;
     };
@@ -184,6 +184,19 @@ struct mat4f : public mat<float, 4, 4> {
         result[2][1] = t * ax[1] * ax[2] + s * ax[0];
         result[2][2] = t * ax[2] * ax[2] + c;
 
+        return result;
+    };
+
+    constexpr static mat4f perspective(float fov, float aspect, float near, float far) {
+        mat4f result = mat4f(0);
+        float yScale = 1 / tan(fov * 0.5 * PI / 180);
+        float xScale = yScale / aspect;
+        result[0][0] = xScale;  //scale the x coordinates of the projected point 
+        result[1][1] = yScale;  //scale the y coordinates of the projected point 
+        result[2][2] = - (far + near) / (far - near);  //used to remap z to [0,1] 
+        result[2][3] = - (2 * far * near)/(far - near); //used to remap z [0,1] 
+        result[3][2] = -1;  //set w = -z 
+        
         return result;
     };
 };

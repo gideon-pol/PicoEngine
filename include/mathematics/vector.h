@@ -9,7 +9,7 @@ struct vec {
 
     constexpr vec() {
         for (int i = 0; i < C; i++) {
-            data[i] = 0;
+            data[i] = T(0);
         }
     }
 
@@ -54,6 +54,14 @@ struct vec {
         return result;
     };
 
+    constexpr vec<T, C> operator*(const T& other) const {
+        vec<T, C> result = vec<T, C>(0);
+        for (int i = 0; i < C; i++) {
+            result[i] = data[i] * other;
+        }
+        return result;
+    };
+
     constexpr vec<T, C> operator+(const vec<T, C>& other) const {
         vec<T, C> result  = vec<T, C>(0);
         for (int i = 0; i < C; i++) {
@@ -66,6 +74,14 @@ struct vec {
         vec<T, C> result = vec<T, C>(0);
         for (int i = 0; i < C; i++) {
             result[i] = data[i] - other(i);
+        }
+        return result;
+    };
+
+    constexpr vec<T, C> operator-() const {
+        vec<T, C> result = vec<T, C>(0);
+        for (int i = 0; i < C; i++) {
+            result[i] = -data[i];
         }
         return result;
     };
@@ -123,6 +139,7 @@ struct vec2 : public vec<T, 2> {
 template<typename T>
 struct vec3 : public vec<T, 3> {
     using vec<T, 3>::data;
+    using vec<T, 3>::vec;
     constexpr vec3(T x, T y, T z) : vec<T, 3>({x, y, z}) {};
     constexpr vec3(const vec<T, 3>& other) : vec<T, 3>(other) {};
     constexpr vec3(const vec2<T>& other, T z) : vec<T, 3>({other(0), other(1), z}) {};
@@ -146,6 +163,7 @@ struct vec3 : public vec<T, 3> {
 template<typename T>
 struct vec4 : public vec<T, 4> {
     using vec<T, 4>::data;
+    using vec<T, 4>::vec;
     constexpr vec4(T x, T y, T z, T w) : vec<T, 4>({x, y, z, w}) {};
     constexpr vec4(const vec<T, 4>& other) : vec<T, 4>(other) {};
     constexpr vec4(const vec3<T>& other, T w) : vec<T, 4>({other(0), other(1), other(2), w}) {};
@@ -158,6 +176,11 @@ struct vec4 : public vec<T, 4> {
     inline constexpr vec2<T> xz() const { return vec2<T>(data[0], data[2]); };
     inline constexpr vec2<T> yz() const { return vec2<T>(data[1], data[2]); };
     inline constexpr vec3<T> xyz() const { return vec3<T>(data[0], data[1], data[2]); };
+
+    constexpr vec3<T> homogenize() const {
+        if(data[3] == 0) return vec3<T>(0);
+        return vec3<T>(data[0] / data[3], data[1] / data[3], data[2] / data[3]);
+    };
 };
 
 struct vec2i16 : public vec2<int16_t> {
@@ -175,7 +198,6 @@ struct vec2f : public vec2<float> {
     using vec2<float>::vec2;
     constexpr vec2f(float x, float y) : vec2<float>(x, y) {};
     constexpr vec2f(const vec<float, 2>& other) : vec2<float>(other) {};
-
     constexpr vec2f& operator=(const vec2f& other) {
         vec<float, 2>::operator=(other);
         return *this;

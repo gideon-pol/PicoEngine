@@ -20,16 +20,15 @@ class Frame {
 
                 // TODO: if zbuffer is null, panic
 
-                // set zbuffer to highest possible floating point value
                 for(int i = 0; i < size.x() * size.y(); i++){
-                    zbuffer[i] = FLT_MAX;
+                    zbuffer[i] = 100;
                 }
             };
 
         void Clear(uint32_t color){
             for(int i = 0; i < Size.x() * Size.y(); i++){
                 Pixels[i] = color;
-                zbuffer[i] = FLT_MAX;
+                zbuffer[i] = 100;
             }
         }
 
@@ -123,11 +122,11 @@ class Frame {
             BoundingBox2D bb = BoundingBox2D::FromTriangle(t1.xy(), t2.xy(), t3.xy());
             BoundingBox2D bbi = Bounds.Intersect(bb);
 
-            DrawBorder(bbi, 2, 0xFFFF0000);
+            // DrawBorder(bbi, 2, 0xFFFF0000);
 
-            printf("Screen bounding box: %f, %f, %f, %f\n", Bounds.Min.x(), Bounds.Min.y(), Bounds.Max.x(), Bounds.Max.y());
-            printf("Triangle bounding box: %f, %f, %f, %f\n", bb.Min.x(), bb.Min.y(), bb.Max.x(), bb.Max.y());
-            printf("Bounding intersection: %f, %f, %f, %f\n", bbi.Min.x(), bbi.Min.y(), bbi.Max.x(), bbi.Max.y());
+            // printf("Screen bounding box: %f, %f, %f, %f\n", Bounds.Min.x(), Bounds.Min.y(), Bounds.Max.x(), Bounds.Max.y());
+            // printf("Triangle bounding box: %f, %f, %f, %f\n", bb.Min.x(), bb.Min.y(), bb.Max.x(), bb.Max.y());
+            // printf("Bounding intersection: %f, %f, %f, %f\n", bbi.Min.x(), bbi.Min.y(), bbi.Max.x(), bbi.Max.y());
 
             if(bbi.IsEmpty()) {
                 printf("Triangle is offscreen");
@@ -137,12 +136,14 @@ class Frame {
             for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
                 for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
                     if(pointInTriangle(vec3f(x, y, 0), t1, t2, t3)){
-                        // calculate a mock uv for the pixel
                         vec3f uvw = barycentric(vec2f(x, y), t1.xy(), t2.xy(), t3.xy());
-                        // calculate the z-coordinate of the pixel
                         float z = t1.z() * uvw.x() + t2.z() * uvw.y() + t3.z() * uvw.z();
                         if(z < zbuffer[y * Size.x() + x]){
-                            Pixels[y * Size.x() + x] = 0xFF << 24 | static_cast<uint8_t>(uvw.x() * 255) << 16 | static_cast<uint8_t>(uvw.y() * 255) << 8 | static_cast<uint8_t>(uvw.z() * 255);
+                            Pixels[y * Size.x() + x] = 
+                                0xFF << 24 |
+                                static_cast<uint8_t>(uvw.x() * 255) << 16 |
+                                static_cast<uint8_t>(uvw.y() * 255) << 8 |
+                                static_cast<uint8_t>(uvw.z() * 255);
                             zbuffer[y * Size.x() + x] = z;
                             // Pixels[y * Size.x() + x] = 0xFF << 24 | static_cast<uint8_t>(z/0.1 * 255) << 16;
                         }
@@ -171,6 +172,14 @@ class Frame {
 
                 x += font->GlyphSize.x();
                 text++;
+            }
+        }
+
+        void FlipY(){
+            for(int y = 0; y < Size.y() / 2; y++){
+                for(int x = 0; x < Size.x(); x++){
+                    std::swap(Pixels[y * Size.x() + x], Pixels[(Size.y() - y - 1) * Size.x() + x]);
+                }
             }
         }
 
