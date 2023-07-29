@@ -27,10 +27,7 @@ class Camera {
     // }
 
     mat4f UpdateVPMatrix(){
-        VP = projection * mat4f::translate(-Position) *
-                mat4f::rotate(Rotation.y(), vec3f(0, 0, 1)) *
-                mat4f::rotate(Rotation.x(), vec3f(1, 0, 0)) *
-                mat4f::rotate(Rotation.z(), vec3f(0, 1, 0));
+        VP = projection * mat4f::translate(-Position) * getRotationalMatrix(Rotation);
         return VP;
     }
     
@@ -116,11 +113,18 @@ namespace Renderer{
 
             vec4f vtest = rMVP * vec4f(mesh.Vertices[mesh.Indices[idx]].Position, 1);
 
+
+            if(getWindingOrder(v1, v2, v3) == WindingOrder::ClockWise){
+                FrameBuffer->DrawTriangle(v1, v2, v3, 0xFF00FF00);
+            } else {
+                printf("Discarded triangle because of backfacing\n");
+            }
+            
             // printf("v1: %f %f %f\n", v1.x(), v1.y(), v1.z());
             // printf("v2: %f %f %f\n", v2.x(), v2.y(), v2.z());
             // printf("v3: %f %f %f\n", v3.x(), v3.y(), v3.z());
 
-            FrameBuffer->DrawTriangle(v1, v2, v3, 0xFF00FF00);
+            
         }
     }
 };

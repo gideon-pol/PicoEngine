@@ -166,8 +166,9 @@ struct mat4f : public mat<float, 4, 4> {
 
     constexpr static mat4f rotate(float angle, const vec<float, 3>& axis) {
         mat4f result = mat4f::identity();
-        float c = cos(angle);
-        float s = sin(angle);
+        float piAngle = angle * PI * (1 / 180.0);
+        float c = cos(piAngle);
+        float s = sin(piAngle);
         float t = 1 - c;
 
         vec<float, 3> ax = axis.normalize();

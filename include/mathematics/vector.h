@@ -62,6 +62,14 @@ struct vec {
         return result;
     };
 
+    constexpr vec<T, C> operator/(const T& other) const {
+        vec<T, C> result = vec<T, C>(0);
+        for (int i = 0; i < C; i++) {
+            result[i] = data[i] / other;
+        }
+        return result;
+    };
+
     constexpr vec<T, C> operator+(const vec<T, C>& other) const {
         vec<T, C> result  = vec<T, C>(0);
         for (int i = 0; i < C; i++) {

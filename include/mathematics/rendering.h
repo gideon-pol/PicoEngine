@@ -63,28 +63,29 @@ class BoundingVolume {
         };
 };
 
-// function that checks if a point is inside a triangle
-bool pointInTriangle(vec3f p, vec3f a, vec3f b, vec3f c){
-    a.z() = 0;
-    b.z() = 0;
-    c.z() = 0;
-    vec3f ab = b - a;
-    vec3f bc = c - b;
-    vec3f ca = a - c;
+float edgeFunction(vec3f a, vec3f b, vec3f c){
+    return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
+}
 
-    vec3f ap = p - a;
-    vec3f bp = p - b;
-    vec3f cp = p - c;
+enum WindingOrder{ClockWise, CounterClockWise};
+WindingOrder getWindingOrder(vec3f p1, vec3f p2, vec3f p3){
+    vec3f v1 = p2 - p1;
+    vec3f v2 = p3 - p1;
+    vec3f cross = v1.cross(v2);
 
-    vec3f v1 = ab.cross(ap);
-    vec3f v2 = bc.cross(bp);
-    vec3f v3 = ca.cross(cp);
-
-    if(v1.dot(v2) > 0 && v2.dot(v3) > 0 && v3.dot(v1) > 0){
-        return true;
+    if(cross.z() > 0){
+        return WindingOrder::CounterClockWise;
     } else{
-        return false;
+        return WindingOrder::ClockWise;
     }
+}
+
+// first applies yaw, then pitch, then roll
+mat4f getRotationalMatrix(vec3f rot){
+    return mat4f::rotate(rot.z(), vec3f(0, 0, 1)) *
+           mat4f::rotate(rot.x(), vec3f(1, 0, 0)) *
+           mat4f::rotate(rot.y(), vec3f(0, 1, 0));
+           
 }
 
 vec3f barycentric(vec2f p, vec2f t1, vec2f t2, vec2f t3){

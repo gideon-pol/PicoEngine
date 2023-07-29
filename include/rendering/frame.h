@@ -133,11 +133,28 @@ class Frame {
                 return;
             }
 
+            // vec2i16 ti1 = vec2i16(t1.x(), t1.y());
+            // vec2i16 ti2 = vec2i16(t2.x(), t2.y());
+            // vec2i16 ti3 = vec2i16(t3.x(), t3.y());
+
+            // DrawLine(ti1, ti2, 0xFFFFFFFF);
+            // DrawLine(ti2, ti3, 0xFFFFFFFF);
+            // DrawLine(ti3, ti1, 0xFFFFFFFF);
+
+            // return;
+
+            float area = edgeFunction(t1, t2, t3);
             for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
                 for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
-                    if(pointInTriangle(vec3f(x, y, 0), t1, t2, t3)){
-                        vec3f uvw = barycentric(vec2f(x, y), t1.xy(), t2.xy(), t3.xy());
-                        float z = t1.z() * uvw.x() + t2.z() * uvw.y() + t3.z() * uvw.z();
+                    vec3f p = vec3f(x, y, 0);
+                    float w0 = edgeFunction(t2, t3, p);
+                    float w1 = edgeFunction(t3, t1, p);
+                    float w2 = edgeFunction(t1, t2, p);
+
+                    if(w0 >= 0 && w1 >= 0 && w2 >= 0){
+                        vec3f uvw = vec3f(w0, w1, w2) / area;
+                        float z = vec3f(t1.z(), t2.z(), t3.z()) * uvw;
+                        
                         if(z < zbuffer[y * Size.x() + x]){
                             Pixels[y * Size.x() + x] = 
                                 0xFF << 24 |
@@ -153,7 +170,6 @@ class Frame {
         }
 
         void DrawText(const char* text, vec2i16 pos, Font* font, uint32_t color){
-            // use the font to draw the text
             int x = pos.x();
             int y = pos.y();
 

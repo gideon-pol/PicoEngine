@@ -16,7 +16,7 @@ int main(int argc, char** argv){
     
     Font* font = new Font((uint8_t*)&main_font);
 
-    Renderer::Init(vec2i16(240), 0xFF0000FF, 45, 0.1, 100);
+    Renderer::Init(vec2i16(1920), 0xFF0000FF, 45, 0.1, 100);
 
     vec3f p1 = vec3f(0, 1, 0);
     vec3f p2 = vec3f(1, -1, 0);
@@ -38,33 +38,30 @@ int main(int argc, char** argv){
         (Vertex){vec3f(0.5, 1, 0.5), vec3f(0), vec2f(0)},
     };
 
+    // clock wise polygons
     uint32_t pyramidIndices[] = {
-        0, 1, 2,
-        1, 2, 3,
-        0, 2, 4,
-        1, 3, 4,
         0, 1, 4,
-        2, 3, 4,
+        1, 3, 4,
+        3, 2, 4,
+        2, 0, 4,
+        0, 2, 1,
+        2, 3, 1,
     };
+
 
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
 
     struct timespec start, now;
     clock_gettime(CLOCK_REALTIME, &start); 
 
-    mat4f rot = mat4f::rotate(45, vec3f(-0.4,1,0.1));
-    mat4f trans = mat4f::translate(vec3f(-1, 0, 3));
-    mat4f scale = mat4f::scale(vec3f(0.33f, 0.33f, 1));
-
-    mat4f M = trans * rot;// * scale;
-
-    Renderer::DrawMesh(pyramid, M);
+    drawCubeTest();
 
     clock_gettime(CLOCK_REALTIME, &now);
     // calculate difference in seconds
     double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
     printf("Drawing took %lf s\n", diff);
 
+    // Renderer::FrameBuffer->FlipY();
     unsigned error = lodepng::encode("test.png", (unsigned char*)Renderer::FrameBuffer->Pixels, Renderer::FrameBuffer->Size.x(), Renderer::FrameBuffer->Size.y());
     if(error) printf("encoder error %d: %s", error, lodepng_error_text(error));
 
