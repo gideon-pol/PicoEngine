@@ -3,14 +3,6 @@ cmake_minimum_required(VERSION 3.13)
 set(RSRC_DIR ${CMAKE_CURRENT_LIST_DIR}/res)
 set(RSRC_BUILD_DIR ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/res)
 
-# set(GEN_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
-
-
-# if(EXISTS GEN_DIR)
-# 	message("Creating generated output directory '${CMAKE_CURRENT_BINARY_DIR}/${GEN_DIR}'")
-# 	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${GEN_DIR}")
-# endif()
-
 set( RESOURCES "" )
 
 add_executable(embed embed.cpp)
@@ -20,6 +12,7 @@ function( add_resource input )
     set( output "res/${input_identifier}.c" )
     add_custom_command(
         OUTPUT ${output}
+        # TODO: generate using CMake rather than Linux shell
         COMMAND mkdir -p res
         COMMAND embed res ${input_identifier} ${RSRC_DIR}/${input}
         DEPENDS res/${input}
@@ -29,9 +22,6 @@ function( add_resource input )
 endfunction()
 
 add_resource("main.font")
-
-# print the resources set
-message(STATUS "Resources: ${RESOURCES}")
 
 
 # include(pico-sdk/pico_sdk_init.cmake)
@@ -68,10 +58,8 @@ message(STATUS "Resources: ${RESOURCES}")
 
 project(game-engine CXX C ASM)
 
-include_directories(include)
-file(GLOB SOURCES src/*.cpp)
+file(GLOB_RECURSE SOURCES src/*.cpp)
 add_subdirectory(lib)
-
 
 add_executable(native
     native_main.cpp
@@ -79,30 +67,11 @@ add_executable(native
     ${RESOURCES}
 )
 
+target_include_directories(native PUBLIC include)
 target_include_directories(native PUBLIC lodepng)
-
 target_link_directories(native PRIVATE lodepng)
 
 target_link_libraries(
     native
     lodepng
 )
-
-# function( add_resource input )
-#     string( MAKE_C_IDENTIFIER ${input} input_identifier )
-#     set( output "${CMAKE_CURRENT_LIST_DIR}/build/res/${input_identifier}.o" )
-#     target_link_libraries( native ${output} )
-
-#     add_custom_command(
-#         OUTPUT ${output}
-#         COMMAND ${CMAKE_LINKER} --relocatable --format binary --output ${output} ${CMAKE_CURRENT_LIST_DIR}/${input}
-#         DEPENDS ${input}
-#     )
-
-#     set( RC_DEPENDS ${RC_DEPENDS} ${output} PARENT_SCOPE )
-# endfunction()
-
-#define an add_resource function that uses "embed.cpp" to
-
-
-add_custom_target(resources ALL DEPENDS ${RESOURCES})

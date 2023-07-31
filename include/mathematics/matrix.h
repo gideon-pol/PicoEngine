@@ -156,6 +156,14 @@ struct mat4f : public mat<float, 4, 4> {
         return result;
     };
 
+    // constexpr vec4f& operator[](int i){
+    //     return data[i];
+    // };
+
+    constexpr vec4f operator()(int i) const {
+        return data[i];
+    };
+
     constexpr static mat4f scale(const vec<float, 3>& v) {
         mat4f result = mat4f::identity();
         result[0][0] = v(0);
@@ -191,12 +199,12 @@ struct mat4f : public mat<float, 4, 4> {
     constexpr static mat4f perspective(float fov, float aspect, float near, float far) {
         mat4f result = mat4f(0);
         float yScale = 1 / tan(fov * 0.5 * PI / 180);
-        float xScale = yScale / aspect;
-        result[0][0] = xScale;  //scale the x coordinates of the projected point 
-        result[1][1] = yScale;  //scale the y coordinates of the projected point 
-        result[2][2] = - (far + near) / (far - near);  //used to remap z to [0,1] 
-        result[2][3] = - (2 * far * near)/(far - near); //used to remap z [0,1] 
-        result[3][2] = -1;  //set w = -z 
+        float xScale = yScale * (1 / aspect);
+        result[0][0] = xScale;
+        result[1][1] = yScale;
+        result[2][2] = -far / (far - near);
+        result[2][3] = (far * near) / (far - near);
+        result[3][2] = -1;
         
         return result;
     };

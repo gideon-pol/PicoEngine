@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <unistd.h>
 
 #pragma pack(push, 1)
 template<typename T, int C>
@@ -124,8 +125,8 @@ struct vec {
         return result;
     };
 
-    constexpr float dot(const vec<T, C>& other) const {
-        float result = 0;
+    constexpr T dot(const vec<T, C>& other) const {
+        T result = 0;
         for (int i = 0; i < C; i++) {
             result += data[i] * other(i);
         }
@@ -139,6 +140,14 @@ struct vec2 : public vec<T, 2> {
     using vec<T, 2>::vec;
     constexpr vec2(T x, T y) : vec<T, 2>({x, y}) {};
     constexpr vec2(const vec<T, 2>& other) : vec<T, 2>(other) {};
+
+    constexpr vec2<T> operator+(const vec<T, 2>& other) const { return vec<T, 2>::operator+(other); }
+    constexpr vec2<T> operator-(const vec<T, 2>& other) const { return vec<T, 2>::operator-(other); }
+    constexpr vec2<T> operator-() const { return vec<T, 2>::operator-(); }
+    constexpr vec2<T> operator*(const T& other) const { return vec<T, 2>::operator*(other); }
+    constexpr T operator*(const vec<T, 2>& other) const { return vec<T, 2>::operator*(other); }
+    constexpr vec2<T> operator/(const T& other) const { return vec<T, 2>::operator/(other); }
+    constexpr vec2<T> normalize() const { return vec<T, 2>::normalize(); }
 
     inline constexpr T& x() { return data[0]; };
     inline constexpr T& y() { return data[1]; };
@@ -160,6 +169,14 @@ struct vec3 : public vec<T, 3> {
         return result;
     };
 
+    constexpr vec3<T> operator+(const vec<T, 3>& other) const { return vec<T, 3>::operator+(other); }
+    constexpr vec3<T> operator-(const vec<T, 3>& other) const { return vec<T, 3>::operator-(other); }
+    constexpr vec3<T> operator-() const { return vec<T, 3>::operator-(); }
+    constexpr vec3<T> operator*(const T& other) const { return vec<T, 3>::operator*(other); }
+    constexpr T operator*(const vec<T, 3>& other) const { return vec<T, 3>::operator*(other); }
+    constexpr vec3<T> operator/(const T& other) const { return vec<T, 3>::operator/(other); }
+    constexpr vec3<T> normalize() const { return vec<T, 3>::normalize(); }
+
     inline constexpr T& x() { return data[0]; };
     inline constexpr T& y() { return data[1]; };
     inline constexpr T& z() { return data[2]; };
@@ -176,6 +193,14 @@ struct vec4 : public vec<T, 4> {
     constexpr vec4(const vec<T, 4>& other) : vec<T, 4>(other) {};
     constexpr vec4(const vec3<T>& other, T w) : vec<T, 4>({other(0), other(1), other(2), w}) {};
 
+    constexpr vec4<T> operator+(const vec<T, 4>& other) const { return vec<T, 4>::operator+(other); }
+    constexpr vec4<T> operator-(const vec<T, 4>& other) const { return vec<T, 4>::operator-(other); }
+    constexpr vec4<T> operator-() const { return vec<T, 4>::operator-(); }
+    constexpr vec4<T> operator*(const T& other) const { return vec<T, 4>::operator*(other); }
+    constexpr T operator*(const vec<T, 4>& other) const { return vec<T, 4>::operator*(other); }
+    constexpr vec4<T> operator/(const T& other) const { return vec<T, 4>::operator/(other); }
+    constexpr vec4<T> normalize() const { return vec<T, 4>::normalize(); }
+
     inline constexpr T& x() { return data[0]; };
     inline constexpr T& y() { return data[1]; };
     inline constexpr T& z() { return data[2]; };
@@ -191,26 +216,34 @@ struct vec4 : public vec<T, 4> {
     };
 };
 
-struct vec2i16 : public vec2<int16_t> {
-    using vec2<int16_t>::vec;
-    constexpr vec2i16(int16_t x, int16_t y) : vec2<int16_t>(x, y) {};
-    constexpr vec2i16(const vec2<int16_t>& other) : vec2<int16_t>(other) {};
-    
-    constexpr vec2i16& operator=(const vec2i16& other) {
-        vec<int16_t, 2>::operator=(other);
-        return *this;
-    };
-};
+typedef vec2<int16_t> vec2i16;
+typedef vec2<float> vec2f;
 
-struct vec2f : public vec2<float> {
-    using vec2<float>::vec2;
-    constexpr vec2f(float x, float y) : vec2<float>(x, y) {};
-    constexpr vec2f(const vec<float, 2>& other) : vec2<float>(other) {};
-    constexpr vec2f& operator=(const vec2f& other) {
-        vec<float, 2>::operator=(other);
-        return *this;
-    };
-};
+// struct vec2i16 : public vec2<int16_t> {
+//     using vec2<int16_t>::vec;
+//     constexpr vec2i16(int16_t x, int16_t y) : vec2<int16_t>(x, y) {};
+//     constexpr vec2i16(const vec2<int16_t>& other) : vec2<int16_t>(other) {};
+    
+//     constexpr vec2i16& operator=(const vec2i16& other) {
+//         vec<int16_t, 2>::operator=(other);
+//         return *this;
+//     };
+
+//     // constexpr vec2i16(const vec2<float>& other){
+//     //     data[0] = std::round(other(0));
+//     //     data[1] = std::round(other(1));
+//     // };
+// };
+
+// struct vec2f : public vec2<float> {
+//     using vec2<float>::vec2;
+//     constexpr vec2f(float x, float y) : vec2<float>(x, y) {};
+//     constexpr vec2f(const vec<float, 2>& other) : vec2<float>(other) {};
+//     constexpr vec2f& operator=(const vec2f& other) {
+//         vec<float, 2>::operator=(other);
+//         return *this;
+//     };
+// };
 
 struct vec3f : public vec3<float> {
     using vec3<float>::vec3;

@@ -36,14 +36,14 @@ class Mesh {
         }
 
         constexpr inline uint32_t GetPolygonCount(){
-            return sizeof(Indices) / sizeof(uint32_t) / 3;
+            return PolygonCount;
         }
 
         BoundingVolume& RecalculateVolume(){
-            vec3f min = vec3f(0, 0, 0);
-            vec3f max = vec3f(0, 0, 0);
+            vec3f min = vec3f(0);
+            vec3f max = vec3f(0);
 
-            for (int i = 0; i < sizeof(Vertices) / sizeof(Vertex); i++){
+            for (int i = 0; i < VertexCount; i++){
                 min = vec3f(
                     min(0) < Vertices[i].Position(0) ? min(0) : Vertices[i].Position(0),
                     min(1) < Vertices[i].Position(1) ? min(1) : Vertices[i].Position(1),

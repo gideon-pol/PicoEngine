@@ -18,7 +18,6 @@ class BoundingBox2D {
             return BoundingBox2D(minBound, maxBound);
         };
 
-
         constexpr bool IsEmpty(){
             return abs(Max.x() - Min.x()) < 0.001f || (Max.y() - Min.y()) < 0.001f;
         }
@@ -30,9 +29,6 @@ class BoundingBox2D {
             );
         };
 };
-
-// typedef BoundingBox2D<int16_t> BoundingBox2Di16;
-// typedef BoundingBox2D<float> BoundingBox2Df;
 
 // TODO: AI generated, doesn't necessarily work
 class BoundingVolume {
@@ -51,15 +47,15 @@ class BoundingVolume {
         };
 
         // TODO: AI generated, test this
-        constexpr void GetCorners(vec3f (&corners)[8]) const {
-            corners[0] = vec3f(Min(0), Min(1), Min(2));
-            corners[1] = vec3f(Min(0), Min(1), Max(2));
-            corners[2] = vec3f(Min(0), Max(1), Min(2));
-            corners[3] = vec3f(Min(0), Max(1), Max(2));
-            corners[4] = vec3f(Max(0), Min(1), Min(2));
-            corners[5] = vec3f(Max(0), Min(1), Max(2));
-            corners[6] = vec3f(Max(0), Max(1), Min(2));
-            corners[7] = vec3f(Max(0), Max(1), Max(2));
+        constexpr void GetCorners(vec3f (*corners)[8]) const {
+            (*corners)[0] = Min;
+            (*corners)[1] = vec3f(Min(0), Min(1), Max(2));
+            (*corners)[2] = vec3f(Min(0), Max(1), Min(2));
+            (*corners)[3] = vec3f(Min(0), Max(1), Max(2));
+            (*corners)[4] = vec3f(Max(0), Min(1), Min(2));
+            (*corners)[5] = vec3f(Max(0), Min(1), Max(2));
+            (*corners)[6] = vec3f(Max(0), Max(1), Min(2));
+            (*corners)[7] = Max;
         };
 };
 
@@ -82,23 +78,7 @@ WindingOrder getWindingOrder(vec3f p1, vec3f p2, vec3f p3){
 
 // first applies yaw, then pitch, then roll
 mat4f getRotationalMatrix(vec3f rot){
-    return mat4f::rotate(rot.z(), vec3f(0, 0, 1)) *
-           mat4f::rotate(rot.x(), vec3f(1, 0, 0)) *
-           mat4f::rotate(rot.y(), vec3f(0, 1, 0));
-           
-}
-
-vec3f barycentric(vec2f p, vec2f t1, vec2f t2, vec2f t3){
-    vec2f v0 = t2 - t1, v1 = t3 - t1, v2 = p - t1;
-    float d00 = v0.dot(v0);
-    float d01 = v0.dot(v1);
-    float d11 = v1.dot(v1);
-    float d20 = v2.dot(v0);
-    float d21 = v2.dot(v1);
-    float denom = d00 * d11 - d01 * d01;
-    float v = (d11 * d20 - d01 * d21) / denom;
-    float w = (d00 * d21 - d01 * d20) / denom;
-    float u = 1.0f - v - w;
-
-    return vec3f(u, v, w);
+    return mat4f::rotate(rot.y(), vec3f::up) *
+           mat4f::rotate(rot.z(), vec3f::forward) *
+           mat4f::rotate(rot.x(), vec3f::right);
 }

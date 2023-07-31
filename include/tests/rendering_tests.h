@@ -2,25 +2,6 @@
 
 #include <lodepng.h>
 
-void rendering_test(){
-
-    // output a black png
-
-    unsigned width = 512, height = 512;
-    std::vector<unsigned char> image;
-    image.resize(width * height * 4);
-
-    for (int i = 0; i < width * height * 4; i+=4) {
-        image[i] = 255;
-        image[i+1] = 0;
-        image[i+2] = 0;
-        image[i+3] = 255;
-    }
-
-    unsigned error = lodepng::encode("black.png", image, width, height);
-    if(error) printf("encoder error %d: %s", error, lodepng_error_text(error));
-}
-
 void drawCubeTest(){
     Vertex cubeVerts[] = {
         (Vertex){vec3f(-1, -1, -1), vec3f(0), vec2f(0)},
@@ -51,12 +32,30 @@ void drawCubeTest(){
 
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
 
-    mat4f rot = getRotationalMatrix(vec3f(0, 45, 0));
-    mat4f trans = mat4f::translate(vec3f(0, 0, 10));
+    Camera* main = Renderer::MainCamera;
+
+    main->SetPosition(vec3f(1, 1, 0));
+
+    mat4f rot = getRotationalMatrix(vec3f(20, 20, 0));
+    mat4f trans = mat4f::translate(vec3f(0, 0, 5));
+    mat4f trans2 = mat4f::translate(vec3f(1, 0, 20));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
 
     mat4f M = trans * rot * scale;
+    mat4f M2 = trans2 * rot * scale;
 
+    Renderer::Clear(0xFF0000FF);
     Renderer::DrawMesh(cube, M);
+    Renderer::DrawMesh(cube, M2);
 
+    BoundingVolume vol = cube.Volume;
+    // Renderer::Debug::DrawVolume(vol, M, 0xFF000000);
+    // Renderer::Debug::DrawVolume(vol, M2, 0xFF000000);
+
+    vec3f forward = M(2).xyz();
+    vec3f up = M(1).xyz();
+    vec3f right = M(0).xyz();
+    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + up, 0xFFF00FFFF);
+    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + right, 0xFFFFFFF00);
+    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + forward, 0xFFFFFFFFF);
 }
