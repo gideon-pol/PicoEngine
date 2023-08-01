@@ -14,26 +14,7 @@ int main(int argc, char** argv){
     
     Renderer::Init(vec2i16(1000), 45, 0.1, 100);
 
-    Vertex pyramidVerts[] = {
-        (Vertex){vec3f(0, 0, 0), vec3f(0), vec2f(0)},
-        (Vertex){vec3f(1, 0, 0), vec3f(0), vec2f(0)},
-        (Vertex){vec3f(0, 0, 1), vec3f(0), vec2f(0)},
-        (Vertex){vec3f(1, 0, 1), vec3f(0), vec2f(0)},
-        (Vertex){vec3f(0.5, 1, 0.5), vec3f(0), vec2f(0)},
-    };
-
-    // clock wise polygons
-    uint32_t pyramidIndices[] = {
-        0, 1, 4,
-        1, 3, 4,
-        3, 2, 4,
-        2, 0, 4,
-        0, 2, 1,
-        2, 3, 1,
-    };
-
-    // Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
-
+   
     struct timespec start, now;
     clock_gettime(CLOCK_REALTIME, &start); 
 

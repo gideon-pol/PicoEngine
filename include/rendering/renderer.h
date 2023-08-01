@@ -2,6 +2,7 @@
 #include "ECS.h"
 #include "mathematics.h"
 #include "rendering/mesh.h"
+#include "rendering/shader.h"
 
 
 class Camera {
@@ -249,7 +250,7 @@ namespace Renderer{
         }
     }
 
-    void DrawMesh(const Mesh& mesh, const mat4f& modelMat){
+    void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
         mat4f rMVP = rasterizationMat * 
                      MainCamera->GetProjectionMatrix() *
                      MainCamera->GetViewMatrix() * 
@@ -259,6 +260,8 @@ namespace Renderer{
             printf("Mesh is offscreen\n");
             return;
         }
+
+
 
         for(int i = 0; i < mesh.PolygonCount; i++){
             uint32_t idx = i * 3;
@@ -277,6 +280,15 @@ namespace Renderer{
                 vec3f normal = (v2 - v1).cross(v3 - v1).normalize();
                 float intensity = (-normal).dot(vec3f::forward) * 0.5 + 0.5;
                 uint32_t color = 0xFF000000 | static_cast<uint8_t>(intensity * 255) << 16;
+                
+                if (material._Shader.Type == ShaderType::CustomTriangle)
+                {
+                    FragmentShaderInput input = { normal, vec2f(0) };
+                    Color c = material._Shader.fragment_shader(input, material.Parameters);
+                    color = 0xFF000000 | c.r << 16 | c.g << 8 | c.b;
+                }
+                
+                
                 DrawTriangle(pv1, pv2, pv3, color);
             }
         }
