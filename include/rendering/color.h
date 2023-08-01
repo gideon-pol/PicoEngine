@@ -74,4 +74,4 @@ typedef struct Color {
             (b + m) * 255,
             a * 255);
     }
-};
+} __attribute__((packed));

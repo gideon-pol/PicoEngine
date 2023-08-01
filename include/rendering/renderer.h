@@ -82,7 +82,7 @@ namespace Renderer{
     Camera* MainCamera;
     // Frame* FrameBuffer;
 
-    uint32_t* FrameBuffer;
+    Color* FrameBuffer;
     float* Zbuffer;
     vec2i16 Resolution;
 
@@ -93,7 +93,7 @@ namespace Renderer{
 
     void Init(vec2i16 resolution, float fov, float near, float far){
         MainCamera = new Camera(fov, near, far, (float)resolution.x() / resolution.y());
-        FrameBuffer = new uint32_t[resolution.x() * resolution.y()];
+        FrameBuffer = new Color[resolution.x() * resolution.y()];
         Zbuffer = new float[resolution.x() * resolution.y()];
         Resolution = resolution;
         bounds = BoundingBox2D(vec2f(0, 0), vec2f(resolution.x(), resolution.y()));
@@ -104,20 +104,20 @@ namespace Renderer{
             mat4f::scale(vec3f(0.5, 0.5, 1));
     }
 
-    void Clear(uint32_t color){
+    void Clear(Color color){
         for(int i = 0; i < Resolution.x() * Resolution.y(); i++){
             FrameBuffer[i] = color;
             Zbuffer[i] = 1;
         }
     }
 
-    inline void PutPixel(vec2i16 pos, uint32_t color){
+    inline void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < Resolution.x() && pos.y() >= 0 && pos.y() < Resolution.y()){
             FrameBuffer[pos.y() * Resolution.x() + pos.x()] = color;
         }
     }
 
-    void DrawBox(BoundingBox2D box, uint32_t color){
+    void DrawBox(BoundingBox2D box, Color color){
         BoundingBox2D bbi = bounds.Intersect(box);
 
         for(int y = bbi.Min.y(); y < static_cast<int>(bbi.Max.y()); y++){
@@ -127,7 +127,7 @@ namespace Renderer{
         }
     }
 
-    void DrawBorder(BoundingBox2D box, uint8_t width, uint32_t color){
+    void DrawBorder(BoundingBox2D box, uint8_t width, Color color){
         BoundingBox2D bbi = box;// bounds.Intersect(box);
 
         int16_t startX = static_cast<int16_t>(bbi.Min.x());
@@ -163,8 +163,7 @@ namespace Renderer{
         }
     }
 
-    void DrawLine(vec2i16 start, vec2i16 end, uint32_t color){
-        // Bresenham's line algorithm
+    void DrawLine(vec2i16 start, vec2i16 end, Color color){
         int16_t x0 = start.x();
         int16_t y0 = start.y();
         int16_t x1 = end.x();
@@ -197,7 +196,7 @@ namespace Renderer{
         }
     }
 
-    void DrawLine(vec3f p1, vec3f p2, uint32_t color){
+    void DrawLine(vec3f p1, vec3f p2, Color color){
         mat4f rVP = rasterizationMat * MainCamera->GetProjectionMatrix() * MainCamera->GetViewMatrix();
 
         vec3f v1 = (rVP * vec4f(p1, 1)).homogenize();
@@ -206,7 +205,7 @@ namespace Renderer{
         DrawLine(vec2i16(v1.x(), v1.y()), vec2i16(v2.x(), v2.y()), color);
     }
 
-    void DrawTriangle(vec3f t1, vec3f t2, vec3f t3, uint32_t color){
+    void DrawTriangle(vec3f t1, vec3f t2, vec3f t3, Color color){
         BoundingBox2D bb = BoundingBox2D::FromTriangle(t1.xy(), t2.xy(), t3.xy());
         BoundingBox2D bbi = bounds.Intersect(bb);
 
@@ -261,8 +260,6 @@ namespace Renderer{
             return;
         }
 
-
-
         for(int i = 0; i < mesh.PolygonCount; i++){
             uint32_t idx = i * 3;
 
@@ -279,13 +276,13 @@ namespace Renderer{
             if(windingOrder.z() <= 0){
                 vec3f normal = (v2 - v1).cross(v3 - v1).normalize();
                 float intensity = (-normal).dot(vec3f::forward) * 0.5 + 0.5;
-                uint32_t color = 0xFF000000 | static_cast<uint8_t>(intensity * 255) << 16;
+                Color color = Color(0, static_cast<uint8_t>(intensity * 255), 0, 255);
                 
+                // This is just for testing, properly implement later
                 if (material._Shader.Type == ShaderType::CustomTriangle)
                 {
                     FragmentShaderInput input = { normal, vec2f(0) };
-                    Color c = material._Shader.fragment_shader(input, material.Parameters);
-                    color = 0xFF000000 | c.r << 16 | c.g << 8 | c.b;
+                    color = material._Shader.fragment_shader(input, material.Parameters);
                 }
                 
                 
@@ -295,7 +292,7 @@ namespace Renderer{
     }
 
     namespace Debug {
-        void DrawVolume(BoundingVolume& volume, mat4f& modelMat, uint32_t color){
+        void DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color color){
             vec3f corners[8];
             volume.GetCorners(&corners);
 

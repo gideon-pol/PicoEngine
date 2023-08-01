@@ -4,12 +4,12 @@
 
 typedef struct VertexShaderInput {
     vec3f Position;
-    // This normal is given in the mesh
+    // This is for now a face normal
     vec3f Normal;
 };
 
 typedef struct FragmentShaderInput {
-    // This normal is for now calculated in the rasterizer
+    // This is for now a face normal
     vec3f Normal;
     vec2f UV;
 };
@@ -63,7 +63,7 @@ public:
         fragment_shader = [](FragmentShaderInput& input, void* parameters){
             Parameters* params = (Parameters*)parameters;
             vec3f lightDir = -params->LightPosition.normalize();
-            float diff = std::max(input.Normal.dot(lightDir), 0.0f);
+            float diff = input.Normal.dot(lightDir);
             Color diffuse = Color(
                                 static_cast<uint8_t>(params->LightColor.r * diff),
                                 static_cast<uint8_t>(params->LightColor.g * diff),

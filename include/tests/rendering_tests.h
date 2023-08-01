@@ -59,7 +59,12 @@ void drawCubeTest(){
 
     Material mat = Material(s);
     ((LightingShader::Parameters*)mat.Parameters)->LightPosition = vec3f::up;
-    ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::White;
+    ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
+
+    Material mat2 = Material(s);
+    ((LightingShader::Parameters*)mat2.Parameters)->LightPosition = vec3f::up;
+    ((LightingShader::Parameters*)mat2.Parameters)->LightColor = Color::White;
+
 
     mat4f rot = getRotationalMatrix(vec3f(-20, 20, 0));
     mat4f trans = mat4f::translate(vec3f(-1, 0, 10));
@@ -69,19 +74,19 @@ void drawCubeTest(){
     mat4f M = trans * rot * scale;
     mat4f M2 = trans2 * rot * scale;
 
-    Renderer::Clear(0xFF0000FF);
+    Renderer::Clear(Color::Red);
     Renderer::DrawMesh(pyramid, M, mat);
-    Renderer::DrawMesh(cube, M2, mat);
+    Renderer::DrawMesh(cube, M2, mat2);
 
     BoundingVolume vol1 = cube.Volume;
     BoundingVolume vol2 = pyramid.Volume;
-    Renderer::Debug::DrawVolume(vol2, M, 0xFF000000);
-    Renderer::Debug::DrawVolume(vol1, M2, 0xFF000000);
+    Renderer::Debug::DrawVolume(vol2, M, Color::Black);
+    Renderer::Debug::DrawVolume(vol1, M2, Color::Black);
 
     vec3f forward = M(2).xyz();
     vec3f up = M(1).xyz();
     vec3f right = M(0).xyz();
-    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + up, 0xFFF00FFFF);
-    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + right, 0xFFFFFFF00);
-    Renderer::DrawLine(vec3f(0, 0, 5), vec3f(0, 0, 5) + forward, 0xFFFFFFFFF);
+    Renderer::DrawLine(vec3f(-1, 0, 10), vec3f(-1, 0, 10) + up, Color::Orange);
+    Renderer::DrawLine(vec3f(-1, 0, 10), vec3f(-1, 0, 10) + right, Color::Cyan);
+    Renderer::DrawLine(vec3f(-1, 0, 10), vec3f(-1, 0, 10) + forward, Color::White);
 }

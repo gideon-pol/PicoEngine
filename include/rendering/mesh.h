@@ -9,17 +9,8 @@ typedef struct {
     vec3f Normal;
     vec2f UV;
 } Vertex;
-
-// typedef struct {
-//     Vertex* Vertices;
-//     uint32_t* Indices;
-// } Mesh;
-
 class Mesh {
     public:
-        // Vertex (&Vertices)[];
-        // uint32_t (&Indices)[];
-
         Vertex* Vertices;
         uint32_t* Indices;
         uint32_t VertexCount;
