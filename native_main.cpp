@@ -14,7 +14,6 @@ int main(int argc, char** argv){
     
     Renderer::Init(vec2i16(1000), 45, 0.1, 100);
 
-   
     struct timespec start, now;
     clock_gettime(CLOCK_REALTIME, &start); 
 

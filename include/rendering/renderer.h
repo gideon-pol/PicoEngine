@@ -39,8 +39,11 @@ class Camera {
         return projection;
     }
 
+    // Frustum intersection test that checks if any of the bounding volume's corners
+    // are inside the frustrum. Very naive and stupid but SAT is expensive.
+    // This function can break for large bounding volumes or if the bounding volume
+    // is close to the camera.
     bool IntersectsFrustrum(const BoundingVolume& volume, const mat4f& translationMat){
-        // Stupid stupid stupid and naive implementation, SAT is expensive however
         vec3f corners[8];
         volume.GetCorners(&corners);
 
@@ -80,8 +83,6 @@ class Camera {
 
 namespace Renderer{
     Camera* MainCamera;
-    // Frame* FrameBuffer;
-
     Color* FrameBuffer;
     float* Zbuffer;
     vec2i16 Resolution;
@@ -237,12 +238,7 @@ namespace Renderer{
                     
                     if(z < Zbuffer[y * Resolution.x() + x]){
                         FrameBuffer[y * Resolution.x() + x] = color;
-                            // 0xFF << 24 |
-                            // static_cast<uint8_t>(uvw.x() * 255) << 16 |
-                            // static_cast<uint8_t>(uvw.y() * 255) << 8 |
-                            // static_cast<uint8_t>(uvw.z() * 255);
                         Zbuffer[y * Resolution.x() + x] = z;
-                        // FrameBuffer[y * Resolution.x() + x] = 0xFF << 24 | static_cast<uint8_t>(z/0.1 * 255) << 16;
                     }
                 }
             }
@@ -250,6 +246,8 @@ namespace Renderer{
     }
 
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
+        // TODO: do not calculate this every mesh
+        
         mat4f rMVP = rasterizationMat * 
                      MainCamera->GetProjectionMatrix() *
                      MainCamera->GetViewMatrix() * 
@@ -263,30 +261,68 @@ namespace Renderer{
         for(int i = 0; i < mesh.PolygonCount; i++){
             uint32_t idx = i * 3;
 
-            vec3f v1 = mesh.Vertices[mesh.Indices[idx]].Position;
-            vec3f v2 = mesh.Vertices[mesh.Indices[idx+1]].Position;
-            vec3f v3 = mesh.Vertices[mesh.Indices[idx+2]].Position;
+            TriangleShaderData t = {
+                mesh.Vertices[mesh.Indices[idx]],
+                mesh.Vertices[mesh.Indices[idx+1]],
+                mesh.Vertices[mesh.Indices[idx+2]],
+                Color::Black
+            };
 
-            vec3f pv1 = (rMVP * vec4f(v1, 1)).homogenize();
-            vec3f pv2 = (rMVP * vec4f(v2, 1)).homogenize();
-            vec3f pv3 = (rMVP * vec4f(v3, 1)).homogenize();
+            if(material._Shader.Type == ShaderType::Flat){
+                t.TriangleColor = ((FlatShader::Parameters*)material.Parameters)->_Color;
+            } else if(material._Shader.TriangleProgram){
+                material._Shader.TriangleProgram(t, material.Parameters);
+            }
+
+            vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
+            vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
+            vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
+
+            BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
+            BoundingBox2D bbi = bounds.Intersect(bb);
+
+            if(bbi.IsEmpty()) return;
+
+            if(material._Shader.Type == ShaderType::WireFrame){
+                Color color = ((WireFrameShader::Parameters*)material.Parameters)->_Color;
+                vec2i16 p1 = vec2i16(pv1.x(), pv1.y());
+                vec2i16 p2 = vec2i16(pv2.x(), pv2.y());
+                vec2i16 p3 = vec2i16(pv3.x(), pv3.y());
+
+                DrawLine(p1, p2, color);
+                DrawLine(p2, p3, color);
+                DrawLine(p3, p1, color);
+                continue;
+            }
 
             vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
-            if(windingOrder.z() <= 0){
-                vec3f normal = (v2 - v1).cross(v3 - v1).normalize();
-                float intensity = (-normal).dot(vec3f::forward) * 0.5 + 0.5;
-                Color color = Color(0, static_cast<uint8_t>(intensity * 255), 0, 255);
-                
-                // This is just for testing, properly implement later
-                if (material._Shader.Type == ShaderType::CustomTriangle)
-                {
-                    FragmentShaderInput input = { normal, vec2f(0) };
-                    color = material._Shader.fragment_shader(input, material.Parameters);
+            if(windingOrder.z() > 0) continue;
+
+            vec3f normal = (t.v2.Position - t.v1.Position).cross(t.v3.Position - t.v1.Position).normalize();
+            float intensity = (-normal).dot(vec3f::forward) * 0.5 + 0.5;
+            Color color = Color(0, static_cast<uint8_t>(intensity * 255), 0, 255);
+
+            Color fragmentColor = t.TriangleColor;
+
+            float area = edgeFunction(pv1, pv2, pv3);
+            for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
+                for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
+                    vec3f p = vec3f(x, y, 0);
+                    float w0 = edgeFunction(pv2, pv3, p);
+                    float w1 = edgeFunction(pv3, pv1, p);
+                    float w2 = edgeFunction(pv1, pv2, p);
+
+                    if(w0 >= 0 && w1 >= 0 && w2 >= 0){
+                        vec3f uvw = vec3f(w0, w1, w2) / area;
+                        float z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
+                        
+                        if(z > Zbuffer[y * Resolution.x() + x]) continue;
+
+                        FrameBuffer[y * Resolution.x() + x] = fragmentColor;
+                        Zbuffer[y * Resolution.x() + x] = z;
+                    }
                 }
-                
-                
-                DrawTriangle(pv1, pv2, pv3, color);
             }
         }
     }

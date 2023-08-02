@@ -56,14 +56,18 @@ void drawCubeTest(){
     Camera* main = Renderer::MainCamera;
 
     LightingShader s = LightingShader();
+    WireFrameShader w = WireFrameShader();
+    FlatShader f = FlatShader();
 
     Material mat = Material(s);
     ((LightingShader::Parameters*)mat.Parameters)->LightPosition = vec3f::up;
     ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
 
-    Material mat2 = Material(s);
-    ((LightingShader::Parameters*)mat2.Parameters)->LightPosition = vec3f::up;
-    ((LightingShader::Parameters*)mat2.Parameters)->LightColor = Color::White;
+    Material mat2 = Material(f);
+    ((FlatShader::Parameters*)mat2.Parameters)->_Color = Color::Green;
+
+    Material mat3 = Material(w);
+    ((WireFrameShader::Parameters*)mat3.Parameters)->_Color = Color::Cyan;
 
 
     mat4f rot = getRotationalMatrix(vec3f(-20, 20, 0));
@@ -75,13 +79,13 @@ void drawCubeTest(){
     mat4f M2 = trans2 * rot * scale;
 
     Renderer::Clear(Color::Red);
-    Renderer::DrawMesh(pyramid, M, mat);
+    // Renderer::DrawMesh(pyramid, M, mat);
     Renderer::DrawMesh(cube, M2, mat2);
 
     BoundingVolume vol1 = cube.Volume;
     BoundingVolume vol2 = pyramid.Volume;
-    Renderer::Debug::DrawVolume(vol2, M, Color::Black);
-    Renderer::Debug::DrawVolume(vol1, M2, Color::Black);
+    // Renderer::Debug::DrawVolume(vol2, M, Color::Black);
+    // Renderer::Debug::DrawVolume(vol1, M2, Color::Black);
 
     vec3f forward = M(2).xyz();
     vec3f up = M(1).xyz();
