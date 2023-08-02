@@ -206,45 +206,6 @@ namespace Renderer{
         DrawLine(vec2i16(v1.x(), v1.y()), vec2i16(v2.x(), v2.y()), color);
     }
 
-    void DrawTriangle(vec3f t1, vec3f t2, vec3f t3, Color color){
-        BoundingBox2D bb = BoundingBox2D::FromTriangle(t1.xy(), t2.xy(), t3.xy());
-        BoundingBox2D bbi = bounds.Intersect(bb);
-
-        // DrawBorder(bbi, 2, 0xFFFF0000);
-
-        if(bbi.IsEmpty()) {
-            return;
-        }
-
-        // vec2i16 ti1 = vec2i16(t1.x(), t1.y());
-        // vec2i16 ti2 = vec2i16(t2.x(), t2.y());
-        // vec2i16 ti3 = vec2i16(t3.x(), t3.y());
-
-        // DrawLine(ti1, ti2, 0xFFFFFFFF);
-        // DrawLine(ti2, ti3, 0xFFFFFFFF);
-        // DrawLine(ti3, ti1, 0xFFFFFFFF);
-
-        float area = edgeFunction(t1, t2, t3);
-        for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
-            for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
-                vec3f p = vec3f(x, y, 0);
-                float w0 = edgeFunction(t2, t3, p);
-                float w1 = edgeFunction(t3, t1, p);
-                float w2 = edgeFunction(t1, t2, p);
-
-                if(w0 >= 0 && w1 >= 0 && w2 >= 0){
-                    vec3f uvw = vec3f(w0, w1, w2) / area;
-                    float z = vec3f(t1.z(), t2.z(), t3.z()) * uvw;
-                    
-                    if(z < Zbuffer[y * Resolution.x() + x]){
-                        FrameBuffer[y * Resolution.x() + x] = color;
-                        Zbuffer[y * Resolution.x() + x] = z;
-                    }
-                }
-            }
-        }
-    }
-
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
         // TODO: do not calculate this every mesh
         
@@ -317,7 +278,7 @@ namespace Renderer{
                         vec3f uvw = vec3f(w0, w1, w2) / area;
                         float z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
                         
-                        if(z > Zbuffer[y * Resolution.x() + x]) continue;
+                        if(z >= Zbuffer[y * Resolution.x() + x]) continue;
 
                         FrameBuffer[y * Resolution.x() + x] = fragmentColor;
                         Zbuffer[y * Resolution.x() + x] = z;

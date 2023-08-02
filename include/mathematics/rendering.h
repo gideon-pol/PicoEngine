@@ -30,7 +30,6 @@ class BoundingBox2D {
         };
 };
 
-// TODO: AI generated, doesn't necessarily work
 class BoundingVolume {
     public:
         vec3f Min;
@@ -59,21 +58,8 @@ class BoundingVolume {
         };
 };
 
-float edgeFunction(vec3f a, vec3f b, vec3f c){
+inline constexpr float edgeFunction(vec3f a, vec3f b, vec3f c){
     return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
-}
-
-enum WindingOrder{ClockWise, CounterClockWise};
-WindingOrder getWindingOrder(vec3f p1, vec3f p2, vec3f p3){
-    vec3f v1 = p2 - p1;
-    vec3f v2 = p3 - p1;
-    vec3f cross = v1.cross(v2);
-
-    if(cross.z() > 0){
-        return WindingOrder::CounterClockWise;
-    } else{
-        return WindingOrder::ClockWise;
-    }
 }
 
 // first applies yaw, then pitch, then roll

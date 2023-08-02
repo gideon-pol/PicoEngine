@@ -40,6 +40,7 @@ public:
     } Parameters;
 
     FlatShader(){
+        // TODO: Test whether this is (significantly) slower than an engine implemented shader
         Type = ShaderType::Custom;
         TriangleProgram = [](TriangleShaderData& i, void* p){
             i.TriangleColor = ((Parameters*)p)->_Color;
@@ -85,6 +86,8 @@ public:
     }
 };
 
+// The wireframe shader is engine-implemented.
+// This class is really only for the parameters object
 class WireFrameShader : public Shader {
 public:
     struct Parameters {
