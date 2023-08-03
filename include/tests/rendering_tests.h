@@ -80,7 +80,7 @@ void drawCubeTest(){
     mat4f M = trans * rot * scale;
     mat4f M2 = trans2 * rot * scale;
 
-    for(int i = 0; i < 1000; i++){
+    for(int i = 0; i < 10000; i++){
         Renderer::Clear(Color::Red);
         Renderer::DrawMesh(pyramid, M, mat4);
         Renderer::DrawMesh(cube, M2, mat4);
