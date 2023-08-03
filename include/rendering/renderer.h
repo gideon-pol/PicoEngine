@@ -84,7 +84,7 @@ class Camera {
 
 namespace Renderer{
     Camera* MainCamera;
-    Color* FrameBuffer;
+    Color16* FrameBuffer;
     float* Zbuffer;
     vec2i16 Resolution;
 
@@ -95,7 +95,7 @@ namespace Renderer{
 
     void Init(vec2i16 resolution, float fov, float near, float far){
         MainCamera = new Camera(fov, near, far, (float)resolution.x() / resolution.y());
-        FrameBuffer = new Color[resolution.x() * resolution.y()];
+        FrameBuffer = new Color16[resolution.x() * resolution.y()];
         Zbuffer = new float[resolution.x() * resolution.y()];
         Resolution = resolution;
         bounds = BoundingBox2D(vec2f(0, 0), vec2f(resolution.x(), resolution.y()));
@@ -108,14 +108,14 @@ namespace Renderer{
 
     void Clear(Color color){
         for(int i = 0; i < Resolution.x() * Resolution.y(); i++){
-            FrameBuffer[i] = color;
+            FrameBuffer[i] = color.ToColor16();
             Zbuffer[i] = 1;
         }
     }
 
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < Resolution.x() && pos.y() >= 0 && pos.y() < Resolution.y()){
-            FrameBuffer[pos.y() * Resolution.x() + pos.x()] = color;
+            FrameBuffer[pos.y() * Resolution.x() + pos.x()] = color.ToColor16();
         }
     }
 
@@ -124,7 +124,7 @@ namespace Renderer{
 
         for(int y = bbi.Min.y(); y < static_cast<int>(bbi.Max.y()); y++){
             for(int x = bbi.Min.x(); x < static_cast<int>(bbi.Max.x()); x++){
-                FrameBuffer[y * Resolution.x() + x] = color;
+                FrameBuffer[y * Resolution.x() + x] = color.ToColor16();
             }
         }
     }
@@ -307,7 +307,7 @@ namespace Renderer{
                                 break;
                         }
 
-                        FrameBuffer[y * Resolution.x() + x] = fragmentColor;
+                        FrameBuffer[y * Resolution.x() + x] = fragmentColor.ToColor16();
                     }
                 }
             }

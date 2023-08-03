@@ -24,7 +24,12 @@ int main(int argc, char** argv){
     double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
     printf("Drawing took %lf s\n", diff);
 
-    unsigned error = lodepng::encode("test.png", (unsigned char*)Renderer::FrameBuffer, Renderer::Resolution.x(), Renderer::Resolution.y());
+    Color* pixels = new Color[Renderer::Resolution.x() * Renderer::Resolution.y()];
+    for(int i = 0; i < Renderer::Resolution.x() * Renderer::Resolution.y(); i++){
+        pixels[i] = Color(Renderer::FrameBuffer[i]);
+    }
+
+    unsigned error = lodepng::encode("test.png", (unsigned char*)pixels, Renderer::Resolution.x(), Renderer::Resolution.y());
     if(error) printf("encoder error %d: %s", error, lodepng_error_text(error));
 
     return 0;

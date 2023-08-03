@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 #include <math.h>
+#include "common.h"
+
+typedef uint16_t Color16;
 
 struct Color {
     uint8_t r;
@@ -11,6 +14,12 @@ struct Color {
 
     constexpr Color() : r(0), g(0), b(0), a(255) {};
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {};
+
+    FORCE_INLINE constexpr Color16 ToColor16() const {
+        return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | (a >> 4);
+    }
+
+    FORCE_INLINE constexpr Color(Color16 c) : r((c >> 12) << 4), g((c >> 8) << 4), b((c >> 4) << 4), a((c >> 0) << 4) {};
 
     static const Color White;
     static const Color Black;
