@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include "common.h"
 #include "mathematics/basic.h"
 #include "mathematics/vector.h"
 
@@ -18,11 +19,11 @@ class BoundingBox2D {
             return BoundingBox2D(minBound, maxBound);
         };
 
-        constexpr bool IsEmpty(){
+        FORCE_INLINE constexpr bool IsEmpty(){
             return abs(Max.x() - Min.x()) < 0.001f || (Max.y() - Min.y()) < 0.001f;
         }
 
-        static BoundingBox2D FromTriangle(const vec2f& a, const vec2f& b, const vec2f& c){
+        FORCE_INLINE static BoundingBox2D FromTriangle(const vec2f& a, const vec2f& b, const vec2f& c){
             return BoundingBox2D(
                 vec2f(min(a(0), min(b(0), c(0))), min(a(1), min(b(1), c(1)))),
                 vec2f(max(a(0), max(b(0), c(0))), max(a(1), max(b(1), c(1))))
@@ -46,7 +47,7 @@ class BoundingVolume {
         };
 
         // TODO: AI generated, test this
-        constexpr void GetCorners(vec3f (*corners)[8]) const {
+        FORCE_INLINE constexpr void GetCorners(vec3f (*corners)[8]) const {
             (*corners)[0] = Min;
             (*corners)[1] = vec3f(Min(0), Min(1), Max(2));
             (*corners)[2] = vec3f(Min(0), Max(1), Min(2));
@@ -58,12 +59,12 @@ class BoundingVolume {
         };
 };
 
-inline constexpr float edgeFunction(vec3f a, vec3f b, vec3f c){
+FORCE_INLINE constexpr float edgeFunction(vec3f a, vec3f b, vec3f c){
     return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
 }
 
 // first applies yaw, then pitch, then roll
-mat4f getRotationalMatrix(vec3f rot){
+FORCE_INLINE mat4f getRotationalMatrix(vec3f rot){
     return mat4f::rotate(rot.y(), vec3f::up) *
            mat4f::rotate(rot.z(), vec3f::forward) *
            mat4f::rotate(rot.x(), vec3f::right);
