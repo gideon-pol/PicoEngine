@@ -1,12 +1,13 @@
 #pragma once
 
 #include <math.h>
+#include "common.h"
 #include "mathematics/basic.h"
 #include "mathematics/vector.h"
 
 template<typename T, int C, int R>
 struct mat {
-    vec<T, C> data[R];
+    vec<T, C> data[R]{};
 
     constexpr mat() {
         for (int i = 0; i < R; i++) {
@@ -32,15 +33,15 @@ struct mat {
         }
     };
 
-    constexpr vec<T, C>& operator[](int i){
+    FORCE_INLINE constexpr vec<T, C>& operator[](int i){
         return data[i];
     };
 
-    constexpr T operator()(int y, int x) const {
+    FORCE_INLINE constexpr T operator()(int y, int x) const {
         return data[y](x);
     };
 
-    constexpr vec<T, C> operator()(int i) const {
+    FORCE_INLINE constexpr vec<T, C> operator()(int i) const {
         return data[i];
     };
 
@@ -85,11 +86,11 @@ struct mat {
         return result;
     };
 
-    constexpr int rows() {
+    FORCE_INLINE constexpr int rows() {
         return R;
     };
 
-    constexpr int columns() {
+    FORCE_INLINE constexpr int columns() {
         return C;
     };
 
@@ -160,7 +161,7 @@ struct mat4f : public mat<float, 4, 4> {
     //     return data[i];
     // };
 
-    constexpr vec4f operator()(int i) const {
+    FORCE_INLINE constexpr vec4f operator()(int i) const {
         return data[i];
     };
 

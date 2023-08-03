@@ -1,4 +1,5 @@
 #pragma once
+#include "common.h"
 #include "ECS.h"
 #include "mathematics.h"
 #include "rendering/mesh.h"
@@ -35,7 +36,7 @@ class Camera {
         return view;
     }
 
-    constexpr inline mat4f& GetProjectionMatrix(){
+    FORCE_INLINE constexpr mat4f& GetProjectionMatrix(){
         return projection;
     }
 
@@ -112,7 +113,7 @@ namespace Renderer{
         }
     }
 
-    inline void PutPixel(vec2i16 pos, Color color){
+    FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < Resolution.x() && pos.y() >= 0 && pos.y() < Resolution.y()){
             FrameBuffer[pos.y() * Resolution.x() + pos.x()] = color;
         }
@@ -207,12 +208,12 @@ namespace Renderer{
     }
 
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
-        // TODO: do not calculate this every mesh
-        
-        mat4f rMVP = rasterizationMat * 
+        // TODO: do not calculate this for every mesh
+        mat4f rMVP = rasterizationMat *
                      MainCamera->GetProjectionMatrix() *
                      MainCamera->GetViewMatrix() * 
                      modelMat;
+                     
 
         if(!MainCamera->IntersectsFrustrum(mesh.Volume, modelMat)){
             printf("Mesh is offscreen\n");
@@ -226,7 +227,7 @@ namespace Renderer{
                 mesh.Vertices[mesh.Indices[idx]],
                 mesh.Vertices[mesh.Indices[idx+1]],
                 mesh.Vertices[mesh.Indices[idx+2]],
-                Color::Black
+                Color::Purple
             };
 
             if(material._Shader.Type == ShaderType::Flat){
@@ -260,11 +261,6 @@ namespace Renderer{
 
             if(windingOrder.z() > 0) continue;
 
-            vec3f normal = (t.v2.Position - t.v1.Position).cross(t.v3.Position - t.v1.Position).normalize();
-            float intensity = (-normal).dot(vec3f::forward) * 0.5 + 0.5;
-            Color color = Color(0, static_cast<uint8_t>(intensity * 255), 0, 255);
-
-            Color fragmentColor = t.TriangleColor;
 
             float area = edgeFunction(pv1, pv2, pv3);
             for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
@@ -279,9 +275,39 @@ namespace Renderer{
                         float z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
                         
                         if(z >= Zbuffer[y * Resolution.x() + x]) continue;
+                        Zbuffer[y * Resolution.x() + x] = z;
+
+                        Color fragmentColor = t.TriangleColor;
+
+                        switch(material._Shader.Type){
+                            case ShaderType::Texture: {
+                                // TODO: implement textures
+                                fragmentColor = Color::Purple;
+                                break;
+                            }
+                            case ShaderType::Custom: {
+                                if(material._Shader.FragmentProgram){
+                                    vec3f normal = (t.v2.Position - t.v1.Position).cross(t.v3.Position - t.v1.Position).normalize();
+                                    vec3f fragCoord = vec3f(x, y, z);
+
+                                    FragmentShaderData data = {
+                                        normal,
+                                        fragCoord,
+                                        uvw.xy(),
+                                        Resolution,
+                                        fragmentColor
+                                    };
+
+                                    material._Shader.FragmentProgram(data, material.Parameters);
+                                    fragmentColor = data.FragmentColor;
+                                }
+                                break;
+                            }
+                            default:
+                                break;
+                        }
 
                         FrameBuffer[y * Resolution.x() + x] = fragmentColor;
-                        Zbuffer[y * Resolution.x() + x] = z;
                     }
                 }
             }

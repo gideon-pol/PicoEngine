@@ -58,9 +58,10 @@ void drawCubeTest(){
     LightingShader s = LightingShader();
     WireFrameShader w = WireFrameShader();
     FlatShader f = FlatShader();
+    RainbowTestShader r = RainbowTestShader();
 
     Material mat = Material(s);
-    ((LightingShader::Parameters*)mat.Parameters)->LightPosition = vec3f::up;
+    ((LightingShader::Parameters*)mat.Parameters)->LightPosition = -vec3f::up;
     ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
 
     Material mat2 = Material(f);
@@ -69,6 +70,7 @@ void drawCubeTest(){
     Material mat3 = Material(w);
     ((WireFrameShader::Parameters*)mat3.Parameters)->_Color = Color::Cyan;
 
+    Material mat4 = Material(r);
 
     mat4f rot = getRotationalMatrix(vec3f(-20, 20, 0));
     mat4f trans = mat4f::translate(vec3f(-1, 0, 10));
@@ -78,9 +80,12 @@ void drawCubeTest(){
     mat4f M = trans * rot * scale;
     mat4f M2 = trans2 * rot * scale;
 
-    Renderer::Clear(Color::Red);
-    // Renderer::DrawMesh(pyramid, M, mat);
-    Renderer::DrawMesh(cube, M2, mat2);
+    for(int i = 0; i < 1000; i++){
+        Renderer::Clear(Color::Red);
+        Renderer::DrawMesh(pyramid, M, mat4);
+        Renderer::DrawMesh(cube, M2, mat4);
+    }
+    
 
     BoundingVolume vol1 = cube.Volume;
     BoundingVolume vol2 = pyramid.Volume;

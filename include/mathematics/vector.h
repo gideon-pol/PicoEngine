@@ -2,11 +2,12 @@
 
 #include <stdint.h>
 #include <unistd.h>
+#include "common.h"
 
 #pragma pack(push, 1)
 template<typename T, int C>
 struct vec {
-    T data[C];
+    T data[C]{};
 
     constexpr vec() {
         for (int i = 0; i < C; i++) {
@@ -32,11 +33,11 @@ struct vec {
         }
     };
 
-    constexpr T& operator[](int i) {
+    FORCE_INLINE constexpr T& operator[](int i) {
         return data[i];
     };
 
-    constexpr T operator()(int i) const {
+    FORCE_INLINE constexpr T operator()(int i) const {
         return data[i];
     };
 
@@ -63,6 +64,14 @@ struct vec {
         return result;
     };
 
+    constexpr vec<T, C> operator/(const vec<T, C>& other) const {
+        vec<T, C> result = vec<T, C>(0);
+        for (int i = 0; i < C; i++) {
+            result[i] = data[i] / other(i);
+        }
+        return result;
+    };
+
     constexpr vec<T, C> operator/(const T& other) const {
         vec<T, C> result = vec<T, C>(0);
         for (int i = 0; i < C; i++) {
@@ -70,7 +79,7 @@ struct vec {
         }
         return result;
     };
-
+    
     constexpr vec<T, C> operator+(const vec<T, C>& other) const {
         vec<T, C> result  = vec<T, C>(0);
         for (int i = 0; i < C; i++) {
@@ -104,7 +113,7 @@ struct vec {
         return true;
     };
 
-    constexpr uint32_t size() const {
+    FORCE_INLINE constexpr uint32_t size() const {
         return C;
     };
 
@@ -141,16 +150,21 @@ struct vec2 : public vec<T, 2> {
     constexpr vec2(T x, T y) : vec<T, 2>({x, y}) {};
     constexpr vec2(const vec<T, 2>& other) : vec<T, 2>(other) {};
 
-    constexpr vec2<T> operator+(const vec<T, 2>& other) const { return vec<T, 2>::operator+(other); }
-    constexpr vec2<T> operator-(const vec<T, 2>& other) const { return vec<T, 2>::operator-(other); }
-    constexpr vec2<T> operator-() const { return vec<T, 2>::operator-(); }
-    constexpr vec2<T> operator*(const T& other) const { return vec<T, 2>::operator*(other); }
-    constexpr T operator*(const vec<T, 2>& other) const { return vec<T, 2>::operator*(other); }
-    constexpr vec2<T> operator/(const T& other) const { return vec<T, 2>::operator/(other); }
-    constexpr vec2<T> normalize() const { return vec<T, 2>::normalize(); }
+    template<typename U>
+    constexpr vec2(const vec<U, 2>& other) : vec<T, 2>({
+        static_cast<T>(other(0)), static_cast<T>(other(1))}) {};
 
-    inline constexpr T& x() { return data[0]; };
-    inline constexpr T& y() { return data[1]; };
+    FORCE_INLINE constexpr vec2<T> operator+(const vec<T, 2>& other) const { return vec<T, 2>::operator+(other); }
+    FORCE_INLINE constexpr vec2<T> operator-(const vec<T, 2>& other) const { return vec<T, 2>::operator-(other); }
+    FORCE_INLINE constexpr vec2<T> operator-() const { return vec<T, 2>::operator-(); }
+    FORCE_INLINE constexpr vec2<T> operator*(const T& other) const { return vec<T, 2>::operator*(other); }
+    FORCE_INLINE constexpr T operator*(const vec<T, 2>& other) const { return vec<T, 2>::operator*(other); }
+    FORCE_INLINE constexpr vec2<T> operator/(const vec<T, 2>& other) const { return vec<T, 2>::operator/(other); }
+    FORCE_INLINE constexpr vec2<T> operator/(const T& other) const { return vec<T, 2>::operator/(other); }
+    FORCE_INLINE constexpr vec2<T> normalize() const { return vec<T, 2>::normalize(); }
+
+    FORCE_INLINE constexpr T& x() { return data[0]; };
+    FORCE_INLINE constexpr T& y() { return data[1]; };
 }; 
 
 template<typename T>
@@ -160,6 +174,10 @@ struct vec3 : public vec<T, 3> {
     constexpr vec3(T x, T y, T z) : vec<T, 3>({x, y, z}) {};
     constexpr vec3(const vec<T, 3>& other) : vec<T, 3>(other) {};
     constexpr vec3(const vec2<T>& other, T z) : vec<T, 3>({other(0), other(1), z}) {};
+    
+    template <typename U>
+    constexpr vec3(const vec<U, 3>& other) : vec<T, 3>({
+        static_cast<T>(other(0)), static_cast<T>(other(1)), static_cast<T>(other(2))}) {};
 
     constexpr vec3 cross(const vec3<T>& other) const {
         vec3<T> result = vec3<T>(0);
@@ -169,20 +187,21 @@ struct vec3 : public vec<T, 3> {
         return result;
     };
 
-    constexpr vec3<T> operator+(const vec<T, 3>& other) const { return vec<T, 3>::operator+(other); }
-    constexpr vec3<T> operator-(const vec<T, 3>& other) const { return vec<T, 3>::operator-(other); }
-    constexpr vec3<T> operator-() const { return vec<T, 3>::operator-(); }
-    constexpr vec3<T> operator*(const T& other) const { return vec<T, 3>::operator*(other); }
-    constexpr T operator*(const vec<T, 3>& other) const { return vec<T, 3>::operator*(other); }
-    constexpr vec3<T> operator/(const T& other) const { return vec<T, 3>::operator/(other); }
-    constexpr vec3<T> normalize() const { return vec<T, 3>::normalize(); }
+    FORCE_INLINE constexpr vec3<T> operator+(const vec<T, 3>& other) const { return vec<T, 3>::operator+(other); }
+    FORCE_INLINE constexpr vec3<T> operator-(const vec<T, 3>& other) const { return vec<T, 3>::operator-(other); }
+    FORCE_INLINE constexpr vec3<T> operator-() const { return vec<T, 3>::operator-(); }
+    FORCE_INLINE constexpr vec3<T> operator*(const T& other) const { return vec<T, 3>::operator*(other); }
+    FORCE_INLINE constexpr T operator*(const vec<T, 3>& other) const { return vec<T, 3>::operator*(other); }
+    FORCE_INLINE constexpr vec3<T> operator/(const vec<T, 3>& other) const { return vec<T, 3>::operator/(other); }
+    FORCE_INLINE constexpr vec3<T> operator/(const T& other) const { return vec<T, 3>::operator/(other); }
+    FORCE_INLINE constexpr vec3<T> normalize() const { return vec<T, 3>::normalize(); }
 
-    inline constexpr T& x() { return data[0]; };
-    inline constexpr T& y() { return data[1]; };
-    inline constexpr T& z() { return data[2]; };
-    inline constexpr vec2<T> xy() const { return vec2<T>(data[0], data[1]); };
-    inline constexpr vec2<T> xz() const { return vec2<T>(data[0], data[2]); };
-    inline constexpr vec2<T> yz() const { return vec2<T>(data[1], data[2]); };
+    FORCE_INLINE constexpr T& x() { return data[0]; };
+    FORCE_INLINE constexpr T& y() { return data[1]; };
+    FORCE_INLINE constexpr T& z() { return data[2]; };
+    FORCE_INLINE constexpr vec2<T> xy() const { return vec2<T>(data[0], data[1]); };
+    FORCE_INLINE constexpr vec2<T> xz() const { return vec2<T>(data[0], data[2]); };
+    FORCE_INLINE constexpr vec2<T> yz() const { return vec2<T>(data[1], data[2]); };
 };
 
 template<typename T>
@@ -193,22 +212,27 @@ struct vec4 : public vec<T, 4> {
     constexpr vec4(const vec<T, 4>& other) : vec<T, 4>(other) {};
     constexpr vec4(const vec3<T>& other, T w) : vec<T, 4>({other(0), other(1), other(2), w}) {};
 
-    constexpr vec4<T> operator+(const vec<T, 4>& other) const { return vec<T, 4>::operator+(other); }
-    constexpr vec4<T> operator-(const vec<T, 4>& other) const { return vec<T, 4>::operator-(other); }
-    constexpr vec4<T> operator-() const { return vec<T, 4>::operator-(); }
-    constexpr vec4<T> operator*(const T& other) const { return vec<T, 4>::operator*(other); }
-    constexpr T operator*(const vec<T, 4>& other) const { return vec<T, 4>::operator*(other); }
-    constexpr vec4<T> operator/(const T& other) const { return vec<T, 4>::operator/(other); }
-    constexpr vec4<T> normalize() const { return vec<T, 4>::normalize(); }
+    template <typename U>
+    constexpr vec4(const vec<U, 4>& other) : vec<T, 4>({
+        static_cast<T>(other(0)), static_cast<T>(other(1)), static_cast<T>(other(2)), static_cast<T>(other(3))}) {};
 
-    inline constexpr T& x() { return data[0]; };
-    inline constexpr T& y() { return data[1]; };
-    inline constexpr T& z() { return data[2]; };
-    inline constexpr T& w() { return data[3]; };
-    inline constexpr vec2<T> xy() const { return vec2<T>(data[0], data[1]); };
-    inline constexpr vec2<T> xz() const { return vec2<T>(data[0], data[2]); };
-    inline constexpr vec2<T> yz() const { return vec2<T>(data[1], data[2]); };
-    inline constexpr vec3<T> xyz() const { return vec3<T>(data[0], data[1], data[2]); };
+    FORCE_INLINE constexpr vec4<T> operator+(const vec<T, 4>& other) const { return vec<T, 4>::operator+(other); }
+    FORCE_INLINE constexpr vec4<T> operator-(const vec<T, 4>& other) const { return vec<T, 4>::operator-(other); }
+    FORCE_INLINE constexpr vec4<T> operator-() const { return vec<T, 4>::operator-(); }
+    FORCE_INLINE constexpr vec4<T> operator*(const T& other) const { return vec<T, 4>::operator*(other); }
+    FORCE_INLINE constexpr T operator*(const vec<T, 4>& other) const { return vec<T, 4>::operator*(other); }
+    FORCE_INLINE constexpr vec4<T> operator/(const vec<T, 4>& other) const { return vec<T, 4>::operator/(other); }
+    FORCE_INLINE constexpr vec4<T> operator/(const T& other) const { return vec<T, 4>::operator/(other); }
+    FORCE_INLINE constexpr vec4<T> normalize() const { return vec<T, 4>::normalize(); }
+
+    FORCE_INLINE constexpr T& x() { return data[0]; };
+    FORCE_INLINE constexpr T& y() { return data[1]; };
+    FORCE_INLINE constexpr T& z() { return data[2]; };
+    FORCE_INLINE constexpr T& w() { return data[3]; };
+    FORCE_INLINE constexpr vec2<T> xy() const { return vec2<T>(data[0], data[1]); };
+    FORCE_INLINE constexpr vec2<T> xz() const { return vec2<T>(data[0], data[2]); };
+    FORCE_INLINE constexpr vec2<T> yz() const { return vec2<T>(data[1], data[2]); };
+    FORCE_INLINE constexpr vec3<T> xyz() const { return vec3<T>(data[0], data[1], data[2]); };
 
     constexpr vec3<T> homogenize() const {
         if(data[3] == 0) return vec3<T>(0);

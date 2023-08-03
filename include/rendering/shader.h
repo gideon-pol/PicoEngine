@@ -16,7 +16,9 @@ struct TriangleShaderData {
 struct FragmentShaderData {
     // This is for now a face normal
     vec3f Normal;
+    vec3f FragCoord;
     vec2f UV;
+    vec2i16 ScreenSize;
     Color FragmentColor;
 };
 
@@ -25,6 +27,7 @@ enum ShaderType { WireFrame, Flat, Texture, Custom };
 class Shader {
 public:
     ShaderType Type;
+    // The triangle program runs for every triangle, regardless of visibility!
     void (*TriangleProgram)(TriangleShaderData& input, void* parameters);
     void (*FragmentProgram)(FragmentShaderData& input, void* parameters);
 
@@ -42,11 +45,11 @@ public:
     FlatShader(){
         // TODO: Test whether this is (significantly) slower than an engine implemented shader
         Type = ShaderType::Custom;
-        TriangleProgram = [](TriangleShaderData& i, void* p){
-            i.TriangleColor = ((Parameters*)p)->_Color;
-        };
-        // Type = ShaderType::Flat;
-        // TriangleProgram = nullptr;
+        // TriangleProgram = [](TriangleShaderData& i, void* p){
+        //     i.TriangleColor = ((Parameters*)p)->_Color;
+        // };
+        Type = ShaderType::Flat;
+        TriangleProgram = nullptr;
         FragmentProgram = nullptr;
     }
 
@@ -55,6 +58,7 @@ public:
     }
 };
 
+// TODO: this shader is probably so common that it should be engine implemented
 class LightingShader : public Shader {
 public:
     typedef struct {
@@ -65,20 +69,20 @@ public:
 
     LightingShader(){
         Type = ShaderType::Custom;
-        TriangleProgram = nullptr;
-
-        FragmentProgram = [](FragmentShaderData& input, void* parameters){
+        TriangleProgram = [](TriangleShaderData& data, void* parameters){
             Parameters* params = (Parameters*)parameters;
             vec3f lightDir = -params->LightPosition.normalize();
-            float diff = input.Normal.dot(lightDir);
-            Color diffuse = Color(
-                                static_cast<uint8_t>(params->LightColor.r * diff),
-                                static_cast<uint8_t>(params->LightColor.g * diff),
-                                static_cast<uint8_t>(params->LightColor.b * diff),
-                                255
-                            );
-            input.FragmentColor = diffuse;
+            vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
+            float diff = normal.dot(lightDir) * 0.5f + 0.5f;
+            data.TriangleColor = Color(
+                                    static_cast<uint8_t>(params->LightColor.r * diff),
+                                    static_cast<uint8_t>(params->LightColor.g * diff),
+                                    static_cast<uint8_t>(params->LightColor.b * diff),
+                                    255
+                                );
         };
+
+        FragmentProgram = nullptr;
     }
 
     void* CreateParameters(){
@@ -102,6 +106,24 @@ public:
 
     void* CreateParameters(){
         return new Parameters();
+    }
+};
+
+class RainbowTestShader : public Shader {
+public:
+    RainbowTestShader(){
+        Type = ShaderType::Custom;
+        TriangleProgram = nullptr;
+
+        FragmentProgram = [](FragmentShaderData& data, void* parameters){
+            vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
+            float h = uv(0) * 360;
+            data.FragmentColor = Color::FromHSV(h, 1, 1);
+        };
+    }
+
+    void* CreateParameters(){
+        return nullptr;
     }
 };
 
