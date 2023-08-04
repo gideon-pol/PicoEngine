@@ -13,6 +13,13 @@ add_executable(
 )
 
 target_include_directories(embed PUBLIC include)
+target_include_directories(embed PUBLIC lodepng)
+target_link_directories(embed PRIVATE lodepng)
+target_link_libraries(
+    embed
+    lodepng
+)
+
 
 function( add_resource input )
     string( MAKE_C_IDENTIFIER ${input} input_identifier )
@@ -30,6 +37,8 @@ endfunction()
 
 add_resource("cube.obj")
 add_resource("suzanne.obj")
+add_resource("test.png")
+add_resource("dirt.png")
 # add_resource("main.font")
 
 # include(pico-sdk/pico_sdk_init.cmake)
@@ -78,6 +87,7 @@ add_executable(native
 target_include_directories(native PUBLIC include)
 target_include_directories(native PUBLIC lodepng)
 target_link_directories(native PRIVATE lodepng)
+set_target_properties(native PROPERTIES COMPILE_FLAGS "-g" )
 
 target_link_libraries(
     native

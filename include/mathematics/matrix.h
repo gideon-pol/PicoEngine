@@ -45,6 +45,14 @@ struct mat {
         return data[i];
     };
 
+    constexpr vec<T, C> col(int i) const {
+        vec<T, C> result = vec<T, C>(0);
+        for (int j = 0; j < R; j++) {
+            result[j] = data[j](i);
+        }
+        return result;
+    };
+
     constexpr mat<T, C, R>& operator=(const mat<T, C, R>& other) {
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
@@ -108,45 +116,16 @@ struct mat {
 typedef mat<float, 2, 2> mat2;
 typedef mat<float, 3, 3> mat3;
 
-
 struct mat4f : public mat<float, 4, 4> {
     using mat<float, 4, 4>::mat;
     constexpr mat4f(const mat<float, 4, 4>& other) : mat<float, 4, 4>(other) {};
 
-    // TODO: figure out why this doesn't work by default
-    constexpr mat4f operator*(const mat4f& other) const {
-        mat4f result = mat4f(0);
-        mat4f trans = ~other;
+    FORCE_INLINE constexpr mat4f operator*(const mat4f& other) const { return mat<float, 4, 4>::operator*(other); };
+    FORCE_INLINE constexpr vec4f operator*(const vec4f& other) const { return mat<float, 4, 4>::operator*(other); };
+    FORCE_INLINE constexpr vec4f operator()(int i) const { return mat<float, 4, 4>::operator()(i); };
 
-        // printf("Current matrix:\n");
-        // for (int i = 0; i < 4; i++) {
-        //     printf("%f %f %f %f\n", data[i](0), data[i](1), data[i](2), data[i](3));
-        // }
-
-        // printf("Other matrix:\n");
-        // for (int i = 0; i < 4; i++) {
-        //     printf("%f %f %f %f\n", trans[i](0), trans[i](1), trans[i](2), trans[i](3));
-        // }
-
-        for (int i = 0; i < 4; i++) {
-            for(int j = 0; j < 4; j++){
-                result[j][i] = data[j] * trans[i];
-            }
-        }
-
-        // printf("Resulting matrix:\n");
-        // for (int i = 0; i < 4; i++) {
-        //     printf("%f %f %f %f\n", result[i](0), result[i](1), result[i](2), result[i](3));
-        // }
-        return result;
-    };
-
-    constexpr vec4f operator*(const vec4f& other) const {
-        vec4f result = vec4f(0);
-        for (int i = 0; i < 4; i++) {
-            result[i] = data[i] * other;
-        }
-        return result;
+    FORCE_INLINE constexpr vec4f col(int i) const {
+        return vec4f(data[0](i), data[1](i), data[2](i), data[3](i));
     };
 
     constexpr static mat4f translate(const vec<float, 3>& v) {
@@ -155,14 +134,6 @@ struct mat4f : public mat<float, 4, 4> {
         result[1][3] = v(1);
         result[2][3] = v(2);
         return result;
-    };
-
-    // constexpr vec4f& operator[](int i){
-    //     return data[i];
-    // };
-
-    FORCE_INLINE constexpr vec4f operator()(int i) const {
-        return data[i];
     };
 
     constexpr static mat4f scale(const vec<float, 3>& v) {

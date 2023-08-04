@@ -88,4 +88,12 @@ struct Color {
             (b + m) * 255,
             a * 255);
     }
+
+    FORCE_INLINE static constexpr Color Lerp(Color a, Color b, float t) {
+        return Color(
+            static_cast<uint8_t>(a.r + (b.r - a.r) * t),
+            static_cast<uint8_t>(a.g + (b.g - a.g) * t),
+            static_cast<uint8_t>(a.b + (b.b - a.b) * t),
+            static_cast<uint8_t>(a.a + (b.a - a.a) * t));
+    }
 } __attribute__((packed));

@@ -5,8 +5,10 @@
 #include <fstream>
 #include <cstring>
 #include <vector>
+#include <lodepng.h>
 #include "mathematics/vector.h"
 #include "rendering/mesh.h"
+#include "rendering/color.h"
 
 FILE* open_or_exit(const char* fname, const char* mode)
 {
@@ -17,7 +19,6 @@ FILE* open_or_exit(const char* fname, const char* mode)
     }
     return f;
 }
-
 
 void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
     std::vector<vec3f> vertices;
@@ -34,15 +35,15 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
             vec3f vertex;
             sscanf(line.c_str(), "v %f %f %f", &vertex.data[0], &vertex.data[1], &vertex.data[2]);
             vertices.push_back(vertex);
-        }else if(line[0] == 'v' && line[1] == 'n'){
+        } else if(line[0] == 'v' && line[1] == 'n'){
             vec3f normal;
             sscanf(line.c_str(), "vn %f %f %f", &normal.data[0], &normal.data[1], &normal.data[2]);
             normals.push_back(normal);
-        }else if(line[0] == 'v' && line[1] == 't'){
+        } else if(line[0] == 'v' && line[1] == 't'){
             vec2f uv;
             sscanf(line.c_str(), "vt %f %f", &uv.data[0], &uv.data[1]);
             uvs.push_back(uv);
-        }else if(line[0] == 'f'){
+        } else if(line[0] == 'f'){
             int vertexIndex[3], uvIndex[3], normalIndex[3];
             sscanf(line.c_str(), "f %d/%d/%d %d/%d/%d %d/%d/%d",
                 &vertexIndex[0], &uvIndex[0], &normalIndex[0],
@@ -84,8 +85,6 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
             << "vec2f(" << bundledVertices[i].UV.x() << ", " << bundledVertices[i].UV.y() << ")"
             << "}," << std::endl;
     }
-
-    // remove the last comma
     out.seekp(-2, std::ios_base::end);
     out << "};" << std::endl;
 
@@ -96,15 +95,33 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
     for(int i = 0; i < vertexIndices.size(); i++){
         out << i << ", ";
     }
-
-    // for(int i = 0; i < vertexIndices.size(); i++){
-    //     out << vertexIndices[i] - 1 << ", ";
-    // }
-
-    // remove the last comma
     out.seekp(-2, std::ios_base::end);
 
     out << "};" << std::endl;
+}
+
+
+void convertPNG(const char* path, std::ofstream& out, const char* sym){
+    std::vector<unsigned char> image;
+    unsigned width, height;
+
+    unsigned error = lodepng::decode(image, width, height, path);
+
+    if(error){
+        std::cout << "decoder error " << error << ": " << lodepng_error_text(error) << std::endl;
+        exit(1);
+    }
+
+    out << "#include \"rendering/texture.h\"\n#include \"rendering/color.h\"\n";
+    out << "Color16 " << sym << "[" << width * height << "] = {\n" << std::endl;
+
+    for(int i = 0; i < image.size(); i+=4){
+        Color color = Color(image[i], image[i+1], image[i+2], image[i+3]);
+        out << "0x" << std::hex << color.ToColor16() << ", ";
+    }
+    out.seekp(-2, std::ios_base::end);
+
+    out << "};\n" << "const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
 }
 
 void outputAsBytes(std::ifstream& in, std::ofstream& out, const char* sym){
@@ -151,19 +168,16 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // FILE* out = open_or_exit(symfile,"w");
-    // fprintf(out, "#include <stdlib.h>\n#include <stdint.h>\n");
-    // fprintf(out, "const uint8_t %s[] = {\n", sym);
-
     out << 
         "#include <stdlib.h>\n#include <stdint.h>\n" << std::endl;
 
-    // test if file format is .obj
     char* ext = strrchr(argv[3], '.');
 
     if (ext != NULL){
         if (strcmp(ext, ".obj") == 0){
             convertOBJ(in, out, sym);
+        } else if(strcmp(ext, ".png") == 0){
+            convertPNG(argv[3], out, sym);
         } else {
             outputAsBytes(in, out, sym);
         }

@@ -1,10 +1,11 @@
 #pragma once
+
 #include "common.h"
 #include "ECS.h"
 #include "mathematics.h"
+#include "rendering/texture.h"
 #include "rendering/mesh.h"
 #include "rendering/shader.h"
-
 
 class Camera {
     public:
@@ -43,7 +44,7 @@ class Camera {
     // Frustum intersection test that checks if any of the bounding volume's corners
     // are inside the frustrum. Very naive and stupid but SAT is expensive.
     // This function can break for large bounding volumes or if the bounding volume
-    // is close to the camera.
+    // is too close to the camera.
     bool IntersectsFrustrum(const BoundingVolume& volume, const mat4f& translationMat){
         vec3f corners[8];
         volume.GetCorners(&corners);
@@ -109,7 +110,7 @@ namespace Renderer{
     void Clear(Color color){
         for(int i = 0; i < Resolution.x() * Resolution.y(); i++){
             FrameBuffer[i] = color.ToColor16();
-            Zbuffer[i] = 1;
+            Zbuffer[i] = 2;
         }
     }
 
@@ -165,7 +166,7 @@ namespace Renderer{
         }
     }
 
-    void DrawLine(vec2i16 start, vec2i16 end, Color color){
+    void DrawLine(vec2i16 start, vec2i16 end, Color color, uint8_t lineWidth = 1){
         int16_t x0 = start.x();
         int16_t y0 = start.y();
         int16_t x1 = end.x();
@@ -180,7 +181,11 @@ namespace Renderer{
         int16_t err = dx - dy;
 
         while(true){
-            PutPixel(vec2i16(x0, y0), color);
+            for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
+                for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
+                    PutPixel(vec2i16(x, y), color);
+                }
+            }
 
             if(x0 == x1 && y0 == y1) break;
 
@@ -198,13 +203,25 @@ namespace Renderer{
         }
     }
 
-    void DrawLine(vec3f p1, vec3f p2, Color color){
+
+    void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1){
         mat4f rVP = rasterizationMat * MainCamera->GetProjectionMatrix() * MainCamera->GetViewMatrix();
 
         vec3f v1 = (rVP * vec4f(p1, 1)).homogenize();
         vec3f v2 = (rVP * vec4f(p2, 1)).homogenize();
 
-        DrawLine(vec2i16(v1.x(), v1.y()), vec2i16(v2.x(), v2.y()), color);
+        DrawLine(v1.xy(), v2.xy(), color, lineWidth);
+    }
+
+    void Blit(const Texture2D& tex, vec2i16 pos){
+        BoundingBox2D bbi = BoundingBox2D(vec2i16(pos), vec2i16(tex.Width, tex.Height))
+                            .Intersect(bounds);
+
+        for(int y = bbi.Min.y(); y < bbi.Max.y(); y++){
+            for(int x = bbi.Min.x(); x < bbi.Max.x(); x++){
+                FrameBuffer[y * Resolution.x() + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
+            }
+        }
     }
 
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
@@ -241,7 +258,7 @@ namespace Renderer{
             BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
             BoundingBox2D bbi = bounds.Intersect(bb);
 
-            if(bbi.IsEmpty()) return;
+            if(bbi.IsEmpty()) continue;
 
             if(material._Shader.Type == ShaderType::WireFrame){
                 Color color = ((WireFrameShader::Parameters*)material.Parameters)->_Color;
@@ -278,19 +295,24 @@ namespace Renderer{
 
                         switch(material._Shader.Type){
                             case ShaderType::Texture: {
-                                // TODO: implement textures
-                                fragmentColor = Color::Purple;
+                                TextureShader::Parameters* params = (TextureShader::Parameters*)material.Parameters;
+                                Texture2D* tex = params->_Texture;
+                                vec2f uv = (t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z());
+                                uv = vec2f(uv.x() * params->TextureScale.x(), uv.y() * params->TextureScale.y());
+                                fragmentColor = tex->Sample(uv).ToColor16();
                                 break;
                             }
                             case ShaderType::Custom: {
                                 if(material._Shader.FragmentProgram){
-                                    vec3f normal = (t.v2.Position - t.v1.Position).cross(t.v3.Position - t.v1.Position).normalize();
+                                    vec3f normal = t.v1.Normal * uvw.x() + t.v2.Normal * uvw.y() + t.v3.Normal * uvw.z();
+                                    normal = (modelMat * vec4f(normal, 0)).xyz().normalize();
                                     vec3f fragCoord = vec3f(x, y, z);
+                                    vec2f uv = t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z();
 
                                     FragmentShaderData data = {
                                         normal,
                                         fragCoord,
-                                        uvw.xy(),
+                                        uv,
                                         Resolution,
                                         fragmentColor
                                     };

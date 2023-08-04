@@ -61,28 +61,46 @@ public:
 // TODO: this shader is probably so common that it should be engine implemented
 class LightingShader : public Shader {
 public:
+    enum ShadingType { Flat, Smooth };
+
     typedef struct {
-        vec3f LightPosition;
+        vec3f LightDirection;
         Color LightColor;
         Color AmbientColor;
+        mat4f* ModelMatrix;
     } Parameters;
 
-    LightingShader(){
+    LightingShader(ShadingType type){
         Type = ShaderType::Custom;
-        TriangleProgram = [](TriangleShaderData& data, void* parameters){
-            Parameters* params = (Parameters*)parameters;
-            vec3f lightDir = -params->LightPosition.normalize();
-            vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
-            float diff = normal.dot(lightDir) * 0.5f + 0.5f;
-            data.TriangleColor = Color(
-                                    static_cast<uint8_t>(params->LightColor.r * diff),
-                                    static_cast<uint8_t>(params->LightColor.g * diff),
-                                    static_cast<uint8_t>(params->LightColor.b * diff),
-                                    255
-                                );
-        };
+        TriangleProgram = nullptr;
 
-        FragmentProgram = nullptr;
+        if(type == ShadingType::Flat){
+            FragmentProgram = nullptr;
+            TriangleProgram = [](TriangleShaderData& data, void* parameters){
+                Parameters* params = (Parameters*)parameters;
+                vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
+                normal = (*params->ModelMatrix * vec4f(normal, 0)).xyz().normalize();
+                float diff = normal.dot(-params->LightDirection) * 0.5f + 0.5f;
+                data.TriangleColor = Color(
+                                        static_cast<uint8_t>(params->LightColor.r * diff),
+                                        static_cast<uint8_t>(params->LightColor.g * diff),
+                                        static_cast<uint8_t>(params->LightColor.b * diff),
+                                        255
+                                    );
+            };
+        } else if(type == ShadingType::Smooth){
+            TriangleProgram = nullptr;
+            FragmentProgram = [](FragmentShaderData& data, void* parameters){
+                Parameters* params = (Parameters*)parameters;
+                float diff = data.Normal.dot(-params->LightDirection) * 0.5f + 0.5f;
+                data.FragmentColor = Color(
+                                        static_cast<uint8_t>(params->LightColor.r * diff),
+                                        static_cast<uint8_t>(params->LightColor.g * diff),
+                                        static_cast<uint8_t>(params->LightColor.b * diff),
+                                        255
+                                    );
+            };
+        } 
     }
 
     void* CreateParameters(){
@@ -126,6 +144,30 @@ public:
         return nullptr;
     }
 };
+
+class TextureShader : public Shader {
+public:
+    struct Parameters {
+        Texture2D* _Texture;
+        vec2f TextureScale;
+    };
+
+    TextureShader(){
+        Type = ShaderType::Texture;
+        TriangleProgram = nullptr;
+        // Engine implemented version is 20% to 30% faster 
+        FragmentProgram = nullptr;
+        // FragmentProgram = [](FragmentShaderData& data, void* parameters){
+        //     Parameters* params = (Parameters*)parameters;
+        //     data.FragmentColor = params->_Texture->Sample(data.UV);
+        // };
+    }
+
+    void* CreateParameters(){
+        return new Parameters();
+    }
+};
+
 
 struct Material {
     Shader& _Shader;
