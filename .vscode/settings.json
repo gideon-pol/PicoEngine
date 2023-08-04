@@ -57,6 +57,14 @@
         "xfacet": "cpp",
         "xiosbase": "cpp",
         "xlocinfo": "cpp",
-        "xlocnum": "cpp"
+        "xlocnum": "cpp",
+        "cstdarg": "cpp",
+        "ctime": "cpp",
+        "fstream": "cpp",
+        "iomanip": "cpp",
+        "iostream": "cpp",
+        "set": "cpp",
+        "xlocmon": "cpp",
+        "xloctime": "cpp"
     }
 }

@@ -4,6 +4,11 @@
 #include <math.h>
 #include "common.h"
 
+// Currently, the entire render pipeline may deal with 32-bit colors.
+// The framebuffers however hold 16-bit colors to conserve space.
+// In terms of computational speed, there is little difference. Memory requirements may vary though.
+
+
 typedef uint16_t Color16;
 
 struct Color {

@@ -9,6 +9,8 @@ typedef struct {
     vec3f Normal;
     vec2f UV;
 } Vertex;
+
+
 class Mesh {
     public:
         Vertex* Vertices;

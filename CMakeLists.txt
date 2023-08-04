@@ -5,11 +5,18 @@ set(RSRC_BUILD_DIR ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/res)
 
 set( RESOURCES "" )
 
-add_executable(embed embed.cpp)
+
+add_executable(
+    embed 
+    embed.cpp
+    ${SOURCES}
+)
+
+target_include_directories(embed PUBLIC include)
 
 function( add_resource input )
     string( MAKE_C_IDENTIFIER ${input} input_identifier )
-    set( output "res/${input_identifier}.c" )
+    set( output "res/${input_identifier}.cpp" )
     add_custom_command(
         OUTPUT ${output}
         # TODO: generate using CMake rather than Linux shell
@@ -21,8 +28,9 @@ function( add_resource input )
     set( RESOURCES ${RESOURCES} ${output} PARENT_SCOPE )
 endfunction()
 
-add_resource("main.font")
-
+add_resource("cube.obj")
+add_resource("suzanne.obj")
+# add_resource("main.font")
 
 # include(pico-sdk/pico_sdk_init.cmake)
 
@@ -31,7 +39,7 @@ add_resource("main.font")
 # pico_sdk_init()
 
 # include_directories(include)
-# file(GLOB SOURCES src/*.cpp)
+# file(GLOB_RECURSE SOURCES src/*.cpp)
 # add_subdirectory(lib)
 
 # add_executable(pico-build
@@ -75,3 +83,7 @@ target_link_libraries(
     native
     lodepng
 )
+
+
+
+

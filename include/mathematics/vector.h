@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
+#include <math.h>
 #include "common.h"
 
 #pragma pack(push, 1)

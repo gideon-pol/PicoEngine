@@ -1,7 +1,13 @@
 #pragma once
 
-#include <lodepng.h>
+#include "rendering/renderer.h"
 #include "rendering/shader.h"
+
+extern Vertex cube_obj_vertices[36];
+extern uint32_t cube_obj_indices[36];
+
+extern Vertex suzanne_obj_vertices[2904];
+extern uint32_t suzanne_obj_indices[2904];
 
 void drawCubeTest(){
     Vertex cubeVerts[] = {
@@ -53,6 +59,9 @@ void drawCubeTest(){
 
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
 
+    Mesh objtest = Mesh((Vertex*)&cube_obj_vertices, sizeof(cube_obj_vertices)/sizeof(Vertex), (uint32_t*)&cube_obj_indices, sizeof(cube_obj_indices)/sizeof(uint32_t)/3);
+    Mesh suzanneTest = Mesh((Vertex*)&suzanne_obj_vertices, sizeof(suzanne_obj_vertices)/sizeof(Vertex), (uint32_t*)&suzanne_obj_indices, sizeof(suzanne_obj_indices)/sizeof(uint32_t)/3);
+
     Camera* main = Renderer::MainCamera;
 
     LightingShader s = LightingShader();
@@ -72,21 +81,20 @@ void drawCubeTest(){
 
     Material mat4 = Material(r);
 
-    mat4f rot = getRotationalMatrix(vec3f(-20, 20, 0));
-    mat4f trans = mat4f::translate(vec3f(-1, 0, 10));
-    mat4f trans2 = mat4f::translate(vec3f(5, 0, 20));
+    mat4f rot = getRotationalMatrix(vec3f(-20, 180, 0));
+    mat4f trans = mat4f::translate(vec3f(-1, 0, 4));
+    mat4f trans2 = mat4f::translate(vec3f(1, 0, 8));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
 
     mat4f M = trans * rot * scale;
     mat4f M2 = trans2 * rot * scale;
 
-    for(int i = 0; i < 10000; i++){
+    // for(int i = 0; i < 5000; i++){
         Renderer::Clear(Color::Red);
-        Renderer::DrawMesh(pyramid, M, mat4);
-        Renderer::DrawMesh(cube, M2, mat4);
-    }
+        // Renderer::DrawMesh(pyramid, M, mat4);
+        Renderer::DrawMesh(suzanneTest, M2, mat);
+    // }
     
-
     BoundingVolume vol1 = cube.Volume;
     BoundingVolume vol2 = pyramid.Volume;
     // Renderer::Debug::DrawVolume(vol2, M, Color::Black);

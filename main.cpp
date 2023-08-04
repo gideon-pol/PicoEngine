@@ -5,6 +5,7 @@
 #include "mathematics/matrix.h"
 #include "mathematics/vector.h"
 #include "tests/maths_tests.h"
+#include "tests/rendering_tests.h"
 
 #define DEBUG_TEST
 
@@ -22,9 +23,15 @@ int main() {
 
 #ifdef DEBUG_TEST
     sleep_ms(5000);
-    printf("Running math unit tests\n");
-    maths_test();
+    // printf("Running math unit tests\n");
+    // maths_test();
 
+    printf("Running rendering unit tests\n");
+    absolute_time_t time = get_absolute_time();
+    drawCubeTest();
+
+    uint32_t diff = to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(time);
+    printf("Drawing took: %u ms\n", diff);
 
 #endif
     vec3f v1 = vec3f::up;
@@ -32,19 +39,6 @@ int main() {
     while (true) {
         absolute_time_t time = get_absolute_time();
         gpio_put(25, 1);
-
-        mat4f m4 = mat4f::rotate(90.0/180*PI, vec3f::up);
-
-        printf("Rotational matrix had %d rows and %d columns\n", m4.rows(), m4.columns());
-        for (int i = 0; i < m4.rows(); i++) {
-            for(int j = 0; j < m4.columns(); j++){
-                printf("%f ", m4[i][j]);
-            }
-            printf("\n");
-        }
-
-        // printf("Vec: %f %f %f %f length: %f\n", v5.x, v5.y, v5.z, v5.w, v5.magnitude());
-
 
         sleep_ms(1000);
 

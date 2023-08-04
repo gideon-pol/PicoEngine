@@ -213,13 +213,11 @@ namespace Renderer{
                      MainCamera->GetProjectionMatrix() *
                      MainCamera->GetViewMatrix() * 
                      modelMat;
-                     
 
         if(!MainCamera->IntersectsFrustrum(mesh.Volume, modelMat)){
-            printf("Mesh is offscreen\n");
             return;
         }
-
+        
         for(int i = 0; i < mesh.PolygonCount; i++){
             uint32_t idx = i * 3;
 
@@ -260,7 +258,6 @@ namespace Renderer{
             vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
             if(windingOrder.z() > 0) continue;
-
 
             float area = edgeFunction(pv1, pv2, pv3);
             for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){

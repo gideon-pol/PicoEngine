@@ -5,7 +5,6 @@
 
 extern "C" const uint16_t main_font[];
 
-// struct for psf2 header
 struct psf2_header {
     uint32_t magic;
     uint32_t version;

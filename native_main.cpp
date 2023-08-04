@@ -7,15 +7,17 @@
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
 
+#define TARGET_NATIVE
+
 extern "C" const uint16_t main_font[];
 
 int main(int argc, char** argv){
     printf("Running rendering unit tests\n");
     
-    Renderer::Init(vec2i16(240), 45, 0.1, 100);
+    Renderer::Init(vec2i16(1000), 45, 0.1, 100);
 
     struct timespec start, now;
-    clock_gettime(CLOCK_REALTIME, &start); 
+    clock_gettime(CLOCK_REALTIME, &start);
 
     drawCubeTest();
 
