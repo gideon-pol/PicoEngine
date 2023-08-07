@@ -115,14 +115,14 @@ void drawCubeTest(){
     ((TextureShader::Parameters*)mat5.Parameters)->_Texture = &dirt;
     ((TextureShader::Parameters*)mat5.Parameters)->TextureScale = vec2f(3);
 
-    // for(int i = 0; i < 1000; i++){
+    for(int i = 0; i < 1; i++){
         Renderer::Clear(Color::Red);
         Renderer::DrawMesh(pyramid, M, mat);
         Renderer::DrawMesh(pyramid, M, mat3);
         Renderer::DrawMesh(suzanne, M2, mat5);
         Renderer::DrawMesh(suzanne, M2, mat3);
         // Renderer::Blit(tex, vec2i16(0));
-    // }
+    }
     
     vec3f forward = M2.col(2).xyz();
     vec3f up = M2.col(1).xyz();

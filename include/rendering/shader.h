@@ -2,6 +2,7 @@
 
 #include "rendering/color.h"
 #include "rendering/mesh.h"
+#include "rendering/texture.h"
 
 struct TriangleShaderData {
     Vertex v1;

@@ -65,6 +65,7 @@
         "iostream": "cpp",
         "set": "cpp",
         "xlocmon": "cpp",
-        "xloctime": "cpp"
+        "xloctime": "cpp",
+        "bit": "cpp"
     }
 }
