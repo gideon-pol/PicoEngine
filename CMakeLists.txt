@@ -13,23 +13,23 @@ if(TARGET_NATIVE)
     add_executable(build
         native_main.cpp
         ${SOURCES}
-        # ${RESOURCES}
     )
 
-    find_package(SDL2 REQUIRED)
+    # find_package(SDL2 REQUIRED)
 
     target_include_directories(build PUBLIC include)
     target_include_directories(build PUBLIC lodepng)
-    target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
+    # target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
     target_link_directories(build PRIVATE lodepng)
-    target_link_directories(build PRIVATE resources)
+    # target_link_directories(build PRIVATE resources)
     set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2" )
+    target_compile_options(build PRIVATE -DPLATFORM_NATIVE=1)
 
     target_link_libraries(
         build
         lodepng
-        resources
-        ${SDL2_LIBRARIES}
+        # resources
+        # ${SDL2_LIBRARIES}
     )
 else()
     include(pico-sdk/pico_sdk_init.cmake)
@@ -49,17 +49,26 @@ else()
         # ${RESOURCES}
     )
 
-    target_link_directories(build PRIVATE resources)
+    # target_link_directories(build PRIVATE resources)
 
-    target_link_libraries(
-        build
+    target_link_libraries(build
         pico_stdlib
         pico_multicore
-        resources
+        hardware_gpio
+        hardware_pio
+        hardware_pwm
+        hardware_spi
+        hardware_dma
+        
+        # resources
+    )
+
+    pico_generate_pio_header(build 
+        ${CMAKE_CURRENT_LIST_DIR}/src/hardware/screen_double.pio
     )
 
     pico_add_extra_outputs(build)
-    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1)
+    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1 -DPLATFORM_PICO=1)
 
     if (TARGET tinyusb_device)
         pico_enable_stdio_usb(build 1)

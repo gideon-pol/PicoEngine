@@ -85,38 +85,34 @@ class Camera {
 
 namespace Renderer{
     Camera* MainCamera;
-    Color16* FrameBuffer;
-    float* Zbuffer;
-    vec2i16 Resolution;
+    Color16 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+    uint16_t Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 
     namespace {
         BoundingBox2D bounds = BoundingBox2D(vec2f(0), vec2f(0));
         mat4f rasterizationMat;
     }
 
-    void Init(vec2i16 resolution, float fov, float near, float far){
-        MainCamera = new Camera(fov, near, far, (float)resolution.x() / resolution.y());
-        FrameBuffer = new Color16[resolution.x() * resolution.y()];
-        Zbuffer = new float[resolution.x() * resolution.y()];
-        Resolution = resolution;
-        bounds = BoundingBox2D(vec2f(0, 0), vec2f(resolution.x(), resolution.y()));
-        // FrameBuffer = new Frame(pixels, resolution);
+    void Init(float fov, float near, float far){
+        MainCamera = new Camera(fov, near, far, (float)FRAME_WIDTH / FRAME_HEIGHT);
+        bounds = BoundingBox2D(vec2f(0, 0), vec2f(FRAME_WIDTH, FRAME_HEIGHT));
         rasterizationMat = 
-            mat4f::scale(vec3f(resolution.x(), resolution.y(), 1)) *
+            mat4f::scale(vec3f(FRAME_WIDTH, FRAME_HEIGHT, 1)) *
             mat4f::translate(vec3f(0.5, 0.5, 0)) *
             mat4f::scale(vec3f(0.5, 0.5, 1));
     }
 
     void Clear(Color color){
-        for(int i = 0; i < Resolution.x() * Resolution.y(); i++){
+        for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
             FrameBuffer[i] = color.ToColor16();
-            Zbuffer[i] = 2;
+            // Zbuffer[i] = 1;
+            Zbuffer[i] = 65535;
         }
     }
 
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
-        if(pos.x() >= 0 && pos.x() < Resolution.x() && pos.y() >= 0 && pos.y() < Resolution.y()){
-            FrameBuffer[pos.y() * Resolution.x() + pos.x()] = color.ToColor16();
+        if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
+            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor16();
         }
     }
 
@@ -125,7 +121,7 @@ namespace Renderer{
 
         for(int y = bbi.Min.y(); y < static_cast<int>(bbi.Max.y()); y++){
             for(int x = bbi.Min.x(); x < static_cast<int>(bbi.Max.x()); x++){
-                FrameBuffer[y * Resolution.x() + x] = color.ToColor16();
+                FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
             }
         }
     }
@@ -140,26 +136,26 @@ namespace Renderer{
 
         for(int y = startY; y < startY + width; y++){
             for(int x = startX; x < endX; x++){
-                // FrameBuffer[y * Resolution.x() + x] = color;
+                // FrameBuffer[y * FRAME_WIDTH + x] = color;
                 PutPixel(vec2i16(x, y), color);
             }
         }
 
         for(int y = startY + width; y < endY - width; y++){
             for(int x = startX; x < startX + width; x++){
-                // FrameBuffer[y * Resolution.x() + x] = color;
+                // FrameBuffer[y * FRAME_WIDTH + x] = color;
                 PutPixel(vec2i16(x, y), color);
             }
 
             for(int x = endX - width; x < endX; x++){
-                // FrameBuffer[y * Resolution.x() + x] = color;
+                // FrameBuffer[y * FRAME_WIDTH + x] = color;
                 PutPixel(vec2i16(x, y), color);
             }
         }
 
         for(int y = endY - width; y < endY; y++){
             for(int x = startX; x < endX; x++){
-                // FrameBuffer[y * Resolution.x() + x] = color;
+                // FrameBuffer[y * FRAME_WIDTH + x] = color;
                 PutPixel(vec2i16(x, y), color);
 
             }
@@ -219,7 +215,7 @@ namespace Renderer{
 
         for(int y = bbi.Min.y(); y < bbi.Max.y(); y++){
             for(int x = bbi.Min.x(); x < bbi.Max.x(); x++){
-                FrameBuffer[y * Resolution.x() + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
+                FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
             }
         }
     }
@@ -287,9 +283,12 @@ namespace Renderer{
                     if(w0 >= 0 && w1 >= 0 && w2 >= 0){
                         vec3f uvw = vec3f(w0, w1, w2) / area;
                         float z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
-                        
-                        if(z >= Zbuffer[y * Resolution.x() + x]) continue;
-                        Zbuffer[y * Resolution.x() + x] = z;
+                        if(z > 1.0f || z < 0.0f) continue;
+
+                        uint16_t z16 = static_cast<uint16_t>(z * 65535.0f);
+
+                        if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                        Zbuffer[y * FRAME_WIDTH + x] = z16;
 
                         Color fragmentColor = t.TriangleColor;
 
@@ -313,7 +312,7 @@ namespace Renderer{
                                         normal,
                                         fragCoord,
                                         uv,
-                                        Resolution,
+                                        vec2f(FRAME_WIDTH, FRAME_HEIGHT),
                                         fragmentColor
                                     };
 
@@ -326,7 +325,7 @@ namespace Renderer{
                                 break;
                         }
 
-                        FrameBuffer[y * Resolution.x() + x] = fragmentColor.ToColor16();
+                        FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor16();
                     }
                 }
             }

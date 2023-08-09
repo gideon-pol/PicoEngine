@@ -21,7 +21,7 @@ struct Color {
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {};
 
     FORCE_INLINE constexpr Color16 ToColor16() const {
-        return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | (a >> 4);
+        return (r & 0xf) | ((a & 0xf) << 4) | ((b & 0xf) << 8) | ((g & 0xf) << 12);
     }
 
     FORCE_INLINE constexpr Color(Color16 c) : r((c >> 12) << 4), g((c >> 8) << 4), b((c >> 4) << 4), a((c >> 0) << 4) {};
