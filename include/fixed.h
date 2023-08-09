@@ -4,10 +4,8 @@
 
 #include "common.h"
 
-#define FIXED_32_SHIFT 10
-#define FIXED_32_FRAC_MASK 0x3FF
-
-
+#define FIXED_32_SHIFT 16
+#define FIXED_32_FRAC_MASK ((1 << FIXED_32_SHIFT) - 1)
 
 struct fixed {
     int32_t value;
@@ -187,15 +185,32 @@ FORCE_INLINE constexpr fixed max(fixed a, fixed b) {
     return a > b ? a : b;
 }
 
-FORCE_INLINE constexpr fixed sqrt(fixed f) {
-    int32_t x = 1 << FIXED_32_SHIFT;
-    int64_t n_one = f.value << FIXED_32_SHIFT;
+// FORCE_INLINE constexpr fixed sqrt(fixed f) {
+//     if(f == 0fp) return 0fp;
+//     // if(f == 1fp) return 1fp;
 
-    while(true){
-        int32_t old = x;
-        x = (x + n_one / x) >> 1;
-        if(x == old) return fixed(old, 0);
+//     int32_t x = 1 << FIXED_32_SHIFT;
+//     int64_t n_one = f.value << FIXED_32_SHIFT;
+
+//     while(true){
+//         int32_t old = x;
+//         x = (x + n_one / x) >> 1;
+//         printf("%d\n", abs(old - x));
+//         if(abs(old - x) <= 1) return fixed(old, 0);
+//     }
+// }
+
+FORCE_INLINE constexpr fixed sqrt(fixed f) {
+    if(f == 0fp) return 0fp;
+    fixed x = f;
+    fixed x2 = x * x;
+    fixed dx = (x2 - f) / (x * 2);
+    while(abs(dx) > 0.01fp) {
+        x -= dx;
+        x2 = x * x;
+        dx = (x2 - f) / (x * 2);
     }
+    return x;
 }
 
 FORCE_INLINE constexpr fixed mod(fixed a, fixed b) {

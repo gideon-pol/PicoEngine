@@ -131,7 +131,9 @@ struct vec {
     constexpr vec<T, C> normalize() const {
         vec<T, C> result = vec<T, C>(0);
         T mag = magnitude();
-        printf("Magnitude: %f\n", (float)mag);
+
+        if(mag == SCAST<T>(0)) return vec<T, C>(0);
+
         for (int i = 0; i < C; i++) {
             result[i] = data[i] * (1fp / mag);
         }

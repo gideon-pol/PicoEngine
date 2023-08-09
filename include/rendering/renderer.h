@@ -105,7 +105,6 @@ namespace Renderer{
     void Clear(Color color){
         for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
             FrameBuffer[i] = color.ToColor16();
-            // Zbuffer[i] = 1;
             Zbuffer[i] = 65535;
         }
     }
@@ -245,6 +244,8 @@ namespace Renderer{
             } else if(material._Shader.TriangleProgram){
                 material._Shader.TriangleProgram(t, material.Parameters);
             }
+
+
 
             vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
             vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();

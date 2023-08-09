@@ -67,7 +67,6 @@ int main(int argc, char** argv){
 
     drawCubeTest();
 
-
     fixed t = 1.5fp;
     fixed d = 0.5fp;
     fixed e = sqrt(t);
@@ -77,6 +76,7 @@ int main(int argc, char** argv){
     fixed i = mod(3.5fp, 1.2fp);
     fixed j = floor(3.5fp);
     fixed k = ceil(3.5fp);
+    fixed l = sqrt(0fp);
     std::cout << (t / d) << "\n";
     std::cout << d << "\n";
     std::cout << e << "\n";
@@ -86,6 +86,7 @@ int main(int argc, char** argv){
     std::cout << i << "\n";
     std::cout << j << "\n";
     std::cout << k << "\n";
+    std::cout << l << "\n";
 
     mat4f m = mat4f::translate(vec3f(1, 2, 3));
     mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
