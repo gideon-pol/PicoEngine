@@ -9,7 +9,7 @@
 
 class Camera {
     public:
-        Camera(float fov, float near, float far, float aspect=1){
+        Camera(fixed fov, fixed near, fixed far, fixed aspect=1){
             this->fov = fov;
             this->near = near;
             this->far = far;
@@ -70,9 +70,9 @@ class Camera {
                     mat4f::rotate(rotation.z(), vec3f::up);
         }
 
-        float fov;
-        float near;
-        float far;
+        fixed fov;
+        fixed near;
+        fixed far;
 
         vec3f position;
         vec3f rotation;
@@ -93,8 +93,8 @@ namespace Renderer{
         mat4f rasterizationMat;
     }
 
-    void Init(float fov, float near, float far){
-        MainCamera = new Camera(fov, near, far, (float)FRAME_WIDTH / FRAME_HEIGHT);
+    void Init(fixed fov, fixed near, fixed far){
+        MainCamera = new Camera(fov, near, far, (fixed)FRAME_WIDTH / FRAME_HEIGHT);
         bounds = BoundingBox2D(vec2f(0, 0), vec2f(FRAME_WIDTH, FRAME_HEIGHT));
         rasterizationMat = 
             mat4f::scale(vec3f(FRAME_WIDTH, FRAME_HEIGHT, 1)) *
@@ -119,8 +119,8 @@ namespace Renderer{
     void DrawBox(BoundingBox2D box, Color color){
         BoundingBox2D bbi = bounds.Intersect(box);
 
-        for(int y = bbi.Min.y(); y < static_cast<int>(bbi.Max.y()); y++){
-            for(int x = bbi.Min.x(); x < static_cast<int>(bbi.Max.x()); x++){
+        for(int y = SCAST<int>(bbi.Min.y()); y < SCAST<int>(bbi.Max.y()); y++){
+            for(int x = SCAST<int>(bbi.Min.x()); x < SCAST<int>(bbi.Max.x()); x++){
                 FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
             }
         }
@@ -129,10 +129,10 @@ namespace Renderer{
     void DrawBorder(BoundingBox2D box, uint8_t width, Color color){
         BoundingBox2D bbi = box;// bounds.Intersect(box);
 
-        int16_t startX = static_cast<int16_t>(bbi.Min.x());
-        int16_t startY = static_cast<int16_t>(bbi.Min.y());
-        int16_t endX = std::ceil(bbi.Max.x());
-        int16_t endY = std::ceil(bbi.Max.y());
+        int16_t startX = SCAST<int16_t>(bbi.Min.x());
+        int16_t startY = SCAST<int16_t>(bbi.Min.y());
+        int16_t endX = SCAST<int16_t>(ceil(bbi.Max.x()));
+        int16_t endY = SCAST<int16_t>(ceil(bbi.Max.y()));
 
         for(int y = startY; y < startY + width; y++){
             for(int x = startX; x < endX; x++){
@@ -199,7 +199,6 @@ namespace Renderer{
         }
     }
 
-
     void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1){
         mat4f rVP = rasterizationMat * MainCamera->GetProjectionMatrix() * MainCamera->GetViewMatrix();
 
@@ -213,8 +212,8 @@ namespace Renderer{
         BoundingBox2D bbi = BoundingBox2D(vec2i16(pos), vec2i16(tex.Width, tex.Height))
                             .Intersect(bounds);
 
-        for(int y = bbi.Min.y(); y < bbi.Max.y(); y++){
-            for(int x = bbi.Min.x(); x < bbi.Max.x(); x++){
+        for(int y = SCAST<int16_t>(bbi.Min.y()); y < SCAST<int16_t>(bbi.Max.y()); y++){
+            for(int x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){
                 FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
             }
         }
@@ -258,9 +257,9 @@ namespace Renderer{
 
             if(material._Shader.Type == ShaderType::WireFrame){
                 Color color = ((WireFrameShader::Parameters*)material.Parameters)->_Color;
-                vec2i16 p1 = vec2i16(pv1.x(), pv1.y());
-                vec2i16 p2 = vec2i16(pv2.x(), pv2.y());
-                vec2i16 p3 = vec2i16(pv3.x(), pv3.y());
+                vec2i16 p1 = vec2i16(SCAST<int16_t>(pv1.x()), SCAST<int16_t>(pv1.y()));
+                vec2i16 p2 = vec2i16(SCAST<int16_t>(pv2.x()), SCAST<int16_t>(pv2.y()));
+                vec2i16 p3 = vec2i16(SCAST<int16_t>(pv3.x()), SCAST<int16_t>(pv3.y()));
 
                 DrawLine(p1, p2, color);
                 DrawLine(p2, p3, color);
@@ -272,20 +271,20 @@ namespace Renderer{
 
             if(windingOrder.z() > 0) continue;
 
-            float area = edgeFunction(pv1, pv2, pv3);
-            for(int16_t x = bbi.Min.x(); x < bbi.Max.x(); x++){
-                for(int16_t y = bbi.Min.y(); y < bbi.Max.y(); y++){
+            fixed area = edgeFunction(pv1, pv2, pv3);
+            for(int16_t x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){
+                for(int16_t y = SCAST<int16_t>(bbi.Min.y()); y < SCAST<int16_t>(bbi.Max.y()); y++){
                     vec3f p = vec3f(x, y, 0);
-                    float w0 = edgeFunction(pv2, pv3, p);
-                    float w1 = edgeFunction(pv3, pv1, p);
-                    float w2 = edgeFunction(pv1, pv2, p);
+                    fixed w0 = edgeFunction(pv2, pv3, p);
+                    fixed w1 = edgeFunction(pv3, pv1, p);
+                    fixed w2 = edgeFunction(pv1, pv2, p);
 
                     if(w0 >= 0 && w1 >= 0 && w2 >= 0){
                         vec3f uvw = vec3f(w0, w1, w2) / area;
-                        float z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
+                        fixed z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
                         if(z > 1.0f || z < 0.0f) continue;
 
-                        uint16_t z16 = static_cast<uint16_t>(z * 65535.0f);
+                        uint16_t z16 = SCAST<uint16_t>(z * 65535.0f);
 
                         if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
                         Zbuffer[y * FRAME_WIDTH + x] = z16;

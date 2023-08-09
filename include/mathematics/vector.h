@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <math.h>
 #include "common.h"
+#include "fixed.h"
 
 #pragma pack(push, 1)
 template<typename T, int C>
@@ -123,14 +124,16 @@ struct vec {
         for (int i = 0; i < C; i++) {
             result += data[i] * data[i];
         }
+        
         return sqrt(result);
     };
 
     constexpr vec<T, C> normalize() const {
-        vec<T, C> result  = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>(0);
         T mag = magnitude();
+        printf("Magnitude: %f\n", (float)mag);
         for (int i = 0; i < C; i++) {
-            result[i] = data[i] * (1/ mag);
+            result[i] = data[i] * (1fp / mag);
         }
         return result;
     };
@@ -153,7 +156,7 @@ struct vec2 : public vec<T, 2> {
 
     template<typename U>
     constexpr vec2(const vec<U, 2>& other) : vec<T, 2>({
-        static_cast<T>(other(0)), static_cast<T>(other(1))}) {};
+        SCAST<T>(other(0)), SCAST<T>(other(1))}) {};
 
     FORCE_INLINE constexpr vec2<T> operator+(const vec<T, 2>& other) const { return vec<T, 2>::operator+(other); }
     FORCE_INLINE constexpr vec2<T> operator-(const vec<T, 2>& other) const { return vec<T, 2>::operator-(other); }
@@ -178,7 +181,7 @@ struct vec3 : public vec<T, 3> {
     
     template <typename U>
     constexpr vec3(const vec<U, 3>& other) : vec<T, 3>({
-        static_cast<T>(other(0)), static_cast<T>(other(1)), static_cast<T>(other(2))}) {};
+        SCAST<T>(other(0)), SCAST<T>(other(1)), SCAST<T>(other(2))}) {};
 
     constexpr vec3 cross(const vec3<T>& other) const {
         vec3<T> result = vec3<T>(0);
@@ -215,7 +218,7 @@ struct vec4 : public vec<T, 4> {
 
     template <typename U>
     constexpr vec4(const vec<U, 4>& other) : vec<T, 4>({
-        static_cast<T>(other(0)), static_cast<T>(other(1)), static_cast<T>(other(2)), static_cast<T>(other(3))}) {};
+        SCAST<T>(other(0)), SCAST<T>(other(1)), SCAST<T>(other(2)), SCAST<T>(other(3))}) {};
 
     FORCE_INLINE constexpr vec4<T> operator+(const vec<T, 4>& other) const { return vec<T, 4>::operator+(other); }
     FORCE_INLINE constexpr vec4<T> operator-(const vec<T, 4>& other) const { return vec<T, 4>::operator-(other); }
@@ -242,7 +245,7 @@ struct vec4 : public vec<T, 4> {
 };
 
 typedef vec2<int16_t> vec2i16;
-typedef vec2<float> vec2f;
+typedef vec2<fixed> vec2f;
 
 // struct vec2i16 : public vec2<int16_t> {
 //     using vec2<int16_t>::vec;
@@ -254,28 +257,28 @@ typedef vec2<float> vec2f;
 //         return *this;
 //     };
 
-//     // constexpr vec2i16(const vec2<float>& other){
+//     // constexpr vec2i16(const vec2<fixed>& other){
 //     //     data[0] = std::round(other(0));
 //     //     data[1] = std::round(other(1));
 //     // };
 // };
 
-// struct vec2f : public vec2<float> {
-//     using vec2<float>::vec2;
-//     constexpr vec2f(float x, float y) : vec2<float>(x, y) {};
-//     constexpr vec2f(const vec<float, 2>& other) : vec2<float>(other) {};
+// struct vec2f : public vec2<fixed> {
+//     using vec2<fixed>::vec2;
+//     constexpr vec2f(fixed x, fixed y) : vec2<fixed>(x, y) {};
+//     constexpr vec2f(const vec<fixed, 2>& other) : vec2<fixed>(other) {};
 //     constexpr vec2f& operator=(const vec2f& other) {
-//         vec<float, 2>::operator=(other);
+//         vec<fixed, 2>::operator=(other);
 //         return *this;
 //     };
 // };
 
-struct vec3f : public vec3<float> {
-    using vec3<float>::vec3;
-    constexpr vec3f(float x, float y, float z) : vec3<float>(x, y, z) {};
-    constexpr vec3f(const vec<float, 3>& other) : vec3<float>(other) {};
+struct vec3f : public vec3<fixed> {
+    using vec3<fixed>::vec3;
+    constexpr vec3f(fixed x, fixed y, fixed z) : vec3<fixed>(x, y, z) {};
+    constexpr vec3f(const vec<fixed, 3>& other) : vec3<fixed>(other) {};
     constexpr vec3f& operator=(const vec3f& other) {
-        vec<float, 3>::operator=(other);
+        vec<fixed, 3>::operator=(other);
         return *this;
     };
 
@@ -284,12 +287,12 @@ struct vec3f : public vec3<float> {
     static const vec3f right;
 };
 
-struct vec4f : public vec4<float> {
-    using vec4<float>::vec4;
-    constexpr vec4f(float x, float y, float z, float w) : vec4<float>(x, y, z, w) {};
-    constexpr vec4f(const vec4<float>& other) : vec4<float>(other) {};
+struct vec4f : public vec4<fixed> {
+    using vec4<fixed>::vec4;
+    constexpr vec4f(fixed x, fixed y, fixed z, fixed w) : vec4<fixed>(x, y, z, w) {};
+    constexpr vec4f(const vec4<fixed>& other) : vec4<fixed>(other) {};
     constexpr vec4f& operator=(const vec4f& other) {
-        vec4<float>::operator=(other);
+        vec4<fixed>::operator=(other);
         return *this;
     };
 };

@@ -120,11 +120,11 @@ void drawCubeTest(){
     for(int i = 0; i < 1; i++){
         Renderer::Clear(Color::Red);
         Renderer::DrawMesh(cube, M2, mat);
-        Renderer::DrawMesh(cube, M2, mat3);
-        Renderer::DrawMesh(cube, M3, mat);
-        Renderer::DrawMesh(cube, M3, mat3);
-        Renderer::DrawMesh(pyramid, M, mat);
-        Renderer::DrawMesh(pyramid, M, mat3);
+        // Renderer::DrawMesh(cube, M2, mat3);
+        // Renderer::DrawMesh(cube, M3, mat);
+        // Renderer::DrawMesh(cube, M3, mat3);
+        // Renderer::DrawMesh(pyramid, M, mat);
+        // Renderer::DrawMesh(pyramid, M, mat3);
         // Renderer::Blit(tex, vec2i16(0));
     }
 

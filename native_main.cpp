@@ -9,6 +9,7 @@
 #include "mathematics.h"
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
+// #include "common.h"
 
 #define TARGET_NATIVE
 
@@ -60,16 +61,50 @@ int main(int argc, char** argv){
     struct timespec start, now;
     clock_gettime(CLOCK_REALTIME, &start);
 
-    printf("%x\n", Color(255, 0, 0, 128));
-    printf("%x\n", Color(0, 255, 0, 128));
-    printf("%x\n", Color(0, 0, 255, 128));
+    // printf("%x\n", Color(255, 0, 0, 128));
+    // printf("%x\n", Color(0, 255, 0, 128));
+    // printf("%x\n", Color(0, 0, 255, 128));
 
     drawCubeTest();
 
-    clock_gettime(CLOCK_REALTIME, &now);
-    // calculate difference in seconds
-    double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
-    printf("Drawing took %lf s\n", diff);
+
+    fixed t = 1.5fp;
+    fixed d = 0.5fp;
+    fixed e = sqrt(t);
+    fixed f = cos(2);
+    fixed g = sin(2);
+    fixed h = abs(-t);
+    fixed i = mod(3.5fp, 1.2fp);
+    fixed j = floor(3.5fp);
+    fixed k = ceil(3.5fp);
+    std::cout << (t / d) << "\n";
+    std::cout << d << "\n";
+    std::cout << e << "\n";
+    std::cout << f << "\n";    
+    std::cout << g << "\n";
+    std::cout << h << "\n";
+    std::cout << i << "\n";
+    std::cout << j << "\n";
+    std::cout << k << "\n";
+
+    mat4f m = mat4f::translate(vec3f(1, 2, 3));
+    mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
+    vec4f p = vec4f(1, 0, 0, 1);
+
+    for(int y = 0; y < 4; y++){
+        for(int x = 0; x < 4; x++){
+            printf("%f ", (float)m2(y)(x));
+        }
+        printf("\n");
+    }
+ 
+    p = m2 * p;
+    printf("%f %f %f %f\n", (float)p.x(), (float)p.y(), (float)p.z(), (float)p.w());
+
+    // clock_gettime(CLOCK_REALTIME, &now);
+    // // calculate difference in seconds
+    // double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
+    // printf("Drawing took %lf s\n", diff);
 
     Color* pixels = new Color[FRAME_WIDTH * FRAME_HEIGHT];
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){

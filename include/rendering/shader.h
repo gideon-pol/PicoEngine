@@ -81,11 +81,11 @@ public:
                 Parameters* params = (Parameters*)parameters;
                 vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
                 normal = (*params->ModelMatrix * vec4f(normal, 0)).xyz().normalize();
-                float diff = normal.dot(-params->LightDirection) * 0.5f + 0.5f;
+                fixed diff = normal.dot(-params->LightDirection) * 0.5fp + 0.5fp;
                 data.TriangleColor = Color(
-                                        static_cast<uint8_t>(params->LightColor.r * diff),
-                                        static_cast<uint8_t>(params->LightColor.g * diff),
-                                        static_cast<uint8_t>(params->LightColor.b * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
                                         255
                                     );
             };
@@ -93,11 +93,11 @@ public:
             TriangleProgram = nullptr;
             FragmentProgram = [](FragmentShaderData& data, void* parameters){
                 Parameters* params = (Parameters*)parameters;
-                float diff = data.Normal.dot(-params->LightDirection) * 0.5f + 0.5f;
+                fixed diff = data.Normal.dot(-params->LightDirection) * 0.5fp + 0.5fp;
                 data.FragmentColor = Color(
-                                        static_cast<uint8_t>(params->LightColor.r * diff),
-                                        static_cast<uint8_t>(params->LightColor.g * diff),
-                                        static_cast<uint8_t>(params->LightColor.b * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
+                                        SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
                                         255
                                     );
             };
@@ -136,8 +136,8 @@ public:
 
         FragmentProgram = [](FragmentShaderData& data, void* parameters){
             vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
-            float h = uv(0) * 360;
-            data.FragmentColor = Color::FromHSV(h, 1, 1);
+            fixed h = uv(0) * 360fp;
+            data.FragmentColor = Color::FromHSV((float)h, 1, 1);
         };
     }
 
