@@ -6,7 +6,6 @@
 #include "rendering/texture.h"
 #include "rendering/mesh.h"
 #include "rendering/shader.h"
-#include "rendering/material.h"
 #include "rendering/color.h"
 
 class Camera {
