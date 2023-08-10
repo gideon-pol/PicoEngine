@@ -6,6 +6,8 @@
 #include "rendering/texture.h"
 #include "rendering/mesh.h"
 #include "rendering/shader.h"
+#include "rendering/material.h"
+#include "rendering/color.h"
 
 class Camera {
     public:
@@ -249,10 +251,7 @@ namespace Renderer{
             vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
             vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
 
-            BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
-            BoundingBox2D bbi = bounds.Intersect(bb);
-
-            if(bbi.IsEmpty()) continue;
+            vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
             if(material._Shader.Type == ShaderType::WireFrame){
                 Color color = ((WireFrameShader::Parameters*)material.Parameters)->_Color;
@@ -264,11 +263,12 @@ namespace Renderer{
                 DrawLine(p2, p3, color);
                 DrawLine(p3, p1, color);
                 continue;
-            }
+            } else if(windingOrder.z() > 0) continue;
 
-            vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
+            BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
+            BoundingBox2D bbi = bounds.Intersect(bb);
 
-            if(windingOrder.z() > 0) continue;
+            if(bbi.IsEmpty()) continue;
 
             fixed area = edgeFunction(pv1, pv2, pv3);
             for(int16_t x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){

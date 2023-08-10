@@ -132,10 +132,10 @@ struct vec {
         vec<T, C> result = vec<T, C>();
         T mag = magnitude();
 
-        if(mag == SCAST<T>(0.0f)) return vec<T, C>();
+        if(mag == SCAST<T>(0)) return vec<T, C>();
 
         for (int i = 0; i < C; i++) {
-            result[i] = SCAST<T>(data[i] * (1.0fp / SCAST<fixed>(mag)));
+            result[i] = SCAST<T>(data[i] / SCAST<fixed>(mag));
         }
         return result;
     };
