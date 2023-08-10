@@ -245,8 +245,6 @@ namespace Renderer{
                 material._Shader.TriangleProgram(t, material.Parameters);
             }
 
-
-
             vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
             vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
             vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
@@ -285,7 +283,9 @@ namespace Renderer{
                         fixed z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
                         if(z > 1.0f || z < 0.0f) continue;
 
-                        uint16_t z16 = SCAST<uint16_t>(z * 65535.0f);
+                        // The precision of a fixed point is not good enough to multiply by 65535
+                        // so we convert to float for the calculation
+                        uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
                         if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
                         Zbuffer[y * FRAME_WIDTH + x] = z16;

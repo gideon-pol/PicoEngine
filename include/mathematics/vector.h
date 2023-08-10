@@ -13,7 +13,7 @@ struct vec {
 
     constexpr vec() {
         for (int i = 0; i < C; i++) {
-            data[i] = T(0);
+            data[i] = SCAST<T>(0);
         }
     }
 
@@ -51,7 +51,7 @@ struct vec {
     };
 
     constexpr T operator*(const vec<T, C>& other) const {
-        T result = 0;
+        T result = SCAST<T>(0);
         for (int i = 0; i < C; i++) {
             result += data[i] * other(i);
         }
@@ -59,7 +59,7 @@ struct vec {
     };
 
     constexpr vec<T, C> operator*(const T& other) const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = data[i] * other;
         }
@@ -67,7 +67,7 @@ struct vec {
     };
 
     constexpr vec<T, C> operator/(const vec<T, C>& other) const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = data[i] / other(i);
         }
@@ -75,7 +75,7 @@ struct vec {
     };
 
     constexpr vec<T, C> operator/(const T& other) const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = data[i] / other;
         }
@@ -83,7 +83,7 @@ struct vec {
     };
     
     constexpr vec<T, C> operator+(const vec<T, C>& other) const {
-        vec<T, C> result  = vec<T, C>(0);
+        vec<T, C> result  = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = data[i] + other(i);
         }
@@ -91,7 +91,7 @@ struct vec {
     };
 
     constexpr vec<T, C> operator-(const vec<T, C>& other) const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = data[i] - other(i);
         }
@@ -99,7 +99,7 @@ struct vec {
     };
 
     constexpr vec<T, C> operator-() const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int i = 0; i < C; i++) {
             result[i] = -data[i];
         }
@@ -120,7 +120,7 @@ struct vec {
     };
 
     constexpr T magnitude() const {
-        T result = 0;
+        T result = SCAST<T>(0);
         for (int i = 0; i < C; i++) {
             result += data[i] * data[i];
         }
@@ -129,13 +129,13 @@ struct vec {
     };
 
     constexpr vec<T, C> normalize() const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         T mag = magnitude();
 
-        if(mag == SCAST<T>(0)) return vec<T, C>(0);
+        if(mag == SCAST<T>(0.0f)) return vec<T, C>();
 
         for (int i = 0; i < C; i++) {
-            result[i] = data[i] * (1fp / mag);
+            result[i] = SCAST<T>(data[i] * (1.0fp / SCAST<fixed>(mag)));
         }
         return result;
     };

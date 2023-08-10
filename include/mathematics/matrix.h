@@ -46,7 +46,7 @@ struct mat {
     };
 
     constexpr vec<T, C> col(int i) const {
-        vec<T, C> result = vec<T, C>(0);
+        vec<T, C> result = vec<T, C>();
         for (int j = 0; j < R; j++) {
             result[j] = data[j](i);
         }
@@ -63,7 +63,7 @@ struct mat {
     };
 
     constexpr mat<T, R, C> operator~() const {
-        mat<T, R, C> result = mat<T, R, C>(0);
+        mat<T, R, C> result = mat<T, R, C>();
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
                 result[j][i] = data[i](j);
@@ -74,7 +74,7 @@ struct mat {
 
     template<int C2>
     constexpr mat<T, C2, R> operator*(const mat<T, C2, C>& other) const {
-        mat<T, C2, R> result = mat<T, C2, R>(0);
+        mat<T, C2, R> result = mat<T, C2, R>();
         mat<T, C, C2> trans = ~other;
 
         for (int i = 0; i < C2; i++) {
@@ -87,7 +87,7 @@ struct mat {
     };
 
     constexpr vec<T, R> operator*(const vec<T, C>& other) const {
-        vec<T, R> result = vec<T, R>(0);
+        vec<T, R> result = vec<T, R>();
         for (int i = 0; i < R; i++) {
             result[i] = data[i] * other;
         }
@@ -103,10 +103,10 @@ struct mat {
     };
 
     static constexpr mat<T, C, R> identity() {
-        mat<T, C, R> result = mat<T, C, R>(0);
+        mat<T, C, R> result = mat<T, C, R>();
         for (int i = 0; i < R; i++) {
             for(int j = 0; j < C; j++){
-                result[i][j] = i == j ? 1 : 0;
+                result[i][j] = i == j ? SCAST<T>(1) : SCAST<T>(0);
             }
         }
         return result;
@@ -169,14 +169,14 @@ struct mat4f : public mat<fixed, 4, 4> {
     };
 
     constexpr static mat4f perspective(fixed fov, fixed aspect, fixed near, fixed far) {
-        mat4f result = mat4f(0);
+        mat4f result = mat4f();
         fixed yScale = 1fp / tan((float)fov * 0.5f * PI / 180.0f);
         fixed xScale = yScale * (1fp / aspect);
         result[0][0] = xScale;
         result[1][1] = yScale;
         result[2][2] = -far / (far - near);
         result[2][3] = (far * near) / (far - near);
-        result[3][2] = -1;
+        result[3][2] = -1fp;
         
         return result;
     };

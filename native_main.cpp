@@ -77,16 +77,16 @@ int main(int argc, char** argv){
     fixed j = floor(3.5fp);
     fixed k = ceil(3.5fp);
     fixed l = sqrt(0fp);
-    std::cout << (t / d) << "\n";
-    std::cout << d << "\n";
-    std::cout << e << "\n";
-    std::cout << f << "\n";    
-    std::cout << g << "\n";
-    std::cout << h << "\n";
-    std::cout << i << "\n";
-    std::cout << j << "\n";
-    std::cout << k << "\n";
-    std::cout << l << "\n";
+    printf("%f\n", (float)(t / d));
+    printf("%f\n", (float)d);
+    printf("%f\n", (float)e);
+    printf("%f\n", (float)f);
+    printf("%f\n", (float)g);
+    printf("%f\n", (float)h);
+    printf("%f\n", (float)i);
+    printf("%f\n", (float)j);
+    printf("%f\n", (float)k);
+    printf("%f\n", (float)l);
 
     mat4f m = mat4f::translate(vec3f(1, 2, 3));
     mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));

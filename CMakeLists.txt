@@ -22,7 +22,8 @@ if(TARGET_NATIVE)
     # target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
     target_link_directories(build PRIVATE lodepng)
     # target_link_directories(build PRIVATE resources)
-    set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2" )
+    set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2")
+    set_property(TARGET build PROPERTY CXX_STANDARD 20)
     target_compile_options(build PRIVATE -DPLATFORM_NATIVE=1)
 
     target_link_libraries(
@@ -68,7 +69,8 @@ else()
     )
 
     pico_add_extra_outputs(build)
-    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1 -DPLATFORM_PICO=1)
+    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1 -DPLATFORM_PICO=0)
+    set_property(TARGET build PROPERTY CXX_STANDARD 20)
 
     if (TARGET tinyusb_device)
         pico_enable_stdio_usb(build 1)

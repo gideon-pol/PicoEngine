@@ -28,14 +28,14 @@ public:
 
     FORCE_INLINE constexpr Color Sample(const vec2f uv) const {
         if(Mode == SampleMode::Nearest){
-            int x = SCAST<int>(mod(abs(uv(0)), 1) * Width);
-            int y = SCAST<int>(mod(abs(uv(1)), 1) * Height);
+            int x = SCAST<int>(mod(abs(uv(0)), 1) * fixed(Width));
+            int y = SCAST<int>(mod(abs(uv(1)), 1) * fixed(Height));
             return Data[y * Width + x];
 
         // This mode is probably mostly useless as colors are reduced to 16 bits anyway
         } else if(Mode == SampleMode::Bilinear){
-            fixed x = uv(0) * Width;
-            fixed y = uv(1) * Height;
+            fixed x = uv(0) * fixed(Width);
+            fixed y = uv(1) * fixed(Height);
 
             int x0 = SCAST<int>(x);
             int y0 = SCAST<int>(y);

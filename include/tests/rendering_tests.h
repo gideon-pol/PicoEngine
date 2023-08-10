@@ -178,13 +178,16 @@ void picoCubeTest(){
         while(ST7789::IsFlipping());
 
         Renderer::Clear(Color::Red);
+        time = get_absolute_time();
+        
         // Renderer::DrawMesh(cube, M2, lightingShader);
         Renderer::DrawMesh(cube, M2, flatShader);
+        Renderer::DrawMesh(cube, M2, wireFrameMat);
         // Renderer::DrawMesh(cube, M3, lightingShader);
         Renderer::DrawMesh(cube, M3, flatShader);
+        Renderer::DrawMesh(cube, M3, wireFrameMat);
         // Renderer::DrawMesh(cube, M, lightingShader);
         // Renderer::DrawMesh(cube, M, wireFrameMat);
-        // Renderer::DrawBorder(BoundingBox2D(vec2f(20), vec2f(100)), 3, Color::Green);
 
         ST7789::Flip((Color16*)&Renderer::FrameBuffer);
 
