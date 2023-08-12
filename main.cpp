@@ -5,12 +5,13 @@
 #include "mathematics/matrix.h"
 #include "mathematics/vector.h"
 #include "tests/maths_tests.h"
-#include "hardware/st7789.h"
 
+#include "hardware/st7789.h"
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
 
 #define DEBUG_TEST
+
 
 // void core1_entry() {
     
@@ -27,7 +28,6 @@ int main() {
 
     ST7789::Init();
 
-    Color16 fb[120*120];
     Renderer::Init(45, 0.1, 100);
 
     ST7789::SetBrightness(65535);

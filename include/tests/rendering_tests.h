@@ -161,14 +161,17 @@ void picoCubeTest(){
     Material wireFrameMat = Material(w);
     ((WireFrameShader::Parameters*)wireFrameMat.Parameters)->_Color = Color::Cyan;
 
-    mat4f rot = getRotationalMatrix(vec3f(20, 160, 0));
+    
     mat4f trans = mat4f::translate(vec3f(0, 0, 6));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
 
-    mat4f M = trans * rot * scale;
+    
 
     while(true){
         absolute_time_t time = get_absolute_time();
+        mat4f rot = getRotationalMatrix(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
+        mat4f M = trans * rot * scale;
+        
         mat4f trans2 = mat4f::translate(vec3f(1, sin(to_ms_since_boot(get_absolute_time())/1000.0), 6));
         mat4f M2 = trans2 * rot * scale;
 
@@ -178,13 +181,16 @@ void picoCubeTest(){
         while(ST7789::IsFlipping());
 
         Renderer::Clear(Color::Red);
+        time = get_absolute_time();
+        
         // Renderer::DrawMesh(cube, M2, lightingShader);
         Renderer::DrawMesh(cube, M2, flatShader);
+        Renderer::DrawMesh(cube, M2, wireFrameMat);
         // Renderer::DrawMesh(cube, M3, lightingShader);
         Renderer::DrawMesh(cube, M3, flatShader);
+        Renderer::DrawMesh(cube, M3, wireFrameMat);
         // Renderer::DrawMesh(cube, M, lightingShader);
         // Renderer::DrawMesh(cube, M, wireFrameMat);
-        // Renderer::DrawBorder(BoundingBox2D(vec2f(20), vec2f(100)), 3, Color::Green);
 
         ST7789::Flip((Color16*)&Renderer::FrameBuffer);
 

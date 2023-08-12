@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "common.h"
+#include "fixed.h"
 
 // Currently, the entire render pipeline may deal with 32-bit colors.
 // The framebuffers however hold 16-bit colors to conserve space.
@@ -20,9 +21,16 @@ struct Color {
     constexpr Color() : r(0), g(0), b(0), a(255) {};
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {};
 
+#ifdef PLATFORM_PICO
     FORCE_INLINE constexpr Color16 ToColor16() const {
         return (r & 0xf) | ((a & 0xf) << 4) | ((b & 0xf) << 8) | ((g & 0xf) << 12);
     }
+#else
+    FORCE_INLINE constexpr Color16 ToColor16() const {
+        // format as rrrrggggbbbbbaaaa
+        return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | (a >> 4) << 0;
+    }
+#endif
 
     FORCE_INLINE constexpr Color(Color16 c) : r((c >> 12) << 4), g((c >> 8) << 4), b((c >> 4) << 4), a((c >> 0) << 4) {};
 
@@ -89,11 +97,11 @@ struct Color {
             a * 255);
     }
 
-    FORCE_INLINE static constexpr Color Lerp(Color a, Color b, float t) {
+    FORCE_INLINE static constexpr Color Lerp(Color a, Color b, fixed t) {
         return Color(
-            static_cast<uint8_t>(a.r + (b.r - a.r) * t),
-            static_cast<uint8_t>(a.g + (b.g - a.g) * t),
-            static_cast<uint8_t>(a.b + (b.b - a.b) * t),
-            static_cast<uint8_t>(a.a + (b.a - a.a) * t));
+            SCAST<uint8_t>(fixed(a.r) + fixed(b.r - a.r) * t),
+            SCAST<uint8_t>(fixed(a.g) + fixed(b.g - a.g) * t),
+            SCAST<uint8_t>(fixed(a.b) + fixed(b.b - a.b) * t),
+            SCAST<uint8_t>(fixed(a.a) + fixed(b.a - a.a) * t));
     }
 } __attribute__((packed));

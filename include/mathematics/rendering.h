@@ -4,6 +4,7 @@
 #include "common.h"
 #include "mathematics/basic.h"
 #include "mathematics/vector.h"
+#include "fixed.h"
 
 class BoundingBox2D {
     public:
@@ -59,7 +60,7 @@ class BoundingVolume {
         };
 };
 
-FORCE_INLINE constexpr float edgeFunction(vec3f a, vec3f b, vec3f c){
+FORCE_INLINE constexpr fixed edgeFunction(vec3f a, vec3f b, vec3f c){
     return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
 }
 
