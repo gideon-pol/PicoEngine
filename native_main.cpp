@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <unistd.h>
 #include <iostream>
 #include <chrono>
@@ -6,12 +5,12 @@
 #include <lodepng.h>
 #include <time.h>
 // #include <SDL2/SDL.h>
+
+#include "common.h"
 #include "mathematics.h"
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
 // #include "common.h"
-
-#define TARGET_NATIVE
 
 extern "C" const uint16_t main_font[];
 

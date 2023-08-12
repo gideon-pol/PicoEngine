@@ -23,7 +23,7 @@ struct Color {
 
 #ifdef PLATFORM_PICO
     FORCE_INLINE constexpr Color16 ToColor16() const {
-        return (r & 0xf) | ((a & 0xf) << 4) | ((b & 0xf) << 8) | ((g & 0xf) << 12);
+        return (g & 0xf0) << 8 | (b & 0xf0) << 4 | (a & 0xf0)| (r >> 4);
     }
 #else
     FORCE_INLINE constexpr Color16 ToColor16() const {

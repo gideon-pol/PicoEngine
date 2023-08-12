@@ -84,7 +84,6 @@ void drawCubeTest(){
     Camera* main = Renderer::MainCamera;
 
     LightingShader s = LightingShader(LightingShader::ShadingType::Flat);
-    WireFrameShader w = WireFrameShader();
     FlatShader f = FlatShader();
     RainbowTestShader r = RainbowTestShader();
     TextureShader t = TextureShader();
@@ -107,9 +106,6 @@ void drawCubeTest(){
     Material mat2 = Material(f);
     ((FlatShader::Parameters*)mat2.Parameters)->_Color = Color::Green;
 
-    Material mat3 = Material(w);
-    ((WireFrameShader::Parameters*)mat3.Parameters)->_Color = Color::Cyan;
-
     Material mat4 = Material(r);
 
     // Material mat5 = Material(t);
@@ -120,11 +116,8 @@ void drawCubeTest(){
     for(int i = 0; i < 1; i++){
         Renderer::Clear(Color::Red);
         Renderer::DrawMesh(cube, M2, mat);
-        Renderer::DrawMesh(cube, M2, mat3);
         Renderer::DrawMesh(cube, M3, mat);
-        Renderer::DrawMesh(cube, M3, mat3);
         Renderer::DrawMesh(pyramid, M, mat);
-        Renderer::DrawMesh(pyramid, M, mat3);
         // Renderer::Blit(tex, vec2i16(0));
     }
 
@@ -140,57 +133,79 @@ void drawCubeTest(){
 
 #ifdef PLATFORM_PICO
 
-// #include "hardware/st7789.h"
+#include "hardware/st7789.h"
+#include "hardware/input.h"
 
 void picoCubeTest(){
-    printf("Reaching here\n");
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
+    Mesh quad = Mesh((Vertex*)&quadVerts, 4, (uint32_t*)&quadIndices, 2);
 
     LightingShader s = LightingShader(LightingShader::ShadingType::Flat);
-    Material lightingShader = Material(s);
-    ((LightingShader::Parameters*)lightingShader.Parameters)->LightDirection = vec3f::forward;
-    ((LightingShader::Parameters*)lightingShader.Parameters)->LightColor = Color::Yellow;
+    Material lightingMat1 = Material(s);
+    ((LightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
+    ((LightingShader::Parameters*)lightingMat1.Parameters)->LightColor = Color::Yellow;
 
+    Material lightingMat2 = Material(s);
+    ((LightingShader::Parameters*)lightingMat2.Parameters)->LightDirection = vec3f::forward;
+    ((LightingShader::Parameters*)lightingMat2.Parameters)->LightColor = Color::Red;
 
     FlatShader f = FlatShader();
-    Material flatShader = Material(f);
-    ((FlatShader::Parameters*)flatShader.Parameters)->_Color = Color::Green;
+    Material flatMat = Material(f);
+    ((FlatShader::Parameters*)flatMat.Parameters)->_Color = Color::Green;
 
-    WireFrameShader w = WireFrameShader();
-    Material wireFrameMat = Material(w);
-    ((WireFrameShader::Parameters*)wireFrameMat.Parameters)->_Color = Color::Cyan;
 
-    
     mat4f trans = mat4f::translate(vec3f(0, 0, 6));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
 
-    
+    fixed yaw, pitch;
 
     while(true){
         absolute_time_t time = get_absolute_time();
-        mat4f rot = getRotationalMatrix(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
+
+        Input::Poll();
+
+        // yaw = mod(yaw + Input::GetAxis(Input::Axis::X), 360fp);
+        // pitch = mod(pitch + Input::GetAxis(Input::Axis::Y), 360fp);
+
+        yaw = Input::GetAxis(Input::Axis::X) * 45;
+        pitch = Input::GetAxis(Input::Axis::Y) * 45;
+
+        // mat4f rot = getRotationalMatrix(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
+        mat4f rot = getRotationalMatrix(vec3f(pitch, yaw, 0));
         mat4f M = trans * rot * scale;
         
         mat4f trans2 = mat4f::translate(vec3f(1, sin(to_ms_since_boot(get_absolute_time())/1000.0), 6));
         mat4f M2 = trans2 * rot * scale;
 
-        mat4f trans3 = mat4f::translate(vec3f(0, -sin(to_ms_since_boot(get_absolute_time())/1000.0), 10));
-        mat4f M3 = trans3 * rot * scale;
+        mat4f rot2 = getRotationalMatrix(vec3f(45, 20, 0));
+        mat4f trans3 = mat4f::translate(vec3f(0, -sin(to_ms_since_boot(get_absolute_time())/1000.0)+1, 10));
+        mat4f M3 = trans3 * rot2 * scale;
+
+        mat4f trans4 = mat4f::translate(vec3f(sin(to_ms_since_boot(get_absolute_time())/1000.0), 0, 10));
+        mat4f M4 = trans4 * rot * scale;
+
+        mat4f trans5 = mat4f::translate(vec3f(2, 0, (sin(to_ms_since_boot(get_absolute_time())/1000.0) + 1) * 5));
+        mat4f M5 = trans5 * rot * scale;
 
         while(ST7789::IsFlipping());
 
         Renderer::Clear(Color::Red);
         time = get_absolute_time();
-        
-        // Renderer::DrawMesh(cube, M2, lightingShader);
-        Renderer::DrawMesh(cube, M2, flatShader);
-        Renderer::DrawMesh(cube, M2, wireFrameMat);
+
+        ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M2;
+        ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
+
+        Renderer::DrawMesh(cube, M2, lightingMat1);
+        // Renderer::DrawMesh(cube, M2, lightingMat1);
         // Renderer::DrawMesh(cube, M3, lightingShader);
-        Renderer::DrawMesh(cube, M3, flatShader);
-        Renderer::DrawMesh(cube, M3, wireFrameMat);
+        // Renderer::DrawMesh(cube, M3, lightingMat2);
+        
+        // Renderer::DrawMesh(cube, M4, flatMat);
+
+        // Renderer::DrawMesh(cube, M5, flatMat);
+        
         // Renderer::DrawMesh(cube, M, lightingShader);
-        // Renderer::DrawMesh(cube, M, wireFrameMat);
 
         ST7789::Flip((Color16*)&Renderer::FrameBuffer);
 

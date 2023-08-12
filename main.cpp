@@ -1,12 +1,15 @@
-#include <stdio.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "pico/multicore.h"
+
+#include "common.h"
+
 #include "mathematics/matrix.h"
 #include "mathematics/vector.h"
-#include "tests/maths_tests.h"
 
 #include "hardware/st7789.h"
+#include "hardware/input.h"
+
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
 
@@ -26,11 +29,15 @@ int main() {
     // multicore_launch_core1(core1_entry);
     sleep_ms(5000);
 
+#ifdef ENABLE_OVERCLOCK
+    vreg_set_voltage(VREG_VOLTAGE_1_20);
+    set_sys_clock_khz(250000, true);
+#endif
+
     ST7789::Init();
-
-    Renderer::Init(45, 0.1, 100);
-
     ST7789::SetBrightness(65535);
+    Input::Init();
+    Renderer::Init(45, 0.1, 100);
 
 #ifdef DEBUG_TEST
     printf("Running rendering unit tests\n");

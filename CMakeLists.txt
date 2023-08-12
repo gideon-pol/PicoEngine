@@ -60,6 +60,7 @@ else()
         hardware_pwm
         hardware_spi
         hardware_dma
+        hardware_adc
         
         # resources
     )

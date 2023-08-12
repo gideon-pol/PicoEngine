@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
 #include "common.h"
 #include "mathematics.h"
 #include "rendering/color.h"
@@ -55,5 +53,7 @@ public:
 
             return Color::Lerp(c0, c1, yWeight);
         }
+
+        return Color::Black;
     }
 };

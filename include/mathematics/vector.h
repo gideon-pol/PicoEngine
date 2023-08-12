@@ -130,12 +130,12 @@ struct vec {
 
     constexpr vec<T, C> normalize() const {
         vec<T, C> result = vec<T, C>();
-        T mag = magnitude();
+        fixed mag = SCAST<fixed>(magnitude());
 
-        if(mag == SCAST<T>(0)) return vec<T, C>();
+        if(mag == 0fp) return vec<T, C>();
 
         for (int i = 0; i < C; i++) {
-            result[i] = SCAST<T>(data[i] / SCAST<fixed>(mag));
+            result[i] = SCAST<T>(data[i] / mag);
         }
         return result;
     };
