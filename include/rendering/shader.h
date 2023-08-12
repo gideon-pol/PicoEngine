@@ -1,8 +1,8 @@
 #pragma once
 
+#include "rendering/renderer.h"
 #include "rendering/color.h"
 #include "rendering/mesh.h"
-#include "rendering/texture.h"
 
 struct TriangleShaderData {
     Vertex v1;
@@ -39,9 +39,9 @@ public:
 
 class FlatShader : public Shader {
 public:
-    typedef struct {
+    struct Parameters {
         Color _Color;
-    } Parameters;
+    };
 
     FlatShader(){
         // TODO: Test whether this is (significantly) slower than an engine implemented shader
@@ -63,13 +63,12 @@ public:
 class LightingShader : public Shader {
 public:
     enum ShadingType { Flat, Smooth };
-
-    typedef struct {
+    struct Parameters {
         vec3f LightDirection;
         Color LightColor;
         Color AmbientColor;
         mat4f* ModelMatrix;
-    } Parameters;
+    };
 
     LightingShader(ShadingType type){
         Type = ShaderType::Custom;
@@ -81,7 +80,7 @@ public:
                 Parameters* params = (Parameters*)parameters;
                 vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
                 normal = (*params->ModelMatrix * vec4f(normal, 0)).xyz().normalize();
-                fixed diff = normal.dot(-params->LightDirection) * 0.5fp + 0.5fp;
+                fixed diff = max(normal.dot(-params->LightDirection), 0fp);
                 data.TriangleColor = Color(
                                         SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
                                         SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
@@ -109,24 +108,22 @@ public:
     }
 };
 
-// The wireframe shader is engine-implemented.
-// This class is really only for the parameters object
-class WireFrameShader : public Shader {
-public:
-    struct Parameters {
-        Color _Color;
-    };
+// class WireFrameShader : public Shader {
+// public:
+//     struct Parameters {
+//         Color _Color;
+//     };
 
-    WireFrameShader(){
-        Type = ShaderType::WireFrame;
-        TriangleProgram = nullptr;
-        FragmentProgram = nullptr;
-    }
+//     WireFrameShader(){
+//         Type = ShaderType::WireFrame;
+//         TriangleProgram = nullptr;
+//         FragmentProgram = nullptr;
+//     }
 
-    void* CreateParameters(){
-        return new Parameters();
-    }
-};
+//     void* CreateParameters(){
+//         return new Parameters();
+//     }
+// };
 
 class RainbowTestShader : public Shader {
 public:

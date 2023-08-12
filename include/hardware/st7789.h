@@ -39,17 +39,16 @@
 #define PWCTR3 0xC2
 #define GAMSET 0x26
 
-
-enum Pin {
-    SCK = 18,
-    MOSI = 19,
-    CS = 17,
-    DC = 20,
-    RST = 21,
-    BL = 22
-};
-
 namespace ST7789 {
+    enum Pin {
+        SCK = 18,
+        MOSI = 19,
+        CS = 17,
+        DC = 20,
+        RST = 21,
+        BL = 22
+    };
+    
     namespace {
         uint32_t dmaChannel = 0;
         uint screenSM = 0;
@@ -60,18 +59,9 @@ namespace ST7789 {
         volatile int16_t dma_scanline = 0;
 
         volatile bool dmaBusy = false;
-        volatile int pixelsPushed = 0;
 
         void transmitScanline() {
-            // uint32_t *s = (uint32_t*)&fb[((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * 120];
-            // uint16_t c = (dma_scanline == 0 || dma_scanline == 120) ? 60 : 120;
-
-            // pixelsPushed += c;
-
             uint32_t* s = (uint32_t*)&fb[dma_scanline * 120];
-            // uint16_t c = (dma_scanline == 120) ? 60 : 120;
-
-            pixelsPushed += 120;
 
             dmaBusy = true;
             dma_channel_transfer_from_buffer_now(dmaChannel, s, 120);
@@ -85,8 +75,6 @@ namespace ST7789 {
             if(++dma_scanline >= 120) {
                 dma_scanline = 0;
                 dmaBusy = false;
-                printf("Pixels pushed: %d\n", pixelsPushed);
-                pixelsPushed = 0;
                 return;
             }
 
@@ -174,6 +162,9 @@ namespace ST7789 {
         pio_sm_config c = screen_double_program_get_default_config(offset);
         pio_sm_set_consecutive_pindirs(pio0, screenSM, Pin::MOSI, 2, true);
 
+#ifdef ENABLE_OVERCLOCK
+        sm_config_set_clkdiv_int_frac(&c, 2, 1);
+#endif
         sm_config_set_out_shift(&c, false, false, 32);
 
         sm_config_set_out_pins(&c, Pin::MOSI, 1);

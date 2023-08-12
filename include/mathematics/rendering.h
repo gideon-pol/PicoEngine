@@ -11,6 +11,7 @@ class BoundingBox2D {
         vec2f Min;
         vec2f Max;
 
+        BoundingBox2D() : Min(vec2f(0, 0)), Max(vec2f(0, 0)) {};
         BoundingBox2D(const vec2f& min, const vec2f& max) : Min(min), Max(max) {};
 
         BoundingBox2D Intersect(const BoundingBox2D& other) {

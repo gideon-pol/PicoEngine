@@ -15,9 +15,9 @@ class Camera {
             this->near = near;
             this->far = far;
 
-            projection = mat4f::perspective(fov, aspect, near, far);
-            updateViewMatrix();
-        }
+        projection = mat4f::perspective(fov, aspect, near, far);
+        updateViewMatrix();
+    }
 
     void SetPosition(const vec3f& position){
         this->position = position;
@@ -36,10 +36,6 @@ class Camera {
             orientationUpdated = false;
         }
         return view;
-    }
-
-    FORCE_INLINE constexpr mat4f& GetProjectionMatrix(){
-        return projection;
     }
 
     // Frustum intersection test that checks if any of the bounding volume's corners
@@ -61,6 +57,10 @@ class Camera {
         };
 
         return false;
+    }
+
+    FORCE_INLINE constexpr mat4f& GetProjectionMatrix(){
+        return projection;
     }
 
     private:
@@ -252,24 +252,18 @@ namespace Renderer{
 
             vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
-            if(material._Shader.Type == ShaderType::WireFrame){
-                Color color = ((WireFrameShader::Parameters*)material.Parameters)->_Color;
-                vec2i16 p1 = vec2i16(SCAST<int16_t>(pv1.x()), SCAST<int16_t>(pv1.y()));
-                vec2i16 p2 = vec2i16(SCAST<int16_t>(pv2.x()), SCAST<int16_t>(pv2.y()));
-                vec2i16 p3 = vec2i16(SCAST<int16_t>(pv3.x()), SCAST<int16_t>(pv3.y()));
+            fixed area;
+            BoundingBox2D bb;
+            BoundingBox2D bbi;
 
-                DrawLine(p1, p2, color);
-                DrawLine(p2, p3, color);
-                DrawLine(p3, p1, color);
-                continue;
-            } else if(windingOrder.z() > 0) continue;
+            if(windingOrder.z() > 0) goto render_debug;
 
-            BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
-            BoundingBox2D bbi = bounds.Intersect(bb);
+            bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
+            bbi = bounds.Intersect(bb);
 
             if(bbi.IsEmpty()) continue;
 
-            fixed area = edgeFunction(pv1, pv2, pv3);
+            area = edgeFunction(pv1, pv2, pv3);
             for(int16_t x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){
                 for(int16_t y = SCAST<int16_t>(bbi.Min.y()); y < SCAST<int16_t>(bbi.Max.y()); y++){
                     vec3f p = vec3f(x, y, 0);
@@ -328,6 +322,32 @@ namespace Renderer{
                     }
                 }
             }
+
+            // TODO: this doesn't properly render because the drawing of other triangles
+            //       will overwrite the debug drawings
+            render_debug:
+            #ifdef RENDER_DEBUG_WIREFRAME
+                Color color = Color::Cyan; // ((WireFrameShader::Parameters*)material.Parameters)->_Color;
+                vec2i16 p1 = vec2i16(SCAST<int16_t>(pv1.x()), SCAST<int16_t>(pv1.y()));
+                vec2i16 p2 = vec2i16(SCAST<int16_t>(pv2.x()), SCAST<int16_t>(pv2.y()));
+                vec2i16 p3 = vec2i16(SCAST<int16_t>(pv3.x()), SCAST<int16_t>(pv3.y()));
+
+                DrawLine(p1, p2, color);
+                DrawLine(p2, p3, color);
+                DrawLine(p3, p1, color);
+            #endif
+
+            #ifdef RENDER_DEBUG_FACE_NORMALS
+                vec3f pos = (t.v1.Position + t.v2.Position + t.v3.Position) / 3;
+                pos = (modelMat * vec4f(pos, 1)).homogenize();
+
+                vec3f normal = (t.v2.Position - t.v1.Position).cross(t.v3.Position - t.v1.Position).normalize();
+                normal = (modelMat * vec4f(normal, 0)).xyz().normalize();
+
+                Renderer::DrawLine(pos, pos + normal, Color::White);
+            #endif
+
+            continue;
         }
     }
 
