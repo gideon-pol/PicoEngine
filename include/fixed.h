@@ -3,6 +3,10 @@
 
 #include "common.h"
 
+#ifndef PLATFORM_PICO
+    #include <iostream>
+#endif
+
 #define FIXED_32_FRAC_BITS 16
 #define FIXED_32_FRAC_MASK ((1 << FIXED_32_FRAC_BITS) - 1)
 
@@ -21,8 +25,6 @@ struct fixed {
     constexpr fixed(int32_t value) : value(value << FIXED_32_FRAC_BITS) {}
     constexpr fixed(uint32_t value) : value(value << FIXED_32_FRAC_BITS) {}
 
-    constexpr fixed(int value) : value(value << FIXED_32_FRAC_BITS) {} 
-   
     constexpr fixed(int64_t value, int32_t shift) : value(value >> shift) {}
     constexpr fixed(int64_t value) : value(value << FIXED_32_FRAC_BITS) {}
     constexpr fixed(uint64_t value) : value(value << FIXED_32_FRAC_BITS) {}
@@ -109,10 +111,6 @@ struct fixed {
         return value >= other.value;
     }
 
-    // FORCE_INLINE friend std::ostream& operator<<(std::ostream& os, const fixed& s) {
-    //     return os << s.value / (float)(1 << FIXED_32_FRAC_BITS);
-    // }
-
     FORCE_INLINE explicit constexpr operator uint8_t() const {
         return value >> FIXED_32_FRAC_BITS;
     }
@@ -141,10 +139,6 @@ struct fixed {
         return value >> FIXED_32_FRAC_BITS;
     }
 
-    FORCE_INLINE explicit constexpr operator int() const {
-        return value >> FIXED_32_FRAC_BITS;
-    }
-
     FORCE_INLINE constexpr explicit operator int64_t() const {
         return value >> FIXED_32_FRAC_BITS;
     }
@@ -157,8 +151,18 @@ struct fixed {
         return value / (double)(1 << FIXED_32_FRAC_BITS);
     }
 
-private:
-    // constexpr fixed(int64_t value, int64_t shift) : value(value >> shift) {}
+#ifndef PLATFORM_EMBED
+    constexpr fixed(int value) : value((int64_t)value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE explicit constexpr operator int() const {
+        return value >> FIXED_32_FRAC_BITS;
+    }
+#endif
+
+#ifndef PLATFORM_PICO
+    FORCE_INLINE friend std::ostream& operator<<(std::ostream& os, const fixed& s) {
+        return os << s.value / (float)(1ll << FIXED_32_FRAC_BITS);
+    }
+#endif
 };
 
 constexpr fixed operator"" fp(long double value) {

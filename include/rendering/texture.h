@@ -28,7 +28,7 @@ public:
         if(Mode == SampleMode::Nearest){
             int x = SCAST<int>(mod(abs(uv(0)), 1) * fixed(Width));
             int y = SCAST<int>(mod(abs(uv(1)), 1) * fixed(Height));
-            return Data[y * Width + x];
+            return Color(Data[y * Width + x]);
 
         // This mode is probably mostly useless as colors are reduced to 16 bits anyway
         } else if(Mode == SampleMode::Bilinear){

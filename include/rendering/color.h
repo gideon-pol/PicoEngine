@@ -21,18 +21,23 @@ struct Color {
     constexpr Color() : r(0), g(0), b(0), a(255) {};
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {};
 
-#ifdef PLATFORM_PICO
+// #ifdef PLATFORM_PICO
     FORCE_INLINE constexpr Color16 ToColor16() const {
-        return (g & 0xf0) << 8 | (b & 0xf0) << 4 | (a & 0xf0)| (r >> 4);
+        return (g & 0xf0) << 8 | (b & 0xf0) << 4 | (a & 0xf0) | (r >> 4);
     }
-#else
-    FORCE_INLINE constexpr Color16 ToColor16() const {
-        // format as rrrrggggbbbbbaaaa
-        return (r >> 4) << 12 | (g >> 4) << 8 | (b >> 4) << 4 | (a >> 4) << 0;
-    }
-#endif
+// #else
+//     FORCE_INLINE constexpr Color16 ToColor16() const {
+//         return (r & 0xf0) << 8 | (g & 0xf0) << 4 | (b & 0xf0) | (a >> 4);
+//     }
+// #endif
 
-    FORCE_INLINE constexpr Color(Color16 c) : r((c >> 12) << 4), g((c >> 8) << 4), b((c >> 4) << 4), a((c >> 0) << 4) {};
+// #ifdef PLATFORM_PICO
+    FORCE_INLINE constexpr Color(Color16 c) :
+        r((c & 0xf) << 4), g((c & 0xf000) >> 8), b((c & 0xf00) >> 4), a(c & 0xf0) {};
+// #else
+//     FORCE_INLINE constexpr Color(Color16 c) :
+//         r((c >> 12) << 4), g((c >> 8) << 4), b((c >> 4) << 4), a((c >> 0) << 4) {};
+// #endif
 
     static const Color White;
     static const Color Black;

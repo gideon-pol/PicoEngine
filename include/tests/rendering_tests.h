@@ -8,12 +8,22 @@
 // extern Vertex cube_obj_vertices[36];
 // extern uint32_t cube_obj_indices[36];
 
-// extern Vertex suzanne_obj_vertices[2904];
-// extern uint32_t suzanne_obj_indices[2904];
+extern Vertex suzanne_obj_vertices[2904];
+extern uint32_t suzanne_obj_indices[2904];
+
+extern const Vertex sphere_obj_vertices[1080];
+extern const uint32_t sphere_obj_indices[1080];
+
+extern const Vertex quad_obj_vertices[6];
+extern const uint32_t quad_obj_indices[6];
+
+extern const Color16 earth_png[80000];
+
+const Color16 test[1] = { Color::Green.ToColor16() };
 
 // extern Color16 test_png[920*900];
 
-// extern Color16 dirt_png[400*400];
+extern Color16 dirt_png[400*400];
 
 Vertex cubeVerts[] = {
     (Vertex){vec3f(-1, -1, -1), vec3f(0), vec2f(0)},
@@ -140,8 +150,15 @@ void picoCubeTest(){
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
     Mesh quad = Mesh((Vertex*)&quadVerts, 4, (uint32_t*)&quadIndices, 2);
+    Mesh suzanne = Mesh((Vertex*)&suzanne_obj_vertices, sizeof(suzanne_obj_vertices)/sizeof(Vertex), (uint32_t*)&suzanne_obj_indices, sizeof(suzanne_obj_indices)/sizeof(uint32_t)/3);
+    Mesh sphere = Mesh((Vertex*)&sphere_obj_vertices, 1080, (uint32_t*)&sphere_obj_indices, 1080/3);
+    Mesh quad2 = Mesh((Vertex*)&quad_obj_vertices, sizeof(quad_obj_vertices)/sizeof(Vertex), (uint32_t*)&quad_obj_indices, sizeof(quad_obj_vertices)/sizeof(uint32_t)/3);
 
-    LightingShader s = LightingShader(LightingShader::ShadingType::Flat);
+    Texture2D dirt = Texture2D((Color16*)&dirt_png, 400, 400);
+    Texture2D earth = Texture2D((Color16*)&earth_png, 400, 200);
+    Texture2D testTex = Texture2D((Color16*)&test, 1, 1);
+
+    LightingShader s = LightingShader(LightingShader::ShadingType::Smooth);
     Material lightingMat1 = Material(s);
     ((LightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
     ((LightingShader::Parameters*)lightingMat1.Parameters)->LightColor = Color::Yellow;
@@ -154,11 +171,31 @@ void picoCubeTest(){
     Material flatMat = Material(f);
     ((FlatShader::Parameters*)flatMat.Parameters)->_Color = Color::Green;
 
+    TextureShader t = TextureShader();
+    Material textureMat = Material(t);
+    ((TextureShader::Parameters*)textureMat.Parameters)->_Texture = &earth;
+    ((TextureShader::Parameters*)textureMat.Parameters)->TextureScale = vec2f(1);
 
-    mat4f trans = mat4f::translate(vec3f(0, 0, 6));
+    mat4f trans = mat4f::translate(vec3f(0, 0, 4));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
 
     fixed yaw, pitch;
+
+    Color randomColors[] = {
+        Color::Red,
+        Color::Green,
+        Color::Blue,
+        Color::Yellow,
+        Color::Magenta,
+        Color::Cyan,
+        Color::Orange,
+        Color::Purple,
+        Color::Pink,
+        Color::Teal,
+        Color::Brown,
+    };
+
+    Color clearColor = Color::Black;
 
     while(true){
         absolute_time_t time = get_absolute_time();
@@ -168,14 +205,14 @@ void picoCubeTest(){
         // yaw = mod(yaw + Input::GetAxis(Input::Axis::X), 360fp);
         // pitch = mod(pitch + Input::GetAxis(Input::Axis::Y), 360fp);
 
-        yaw = Input::GetAxis(Input::Axis::X) * 45;
-        pitch = Input::GetAxis(Input::Axis::Y) * 45;
+        yaw = Input::GetAxis(Input::Axis::X) * 90;
+        pitch = Input::GetAxis(Input::Axis::Y) * 90;
 
         // mat4f rot = getRotationalMatrix(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
-        mat4f rot = getRotationalMatrix(vec3f(pitch, yaw, 0));
+        mat4f rot = getRotationalMatrix(vec3f(pitch, yaw+180, 0));
         mat4f M = trans * rot * scale;
         
-        mat4f trans2 = mat4f::translate(vec3f(1, sin(to_ms_since_boot(get_absolute_time())/1000.0), 6));
+        mat4f trans2 = mat4f::translate(vec3f(0, sin(to_ms_since_boot(get_absolute_time())/1000.0), 6));
         mat4f M2 = trans2 * rot * scale;
 
         mat4f rot2 = getRotationalMatrix(vec3f(45, 20, 0));
@@ -190,13 +227,18 @@ void picoCubeTest(){
 
         while(ST7789::IsFlipping());
 
-        Renderer::Clear(Color::Red);
+        if(Input::IsButtonDown(Input::Buttons::Stick)){
+            clearColor = randomColors[rand() % 11];
+        }
+        Renderer::Clear(clearColor);
+
         time = get_absolute_time();
 
-        ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M2;
-        ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
+        ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M;
+        // ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
 
-        Renderer::DrawMesh(cube, M2, lightingMat1);
+        Renderer::DrawMesh(sphere, M, textureMat);
+        // Renderer::DrawMesh(suzanne, M, lightingMat1);
         // Renderer::DrawMesh(cube, M2, lightingMat1);
         // Renderer::DrawMesh(cube, M3, lightingShader);
         // Renderer::DrawMesh(cube, M3, lightingMat2);
@@ -206,6 +248,8 @@ void picoCubeTest(){
         // Renderer::DrawMesh(cube, M5, flatMat);
         
         // Renderer::DrawMesh(cube, M, lightingShader);
+
+        // Renderer::Blit(dirt, vec2i16(0));
 
         ST7789::Flip((Color16*)&Renderer::FrameBuffer);
 

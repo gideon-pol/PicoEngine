@@ -14,8 +14,7 @@
 #define JOYSTICK_PRESS_PIN 13
 
 #define JOYSTICK_AXIS_DEADZONE 0.1fp
-#define JOYSTICK_SAMPLE_SMOOTHING 4
-
+#define JOYSTICK_SAMPLE_SMOOTHING 3
 
 namespace Input {
     enum Buttons {
@@ -51,6 +50,8 @@ namespace Input {
 
         gpio_set_function(JOYSTICK_PRESS_PIN, GPIO_FUNC_SIO);
         gpio_set_dir(JOYSTICK_PRESS_PIN, GPIO_IN);
+        // set pullup resistor
+        gpio_pull_up(JOYSTICK_PRESS_PIN);
 
         adc_init();
         adc_gpio_init(JOYSTICK_X_PIN);
@@ -61,7 +62,7 @@ namespace Input {
         bool buttonA = false; //(gpio_get(BUTTON_A_PIN) != 0);
         bool buttonB = false; //(gpio_get(BUTTON_B_PIN) != 0);
         bool buttonC = false; //(gpio_get(BUTTON_C_PIN) != 0);
-        bool buttonStick = (gpio_get(JOYSTICK_PRESS_PIN) != 0);
+        bool buttonStick = (gpio_get(JOYSTICK_PRESS_PIN) == 0);
 
         buttonsPressed[Buttons::A] = (buttonA && !buttonsDown[Buttons::A]);
         buttonsPressed[Buttons::B] = (buttonB && !buttonsDown[Buttons::B]);
@@ -92,7 +93,7 @@ namespace Input {
         joystickAxis[0] = joystickAxisTotal[0] / JOYSTICK_SAMPLE_SMOOTHING;
         joystickAxis[1] = joystickAxisTotal[1] / JOYSTICK_SAMPLE_SMOOTHING;
         
-        printf("X: %f, Y: %f, Stick: %d\n", (float)joystickAxis[Axis::X], (float)joystickAxis[Axis::Y], gpio_get(JOYSTICK_PRESS_PIN));
+        printf("X: %f, Y: %f, Stick: %d\n", (float)joystickAxis[Axis::X], (float)joystickAxis[Axis::Y], buttonStick);
     };
 
     bool IsButtonDown(Buttons button){

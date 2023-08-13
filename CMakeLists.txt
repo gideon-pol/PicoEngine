@@ -7,12 +7,14 @@ if(TARGET_NATIVE)
 
     include_directories(include)
     file(GLOB_RECURSE SOURCES src/*.cpp)
+    file(GLOB_RECURSE RESOURCES res/build/*.cpp)
     add_subdirectory(lib)
-    add_subdirectory(res)
+    # add_subdirectory(res)
 
     add_executable(build
         native_main.cpp
         ${SOURCES}
+        ${RESOURCES}
     )
 
     # find_package(SDL2 REQUIRED)
@@ -24,7 +26,8 @@ if(TARGET_NATIVE)
     # target_link_directories(build PRIVATE resources)
     set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2")
     set_property(TARGET build PROPERTY CXX_STANDARD 20)
-    target_compile_options(build PRIVATE -DPLATFORM_NATIVE=1)
+    # target_compile_options(build PRIVATE -DPLATFORM_NATIVE=1)
+    add_compile_definitions(PLATFORM_NATIVE=1)
 
     target_link_libraries(
         build
@@ -41,13 +44,16 @@ else()
 
     include_directories(include)
     file(GLOB_RECURSE SOURCES src/*.cpp)
+    file(GLOB_RECURSE RESOURCES res/build/generated/*.cpp)
+    # remove the CMakeCXXCompilerId.cpp 
+
     add_subdirectory(lib)
-    add_subdirectory(res)
+    # add_subdirectory(res)
 
     add_executable(build
         main.cpp
         ${SOURCES}
-        # ${RESOURCES}
+        ${RESOURCES}
     )
 
     # target_link_directories(build PRIVATE resources)
@@ -62,7 +68,7 @@ else()
         hardware_dma
         hardware_adc
         
-        # resources
+        # ${CMAKE_CURRENT_SOURCE_DIR}/res/build/libresources.a
     )
 
     pico_generate_pio_header(build 
@@ -70,7 +76,8 @@ else()
     )
 
     pico_add_extra_outputs(build)
-    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1 -DPLATFORM_PICO=0)
+    target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1)
+    add_compile_definitions(PLATFORM_PICO=1)
     set_property(TARGET build PROPERTY CXX_STANDARD 20)
 
     if (TARGET tinyusb_device)

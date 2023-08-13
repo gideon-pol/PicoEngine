@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "ECS.h"
 #include "mathematics.h"
 #include "rendering/texture.h"
 #include "rendering/mesh.h"
@@ -212,8 +211,8 @@ namespace Renderer{
         BoundingBox2D bbi = BoundingBox2D(vec2i16(pos), vec2i16(tex.Width, tex.Height))
                             .Intersect(bounds);
 
-        for(int y = SCAST<int16_t>(bbi.Min.y()); y < SCAST<int16_t>(bbi.Max.y()); y++){
-            for(int x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){
+        for(int y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
+            for(int x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
                 FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
             }
         }
@@ -264,8 +263,8 @@ namespace Renderer{
             if(bbi.IsEmpty()) continue;
 
             area = edgeFunction(pv1, pv2, pv3);
-            for(int16_t x = SCAST<int16_t>(bbi.Min.x()); x < SCAST<int16_t>(bbi.Max.x()); x++){
-                for(int16_t y = SCAST<int16_t>(bbi.Min.y()); y < SCAST<int16_t>(bbi.Max.y()); y++){
+            for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
+                for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
                     vec3f p = vec3f(x, y, 0);
                     fixed w0 = edgeFunction(pv2, pv3, p);
                     fixed w1 = edgeFunction(pv3, pv1, p);

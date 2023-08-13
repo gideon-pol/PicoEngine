@@ -32,17 +32,17 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
     std::string line;
     while(std::getline(in, line)){
         if(line[0] == 'v' && line[1] == ' '){
-            vec3f vertex;
-            sscanf(line.c_str(), "v %f %f %f", &vertex.data[0], &vertex.data[1], &vertex.data[2]);
-            vertices.push_back(vertex);
+            float data[3];
+            sscanf(line.c_str(), "v %f %f %f", &data[0], &data[1], &data[2]);
+            vertices.push_back(vec3f(fixed(data[0]), fixed(data[1]), fixed(data[2])));
         } else if(line[0] == 'v' && line[1] == 'n'){
-            vec3f normal;
-            sscanf(line.c_str(), "vn %f %f %f", &normal.data[0], &normal.data[1], &normal.data[2]);
-            normals.push_back(normal);
+            float data[3];
+            sscanf(line.c_str(), "vn %f %f %f", &data[0], &data[1], &data[2]);
+            normals.push_back(vec3f(fixed(data[0]), fixed(data[1]), fixed(data[2])));
         } else if(line[0] == 'v' && line[1] == 't'){
-            vec2f uv;
-            sscanf(line.c_str(), "vt %f %f", &uv.data[0], &uv.data[1]);
-            uvs.push_back(uv);
+            float data[2];
+            sscanf(line.c_str(), "vt %f %f", &data[0], &data[1]);
+            uvs.push_back(vec2f(fixed(data[0]), fixed(data[1])));
         } else if(line[0] == 'f'){
             int vertexIndex[3], uvIndex[3], normalIndex[3];
             sscanf(line.c_str(), "f %d/%d/%d %d/%d/%d %d/%d/%d",
@@ -77,7 +77,7 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
 
     // write the vertices to the file as a vertex array
     out << "#include \"rendering/mesh.h\"\n#include \"mathematics/vector.h\"\n\n";
-    out << "Vertex " << sym  << "_vertices[" << bundledVertices.size() << "] = {\n";
+    out << "extern const Vertex " << sym  << "_vertices[" << bundledVertices.size() << "] = {\n";
 
     for(int i = 0; i < bundledVertices.size(); i++){
         out << "(Vertex){vec3f(" << bundledVertices[i].Position.x() << ", " << bundledVertices[i].Position.y() << ", " << bundledVertices[i].Position.z() << "),"
@@ -89,7 +89,7 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
     out << "};" << std::endl;
 
     // write the indices to the file as an index array.
-    out << "uint32_t " << sym << "_indices[" << vertexIndices.size() << "] = {";
+    out << "extern const uint32_t " << sym << "_indices[" << vertexIndices.size() << "] = {";
 
     // Simply write increasing numbers from 0 to the number of vertices
     for(int i = 0; i < vertexIndices.size(); i++){
@@ -99,7 +99,6 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
 
     out << "};" << std::endl;
 }
-
 
 void convertPNG(const char* path, std::ofstream& out, const char* sym){
     std::vector<unsigned char> image;
@@ -112,8 +111,8 @@ void convertPNG(const char* path, std::ofstream& out, const char* sym){
         exit(1);
     }
 
-    out << "#include \"rendering/texture.h\"\n#include \"rendering/color.h\"\n";
-    out << "Color16 " << sym << "[" << width * height << "] = {\n" << std::endl;
+    out << "#include \"rendering/texture.h\"\n#include \"rendering/color.h\"\n\n";
+    out << "extern const Color16 " << sym << "[" << width * height << "] = {\n";
 
     for(int i = 0; i < image.size(); i+=4){
         Color color = Color(image[i], image[i+1], image[i+2], image[i+3]);
@@ -121,27 +120,26 @@ void convertPNG(const char* path, std::ofstream& out, const char* sym){
     }
     out.seekp(-2, std::ios_base::end);
 
-    out << "};\n" << "const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
+    out << "};\n" << "extern const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
 }
 
 void outputAsBytes(std::ifstream& in, std::ofstream& out, const char* sym){
-    out << "uint8_t " << sym << "[] = {\n" << std::endl;
+    out << "extern const uint8_t " << sym << "[] = {\n" << std::endl;
 
-    // read the file as binary and output the bytes
     char byte;
     while(in.read(&byte, 1)){
         out << "0x" << std::hex << (int)(unsigned char)byte << ", ";
     }
 
-    // remove the last comma
     out.seekp(-2, std::ios_base::end);
 
-    out << "};\n" << "const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
+    out << "};\n" << "extern const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
 
 }
 
 int main(int argc, char** argv)
 {
+    std::cout << "Started embedding procedure" << std::endl;
     if (argc < 3) {
         fprintf(stderr, "USAGE: %s {sym} {rsrc}\n\n"
             "  Creates {sym}.c from the contents of {rsrc}\n",
@@ -161,12 +159,15 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    std::cout << "Converting " << argv[3] << " to embeddable array" << std::endl;
+
     char symfile[256];
     snprintf(symfile, sizeof(symfile), "%s.cpp", sym);
 
     std::cout << "Writing to " << symfile << std::endl;
+    std::cout << "Writing to " << path << std::endl;
 
-    std::ofstream out(symfile, std::ios::out | std::ios::binary);
+    std::ofstream out(path, std::ios::out | std::ios::binary);
     if(!out){
         std::cout << "Cannot open output file.\n";
         return 1;

@@ -13,8 +13,6 @@
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
 
-#define DEBUG_TEST
-
 
 // void core1_entry() {
     
@@ -39,11 +37,15 @@ int main() {
     Input::Init();
     Renderer::Init(45, 0.1, 100);
 
-#ifdef DEBUG_TEST
-    printf("Running rendering unit tests\n");
+    Color c = Color(32, 64, 128, 255);
+    printf("Color %u %u %u %u\n", c.r, c.g, c.b, c.a);
+    uint16_t c16 = c.ToColor16();
+    c = Color(c.ToColor16());
+    printf("Color16 %x\n", c16);
+    printf("Color %u %u %u %u\n", c.r, c.g, c.b, c.a);
 
     picoCubeTest();
-#endif
+
     while (true) {
         gpio_put(25, 1);
         sleep_ms(1000);

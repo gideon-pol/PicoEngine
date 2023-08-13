@@ -8,7 +8,7 @@
 #define SCAST static_cast
 
 // #define RENDER_DEBUG_FACE_NORMALS   1
-#define RENDER_DEBUG_WIREFRAME      1
+// #define RENDER_DEBUG_WIREFRAME      1
 
 #ifdef PLATFORM_PICO
 #define FRAME_WIDTH                 120

@@ -1,5 +1,8 @@
+cmake_minimum_required(VERSION 3.13)
 # set(RSRC_DIR ${CMAKE_CURRENT_LIST_DIR}/res)
 # set(RSRC_BUILD_DIR ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/res)
+
+project(embedding CXX C ASM)
 
 set( RESOURCES "" )
 
@@ -14,8 +17,12 @@ add_executable(
     ${SOURCES}
 )
 
+set_property(TARGET embed PROPERTY CXX_STANDARD 20)
+add_compile_definitions(PLATFORM_EMBED=1)
 
-target_include_directories(embed PUBLIC include)
+add_subdirectory(lib)
+
+target_include_directories(embed PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 target_include_directories(embed PUBLIC lodepng)
 target_link_directories(embed PRIVATE lodepng)
 target_link_libraries(
@@ -25,7 +32,7 @@ target_link_libraries(
 
 function( add_resource input )
     string( MAKE_C_IDENTIFIER ${input} input_identifier )
-    set( output "${input_identifier}.cpp" )
+    set( output "generated/${input_identifier}.cpp" )
     add_custom_command(
         OUTPUT ${output}
         COMMAND embed ${output} ${input_identifier} ${CMAKE_CURRENT_LIST_DIR}/${input}
@@ -35,9 +42,17 @@ function( add_resource input )
     set( RESOURCES ${RESOURCES} ${output} PARENT_SCOPE )
 endfunction()
 
-add_resource("cube.obj")
+# add_resource("cube.obj")
 add_resource("suzanne.obj")
+add_resource("sphere.obj")
+add_resource("quad.obj")
 add_resource("test.png")
 add_resource("dirt.png")
+add_resource("earth.png")
 
+
+file(MAKE_DIRECTORY build/generated)
+include_directories(resources PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 add_library(resources STATIC ${RESOURCES})
+
+# set_property(TARGET resources PROPERTY CXX_STANDARD 20)
