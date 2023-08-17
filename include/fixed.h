@@ -225,6 +225,10 @@ FORCE_INLINE constexpr fixed ceil(fixed f) {
     return fixed((f.value & ~FIXED_32_FRAC_MASK) + (1 << FIXED_32_FRAC_BITS), 0);
 }
 
+FORCE_INLINE constexpr fixed clamp(fixed f, fixed min, fixed max) {
+    return f < min ? min : (f > max ? max : f);
+}
+
 // FORCE_INLINE constexpr fixed sin(fixed f) {
 //     fixed x = f;
 //     fixed x2 = x * x;

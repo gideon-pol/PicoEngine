@@ -61,10 +61,9 @@ namespace ST7789 {
         volatile bool dmaBusy = false;
 
         void transmitScanline() {
-            uint32_t* s = (uint32_t*)&fb[dma_scanline * 120];
-
+            uint32_t* s = (uint32_t*)&fb[((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * FRAME_WIDTH];
             dmaBusy = true;
-            dma_channel_transfer_from_buffer_now(dmaChannel, s, 120);
+            dma_channel_transfer_from_buffer_now(dmaChannel, s, FRAME_WIDTH);
         }
 
         void __isr dmaComplete() {
@@ -72,7 +71,7 @@ namespace ST7789 {
                 dma_channel_acknowledge_irq0(dmaChannel);
             }
 
-            if(++dma_scanline >= 120) {
+            if(++dma_scanline >= FRAME_HEIGHT) {
                 dma_scanline = 0;
                 dmaBusy = false;
                 return;
@@ -125,7 +124,6 @@ namespace ST7789 {
         /*
             -- 12 bits per pixel
         */
-        sendCommand(COLMOD, 1, "\x03");
 
         /*
             -- Top to bottom page address order
@@ -136,6 +134,9 @@ namespace ST7789 {
             -- Left to right refresh
         */
         sendCommand(MADCTL, 1, "\x04");
+        sendCommand(TEON, 1,"\x00");
+        sendCommand(FRMCTR2, 5, "\x0C\x0C\x00\x33\x33");
+        sendCommand(COLMOD, 1, "\x03");
         sendCommand(GAMSET, 1, "\x02");
         // sendCommand(TEON, 1, "\b00000000");
         sendCommand(INVON);
@@ -146,8 +147,8 @@ namespace ST7789 {
         sendCommand(SLPOUT);
         sendCommand(NORON);
 
-        sendCommand(RASET, 4, "\x00\x00\x00\xEF");
         sendCommand(CASET, 4, "\x00\x00\x00\xEF");
+        sendCommand(RASET, 4, "\x00\x00\x00\xEF");
 
         sendCommand(DISPON);
 

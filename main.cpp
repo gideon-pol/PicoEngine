@@ -3,20 +3,19 @@
 #include "pico/multicore.h"
 
 #include "common.h"
+#include "time.hpp"
 
-#include "mathematics/matrix.h"
-#include "mathematics/vector.h"
+#include "mathematics.h"
 
 #include "hardware/st7789.h"
 #include "hardware/input.h"
 
 #include "rendering/renderer.h"
-#include "tests/rendering_tests.h"
+// #include "tests/rendering_tests.h"
 
-
-// void core1_entry() {
-    
-// }
+extern void game_init();
+extern void game_update();
+extern void game_render();
 
 int main() {
     stdio_init_all();
@@ -35,22 +34,19 @@ int main() {
     ST7789::Init();
     ST7789::SetBrightness(65535);
     Input::Init();
-    Renderer::Init(45, 0.1, 100);
+    Renderer::Init();
 
-    Color c = Color(32, 64, 128, 255);
-    printf("Color %u %u %u %u\n", c.r, c.g, c.b, c.a);
-    uint16_t c16 = c.ToColor16();
-    c = Color(c.ToColor16());
-    printf("Color16 %x\n", c16);
-    printf("Color %u %u %u %u\n", c.r, c.g, c.b, c.a);
-
-    picoCubeTest();
+    game_init();
+    // picoCubeTest();
 
     while (true) {
-        gpio_put(25, 1);
-        sleep_ms(1000);
-        gpio_put(25, 0);
-        sleep_ms(1000);
+        Time::Update();
+        Input::Poll();
+        game_update();
+
+        while(ST7789::IsFlipping());
+        game_render();
+        ST7789::Flip((Color16*)&Renderer::FrameBuffer);
     }
 
     return 0;

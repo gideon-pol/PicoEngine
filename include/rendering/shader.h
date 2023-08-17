@@ -1,8 +1,8 @@
 #pragma once
 
-#include "rendering/renderer.h"
 #include "rendering/color.h"
 #include "rendering/mesh.h"
+#include "rendering/texture.h"
 
 struct TriangleShaderData {
     Vertex v1;
@@ -23,7 +23,7 @@ struct FragmentShaderData {
     Color FragmentColor;
 };
 
-enum ShaderType { WireFrame, Flat, Texture, Custom };
+enum ShaderType { None, Flat, Texture, Custom };
 
 class Shader {
 public:
@@ -45,7 +45,7 @@ public:
 
     FlatShader(){
         // TODO: Test whether this is (significantly) slower than an engine implemented shader
-        Type = ShaderType::Custom;
+        // Type = ShaderType::Custom;
         // TriangleProgram = [](TriangleShaderData& i, void* p){
         //     i.TriangleColor = ((Parameters*)p)->_Color;
         // };
@@ -165,7 +165,6 @@ public:
         return new Parameters();
     }
 };
-
 
 struct Material {
     Shader& _Shader;

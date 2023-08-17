@@ -11,16 +11,6 @@
 extern Vertex suzanne_obj_vertices[2904];
 extern uint32_t suzanne_obj_indices[2904];
 
-extern const Vertex sphere_obj_vertices[1080];
-extern const uint32_t sphere_obj_indices[1080];
-
-extern const Vertex quad_obj_vertices[6];
-extern const uint32_t quad_obj_indices[6];
-
-extern const Color16 earth_png[80000];
-
-const Color16 test[1] = { Color::Green.ToColor16() };
-
 // extern Color16 test_png[920*900];
 
 extern Color16 dirt_png[400*400];
@@ -91,7 +81,7 @@ void drawCubeTest(){
     // Texture2D tex = Texture2D((Color16*)&test_png, 920, 900);
     // Texture2D dirt = Texture2D((Color16*)&dirt_png, 400, 400);
 
-    Camera* main = Renderer::MainCamera;
+    Camera& main = Renderer::MainCamera;
 
     LightingShader s = LightingShader(LightingShader::ShadingType::Flat);
     FlatShader f = FlatShader();
@@ -147,16 +137,14 @@ void drawCubeTest(){
 #include "hardware/input.h"
 
 void picoCubeTest(){
+    Camera cam = Renderer::MainCamera;
+
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
     Mesh quad = Mesh((Vertex*)&quadVerts, 4, (uint32_t*)&quadIndices, 2);
     Mesh suzanne = Mesh((Vertex*)&suzanne_obj_vertices, sizeof(suzanne_obj_vertices)/sizeof(Vertex), (uint32_t*)&suzanne_obj_indices, sizeof(suzanne_obj_indices)/sizeof(uint32_t)/3);
-    Mesh sphere = Mesh((Vertex*)&sphere_obj_vertices, 1080, (uint32_t*)&sphere_obj_indices, 1080/3);
-    Mesh quad2 = Mesh((Vertex*)&quad_obj_vertices, sizeof(quad_obj_vertices)/sizeof(Vertex), (uint32_t*)&quad_obj_indices, sizeof(quad_obj_vertices)/sizeof(uint32_t)/3);
 
     Texture2D dirt = Texture2D((Color16*)&dirt_png, 400, 400);
-    Texture2D earth = Texture2D((Color16*)&earth_png, 400, 200);
-    Texture2D testTex = Texture2D((Color16*)&test, 1, 1);
 
     LightingShader s = LightingShader(LightingShader::ShadingType::Smooth);
     Material lightingMat1 = Material(s);
@@ -171,10 +159,7 @@ void picoCubeTest(){
     Material flatMat = Material(f);
     ((FlatShader::Parameters*)flatMat.Parameters)->_Color = Color::Green;
 
-    TextureShader t = TextureShader();
-    Material textureMat = Material(t);
-    ((TextureShader::Parameters*)textureMat.Parameters)->_Texture = &earth;
-    ((TextureShader::Parameters*)textureMat.Parameters)->TextureScale = vec2f(1);
+    
 
     mat4f trans = mat4f::translate(vec3f(0, 0, 4));
     mat4f scale = mat4f::scale(vec3f(1, 1, 1));
@@ -237,8 +222,7 @@ void picoCubeTest(){
         ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M;
         // ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
 
-        Renderer::DrawMesh(sphere, M, textureMat);
-        // Renderer::DrawMesh(suzanne, M, lightingMat1);
+        Renderer::DrawMesh(suzanne, M, lightingMat1);
         // Renderer::DrawMesh(cube, M2, lightingMat1);
         // Renderer::DrawMesh(cube, M3, lightingShader);
         // Renderer::DrawMesh(cube, M3, lightingMat2);

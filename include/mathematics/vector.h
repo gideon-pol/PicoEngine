@@ -241,12 +241,14 @@ struct vec4 : public vec<T, 4> {
     FORCE_INLINE constexpr vec3<T> xyz() const { return vec3<T>(data[0], data[1], data[2]); };
 
     constexpr vec3<T> homogenize() const {
-        if(data[3] == 0) return vec3<T>(0);
+        if(data[3] == SCAST<T>(0)) return vec3<T>(0);
+        printf("%f\n", (float)data[3]);
         return vec3<T>(data[0] / data[3], data[1] / data[3], data[2] / data[3]);
     };
 };
 
 typedef vec2<int16_t> vec2i16;
+typedef vec2<int32_t> vec2i32;
 typedef vec2<fixed> vec2f;
 
 // struct vec2i16 : public vec2<int16_t> {

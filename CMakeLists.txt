@@ -78,7 +78,7 @@ else()
     pico_add_extra_outputs(build)
     target_compile_options(build PRIVATE -DPARAM_ASSERTIONS_ENABLE_ALL=1)
     add_compile_definitions(PLATFORM_PICO=1)
-    set_property(TARGET build PROPERTY CXX_STANDARD 20)
+    target_compile_features(build PUBLIC cxx_std_20)
 
     if (TARGET tinyusb_device)
         pico_enable_stdio_usb(build 1)
