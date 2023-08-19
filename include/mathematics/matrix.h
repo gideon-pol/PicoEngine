@@ -111,6 +111,8 @@ struct mat {
         }
         return result;
     };
+
+
 };
 
 typedef mat<fixed, 2, 2> mat2;
@@ -118,15 +120,23 @@ typedef mat<fixed, 3, 3> mat3;
 
 struct mat4f : public mat<fixed, 4, 4> {
     using mat<fixed, 4, 4>::mat;
-    constexpr mat4f(const mat<fixed, 4, 4>& other) : mat<fixed, 4, 4>(other) {};
+    constexpr mat4f(const mat<fixed, 4, 4>& other) : mat<fixed, 4, 4>(other) { };
 
     FORCE_INLINE constexpr mat4f operator*(const mat4f& other) const { return mat<fixed, 4, 4>::operator*(other); };
     FORCE_INLINE constexpr vec4f operator*(const vec4f& other) const { return mat<fixed, 4, 4>::operator*(other); };
     FORCE_INLINE constexpr vec4f operator()(int i) const { return mat<fixed, 4, 4>::operator()(i); };
+    FORCE_INLINE constexpr fixed operator()(int y, int x) const { return mat<fixed, 4, 4>::operator()(y, x); };
+    FORCE_INLINE constexpr vec4f col(int i) const { return mat<fixed, 4, 4>::col(i); };
 
-    FORCE_INLINE constexpr vec4f col(int i) const {
-        return vec4f(data[0](i), data[1](i), data[2](i), data[3](i));
-    };
+    constexpr mat4f transpose(){
+        mat4f result = mat4f::identity();
+        for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+                result[i][j] = data[j](i);
+            }
+        }
+        return result;
+    }
 
     constexpr static mat4f translate(const vec<fixed, 3>& v) {
         mat4f result = mat4f::identity();
@@ -167,6 +177,12 @@ struct mat4f : public mat<fixed, 4, 4> {
 
         return result;
     };
+
+    constexpr static mat4f euler(const vec<fixed, 3>& v){
+        return  mat4f::rotate(v(2), vec3f::forward) *
+                mat4f::rotate(v(0), vec3f::right) *
+                mat4f::rotate(v(1), vec3f::up);
+    }
 
     constexpr static mat4f perspective(fixed fov, fixed aspect, fixed near, fixed far) {
         mat4f result = mat4f();

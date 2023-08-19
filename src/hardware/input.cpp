@@ -1,7 +1,8 @@
 #include "hardware/input.h"
-#include "hardware/adc.h"
 
 #ifdef PLATFORM_PICO
+#include "hardware/adc.h"
+
 void Input::Init(){
     // gpio_function(BUTTON_A_PIN, GPIO_FUNC_SIO);
     // gpio_function(BUTTON_B_PIN, GPIO_FUNC_SIO);
@@ -27,15 +28,15 @@ void Input::Poll(){
     bool buttonC = false; //(gpio_get(BUTTON_C_PIN) != 0);
     bool buttonStick = (gpio_get(JOYSTICK_PRESS_PIN) == 0);
 
-    buttonsPressed[Buttons::A] = (buttonA && !buttonsDown[Buttons::A]);
-    buttonsPressed[Buttons::B] = (buttonB && !buttonsDown[Buttons::B]);
-    buttonsPressed[Buttons::C] = (buttonC && !buttonsDown[Buttons::C]);
-    buttonsPressed[Buttons::Stick] = (buttonStick && !buttonsDown[Buttons::Stick]);
+    buttonsPressed[Button::A] = (buttonA && !buttonsDown[Button::A]);
+    buttonsPressed[Button::B] = (buttonB && !buttonsDown[Button::B]);
+    buttonsPressed[Button::C] = (buttonC && !buttonsDown[Button::C]);
+    buttonsPressed[Button::Stick] = (buttonStick && !buttonsDown[Button::Stick]);
 
-    buttonsDown[Buttons::A] = buttonA;
-    buttonsDown[Buttons::B] = buttonB;
-    buttonsDown[Buttons::C] = buttonC;
-    buttonsDown[Buttons::Stick] = buttonStick;
+    buttonsDown[Button::A] = buttonA;
+    buttonsDown[Button::B] = buttonB;
+    buttonsDown[Button::C] = buttonC;
+    buttonsDown[Button::Stick] = buttonStick;
 
     adc_select_input(0);
     fixed rawX = fixed((int)adc_read() - 2048)/2048;
@@ -59,11 +60,11 @@ void Input::Poll(){
     printf("X: %f, Y: %f, Stick: %d\n", (float)joystickAxis[Axis::X], (float)joystickAxis[Axis::Y], buttonStick);
 };
 
-bool Input::IsButtonDown(Buttons button){
+bool Input::GetButtonDown(Button button){
     return buttonsDown[button];
 };
 
-bool Input::IsButtonPressed(Buttons button){
+bool Input::GetButtonPress(Button button){
     return buttonsPressed[button];
 };
 
@@ -73,4 +74,12 @@ fixed Input::GetAxis(Axis axis){
         0fp :
         (joystickAxis[axis] - JOYSTICK_AXIS_DEADZONE) / (1.0fp - JOYSTICK_AXIS_DEADZONE);
 };
+#endif
+
+#ifdef PLATFORM_NATIVE
+void Input::Init(){};
+void Input::Poll(){};
+bool Input::GetButtonDown(Button button){return false;};
+bool Input::GetButtonPress(Button button){return false;};
+fixed Input::GetAxis(Axis axis){return 0fp;};
 #endif

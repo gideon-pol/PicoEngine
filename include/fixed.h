@@ -7,7 +7,7 @@
     #include <iostream>
 #endif
 
-#define FIXED_32_FRAC_BITS 16
+#define FIXED_32_FRAC_BITS 10
 #define FIXED_32_FRAC_MASK ((1 << FIXED_32_FRAC_BITS) - 1)
 
 struct fixed {
@@ -151,7 +151,7 @@ struct fixed {
         return value / (double)(1 << FIXED_32_FRAC_BITS);
     }
 
-#ifndef PLATFORM_EMBED
+#ifdef PLATFORM_PICO
     constexpr fixed(int value) : value((int64_t)value << FIXED_32_FRAC_BITS) {}
     FORCE_INLINE explicit constexpr operator int() const {
         return value >> FIXED_32_FRAC_BITS;
@@ -222,7 +222,9 @@ FORCE_INLINE constexpr fixed floor(fixed f) {
 }
 
 FORCE_INLINE constexpr fixed ceil(fixed f) {
-    return fixed((f.value & ~FIXED_32_FRAC_MASK) + (1 << FIXED_32_FRAC_BITS), 0);
+    return fixed((f.value & ~FIXED_32_FRAC_MASK) + 
+                (f.value & FIXED_32_FRAC_MASK ? (1 << FIXED_32_FRAC_BITS) : 0), 
+            0);
 }
 
 FORCE_INLINE constexpr fixed clamp(fixed f, fixed min, fixed max) {

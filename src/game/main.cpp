@@ -7,125 +7,180 @@
 #include "rendering/mesh.h"
 #include "rendering/renderer.h"
 #include "hardware/input.h"
+#include "ecs/object.h"
 
 extern const Vertex sphere_obj_vertices[1080];
 extern const uint32_t sphere_obj_indices[1080];
 
 extern const Color16 earth_png[80000];
 extern const Color16 mars_png[80000];
+extern const Color16 moon_png[80000];
 
-struct Body {
-    vec3f Position;
-    vec3f Rotation;
-    vec3f Velocity;
-    vec3f RotationalVelocity;
-    vec3f Scale;
-    fixed Mass;
+class PlanetShader : Shader {
+    public:
+    struct Parameters {
+        Texture2D* _Texture;
+        vec3f LightPosition;
+        Color LightColor;
+    };
+
+    PlanetShader(){
+        Type = ShaderType::Custom;
+        TriangleProgram = [](TriangleShaderData& i, void* p){
+            // caluculate normal
+            Parameters* parameters = (Parameters*)p;
+            vec3f normal = (i.v2.Position - i.v1.Position).cross(i.v3.Position - i.v1.Position).normalize();
+            // fixed diff = clamp(dot(normal, (parameters->LightPosition - i.v1.Position).normalize()), 0fp, 1fp);
+
+            
+            // i.TriangleColor = parameters->LightColor
+        };
+        FragmentProgram = [](FragmentShaderData& i, void* p){
+            // Texture2D* texture = ((Parameters*)p)->_Texture;
+            // vec3f lightPosition = ((Parameters*)p)->LightPosition;
+            // Color lightColor = ((Parameters*)p)->LightColor;
+
+            // vec3f normal = i.Normal.normalize();
+            // vec3f lightDirection = (lightPosition - i.FragCoord).normalize();
+            // fixed lightIntensity = clamp(dot(normal, lightDirection), 0fp, 1fp);
+
+            // Color textureColor = texture->Sample(i.UV);
+            // i.FragmentColor = textureColor * lightColor * lightIntensity;
+        };
+    }
+    
+    Parameters* CreateParameters() override {
+        return new Parameters();
+    }
+};
+
+#define LINE_SIZE 20
+
+struct Body : public Object {
+    vec3<float> Velocity;
+    vec3<float> RotationalVelocity;
+    float Mass;
     Material* _Material;
+    vec3f LinePoints[LINE_SIZE];
 };
 
 Camera& cam = Renderer::MainCamera;
-Mesh planet = Mesh((Vertex*)&sphere_obj_vertices, 1080, (uint32_t*)&sphere_obj_indices, 1080/3);
-Texture2D earth = Texture2D(nullptr, 400, 200);
-Texture2D mars = Texture2D(nullptr, 400, 200);
+Mesh planetMesh = Mesh((Vertex*)&sphere_obj_vertices, 1080, (uint32_t*)&sphere_obj_indices, 1080/3);
+Texture2D earth = Texture2D((Color16*)&earth_png, 400, 200);
+Texture2D mars = Texture2D((Color16*)&mars_png, 400, 200);
+Texture2D moon = Texture2D((Color16*)&moon_png, 400, 200);
 TextureShader t = TextureShader();
 FlatShader f = FlatShader();
 
-Body planets[2];
+Body planets[3];
 
 fixed yaw, pitch;
 
+const float G = 1;
+
 void game_init(){
     printf("Initializing game\n");
-    Material* earthMat = new Material(f);
-    ((FlatShader::Parameters*)earthMat->Parameters)->_Color = Color::Green;
-    // ((TextureShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
-    // ((TextureShader::Parameters*)earthMat->Parameters)->TextureScale = vec2f(1);
+    Material* earthMat = new Material(t);
+    ((TextureShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
+    ((TextureShader::Parameters*)earthMat->Parameters)->TextureScale = vec2f(1);
 
-    Material* marsMat = new Material(f);
-    ((FlatShader::Parameters*)marsMat->Parameters)->_Color = Color::Blue;
-    // ((TextureShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
-    // ((TextureShader::Parameters*)marsMat->Parameters)->TextureScale = vec2f(1);
+    Material* marsMat = new Material(t);
+    ((TextureShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
+    ((TextureShader::Parameters*)marsMat->Parameters)->TextureScale = vec2f(1);
 
-    planets[0] = (Body){
-        vec3f(0),
-        vec3f(0),
-        vec3f(0),
-        vec3f(0),
-        vec3f(1),
-        1fp,
-        earthMat
-    };
+    Material* moonMat = new Material(t);
+    ((TextureShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
+    ((TextureShader::Parameters*)moonMat->Parameters)->TextureScale = vec2f(1);
 
-    planets[1] = (Body){
-        vec3f(0),
-        vec3f(0),
-        vec3f(0),
-        vec3f(0),
-        vec3f(1),
-        1fp,
-        marsMat
-    };
+    planets[0]._Material = earthMat;
+    planets[0].Mass = 1;
+    planets[0].Velocity = vec3<float>(0);
+    planets[1]._Material = marsMat;
+    planets[1].SetPosition(vec3f(5, 0, 0));
+    planets[1].Enabled = false;
+    planets[2]._Material = moonMat;
+    planets[2].SetPosition(vec3f(0, 0, 5));
+    planets[2].SetScale(vec3f(0.5, 0.5, 0.5));
+    planets[2].Mass = 0.1;
+    planets[2].Velocity = vec3<float>(0.5, 0, 0);
+
+    // planets[2].Velocity = vec3f(0, 0, sqrt(G * (planets[0].Mass + planets[2].Mass) / (planets[2].GetPosition() - planets[0].GetPosition()).magnitude() / 2));
 
     printf("Finished initializing game\n");
 }
 
+int targetPlanet = 0;
+
 void game_update(){
     printf("Delta time: %f\n", Time::GetDeltaTime());
-    yaw += Input::GetAxis(Input::Axis::X) * 20fp * Time::GetDeltaTime();
-    pitch += Input::GetAxis(Input::Axis::Y) * 20fp * Time::GetDeltaTime();
+    yaw += Input::GetAxis(Input::Axis::X) * 50fp * Time::GetDeltaTime();
+    pitch += Input::GetAxis(Input::Axis::Y) * 50fp * Time::GetDeltaTime();
 
     yaw = mod(yaw, 360fp);
     pitch = clamp(pitch, -90fp, 90fp);
 
-    // yaw = mod(yaw + fixed(Time::GetDeltaTime()) * 10fp, 360fp);
-    // printf("Yaw: %f, Pitch: %f\n", (float)yaw, (float)pitch);
+    for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
+        if(!planets[i].Enabled) continue;
+        for(int j = i+1; j < sizeof(planets)/sizeof(Body); j++){
+            if(!planets[j].Enabled) continue;
+            if(i == j) continue;
+            vec3<float> direction = planets[j].GetPosition() - planets[i].GetPosition();
+            float distance = direction.magnitude();
+            float g = ((planets[i].Mass * planets[j].Mass) / (distance * distance) * G);
+            vec3<float> force = direction.normalize() * g * Time::GetDeltaTime();
+            planets[i].Velocity += force / planets[i].Mass;
+            planets[j].Velocity -= force / planets[j].Mass;
+        }
+    }
 
-    cam.SetRotation(vec3f(0, yaw, 0));
-    // planets[0].Rotation = vec3f(0, yaw, 0);
-    vec3f camForward = cam.GetViewMatrix().col(2).xyz();
+    for(Body& planet : planets){
+        // planets[i].Rotation += planets[i].RotationalVelocity * Time::GetDeltaTime();
+        if(!planet.Enabled) continue;
+        planet.Translate(planet.Velocity * Time::GetDeltaTime());
+    }
 
-    // for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
-    //     for(int j = 0; j < sizeof(planets)/sizeof(Body); j++){
-    //         if(i == j) continue;
+    if(Time::GetFrameCount() % 50 == 0){
+        for(Body& planet : planets){
+            if(!planet.Enabled) continue;
+            for(int i = LINE_SIZE-1; i > 0 ; i--){
+                planet.LinePoints[i] = planet.LinePoints[i-1];
+            }
 
-    //         vec3f direction = planets[j].Position - planets[i].Position;
-    //         fixed distance = direction.magnitude();
-    //         vec3f force = direction.normalize() * (planets[i].Mass * planets[j].Mass) / (distance * distance);
-    //         planets[i].Velocity += force * Time::GetDeltaTime();
-    //     }
-    // }
+            planet.LinePoints[0] = planet.GetPosition();
+        }
+    }
 
-    // for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
-    //     planets[i].Rotation += planets[i].RotationalVelocity * Time::GetDeltaTime();
-    //     planets[i].Position += planets[i].Velocity * Time::GetDeltaTime();
-    // }
+    cam.SetRotation(Quaternion::Euler(vec3f(pitch, yaw, 0)));
 
-    cam.SetPosition(planets[0].Position - camForward * 5fp);
-    vec3f camPos = cam.GetPosition();
-    printf("Camera position: %f, %f, %f\n", (float)camPos(0), (float)camPos(1), (float)camPos(2));
+    vec3f camForward = cam.GetModelMatrix()(2).xyz();
+
+    if(Input::GetButtonPress(Input::Button::Stick)){
+        while(!planets[++targetPlanet].Enabled);
+    }
+
+    cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * 5fp);
 }
 
 void game_render(){
-    Renderer::Clear(Color::Red);
-    static FlatShader flatShader = FlatShader();
-    static Material flatMat = Material(flatShader);
-    ((FlatShader::Parameters*)flatMat.Parameters)->_Color = Color::Green;
+    Renderer::Clear(Color::Black);
+    FlatShader f = FlatShader();
+    Material flatMat = Material(f);
+    ((FlatShader::Parameters*)flatMat.Parameters)->_Color = Color::White;
+    
+    for(Body& planet : planets){
+        if(!planet.Enabled) continue;
+        Renderer::DrawMesh(planetMesh, planet.GetModelMatrix(), *planet._Material);
 
-    for(int i = 0; i < 1 /*sizeof(planets)/sizeof(Body)*/; i++){
-        mat4f modelMat = 
-            mat4f::translate(planets[i].Position) *
-            mat4f::scale(planets[i].Scale) *
-            getRotationalMatrix(planets[i].Rotation);
-        Renderer::DrawMesh(planet, modelMat, *planets[i]._Material);
+        Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
+        for(int i = 0; i < LINE_SIZE-1; i++){
+            Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
+        }
     }
 
-    // Renderer::DrawBox(BoundingBox2D(vec2f(yaw,0), vec2f(yaw+10,10)), Color::Green);
-
-    vec3f upV = getRotationalMatrix(planets[0].Rotation).col(1).xyz();
-    vec3f rightV = getRotationalMatrix(planets[0].Rotation).col(0).xyz();
-    vec3f forwardV = getRotationalMatrix(planets[0].Rotation).col(2).xyz();
-    Renderer::DrawLine(planets[0].Position, planets[0].Position + upV, Color::Yellow, 2);
-    Renderer::DrawLine(planets[0].Position, planets[0].Position + rightV, Color::Blue, 2);
-    Renderer::DrawLine(planets[0].Position, planets[0].Position + forwardV, Color::Cyan, 2);
+    // vec3f upV = mat4f::euler(planets[0].Rotation).col(1).xyz();
+    // vec3f rightV = mat4f::euler(planets[0].Rotation).col(0).xyz();
+    // vec3f forwardV = mat4f::euler(planets[0].Rotation).col(2).xyz();
+    // Renderer::DrawLine(planets[0].Position, planets[0].Position + upV, Color::Yellow, 2);
+    // Renderer::DrawLine(planets[0].Position, planets[0].Position + rightV, Color::Blue, 2);
+    // Renderer::DrawLine(planets[0].Position, planets[0].Position + forwardV, Color::Cyan, 2);
 }

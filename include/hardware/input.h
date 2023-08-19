@@ -16,7 +16,7 @@
 #define JOYSTICK_SAMPLE_SMOOTHING 3
 
 namespace Input {
-    enum Buttons {
+    enum Button {
         A = 0,
         B = 1,
         C = 2,
@@ -39,8 +39,8 @@ namespace Input {
 
     void Init();
     void Poll();
-    bool IsButtonDown(Buttons button);
-    bool IsButtonPressed(Buttons button);
+    bool GetButtonDown(Button button);
+    bool GetButtonPress(Button button);
     fixed GetAxis(Axis axis);
 };
 

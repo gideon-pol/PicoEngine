@@ -8,8 +8,8 @@
 // extern Vertex cube_obj_vertices[36];
 // extern uint32_t cube_obj_indices[36];
 
-extern Vertex suzanne_obj_vertices[2904];
-extern uint32_t suzanne_obj_indices[2904];
+// extern Vertex suzanne_obj_vertices[2904];
+// extern uint32_t suzanne_obj_indices[2904];
 
 // extern Color16 test_png[920*900];
 
@@ -88,7 +88,7 @@ void drawCubeTest(){
     RainbowTestShader r = RainbowTestShader();
     TextureShader t = TextureShader();
 
-    mat4f rot = getRotationalMatrix(vec3f(20, 160, 0));
+    mat4f rot = mat4f::euler(vec3f(20, 160, 0));
     mat4f trans = mat4f::translate(vec3f(-1, 0, 6));
     mat4f trans2 = mat4f::translate(vec3f(1, 0, 6));
     mat4f trans3 = mat4f::translate(vec3f(-1, 0, 3));
@@ -142,7 +142,7 @@ void picoCubeTest(){
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
     Mesh pyramid = Mesh((Vertex*)&pyramidVerts, 5, (uint32_t*)&pyramidIndices, 6);
     Mesh quad = Mesh((Vertex*)&quadVerts, 4, (uint32_t*)&quadIndices, 2);
-    Mesh suzanne = Mesh((Vertex*)&suzanne_obj_vertices, sizeof(suzanne_obj_vertices)/sizeof(Vertex), (uint32_t*)&suzanne_obj_indices, sizeof(suzanne_obj_indices)/sizeof(uint32_t)/3);
+    // Mesh suzanne = Mesh((Vertex*)&suzanne_obj_vertices, sizeof(suzanne_obj_vertices)/sizeof(Vertex), (uint32_t*)&suzanne_obj_indices, sizeof(suzanne_obj_indices)/sizeof(uint32_t)/3);
 
     Texture2D dirt = Texture2D((Color16*)&dirt_png, 400, 400);
 
@@ -193,14 +193,14 @@ void picoCubeTest(){
         yaw = Input::GetAxis(Input::Axis::X) * 90;
         pitch = Input::GetAxis(Input::Axis::Y) * 90;
 
-        // mat4f rot = getRotationalMatrix(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
-        mat4f rot = getRotationalMatrix(vec3f(pitch, yaw+180, 0));
+        // mat4f rot = mat4f::euler(vec3f(20, to_ms_since_boot(get_absolute_time())/10, 0));
+        mat4f rot = mat4f::euler(vec3f(pitch, yaw+180, 0));
         mat4f M = trans * rot * scale;
         
         mat4f trans2 = mat4f::translate(vec3f(0, sin(to_ms_since_boot(get_absolute_time())/1000.0), 6));
         mat4f M2 = trans2 * rot * scale;
 
-        mat4f rot2 = getRotationalMatrix(vec3f(45, 20, 0));
+        mat4f rot2 = mat4f::euler(vec3f(45, 20, 0));
         mat4f trans3 = mat4f::translate(vec3f(0, -sin(to_ms_since_boot(get_absolute_time())/1000.0)+1, 10));
         mat4f M3 = trans3 * rot2 * scale;
 
@@ -222,7 +222,7 @@ void picoCubeTest(){
         ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M;
         // ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
 
-        Renderer::DrawMesh(suzanne, M, lightingMat1);
+        // Renderer::DrawMesh(suzanne, M, lightingMat1);
         // Renderer::DrawMesh(cube, M2, lightingMat1);
         // Renderer::DrawMesh(cube, M3, lightingShader);
         // Renderer::DrawMesh(cube, M3, lightingMat2);

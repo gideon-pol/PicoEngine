@@ -3,4 +3,5 @@
 #include "mathematics/vector.h"
 #include "mathematics/matrix.h"
 #include "mathematics/rendering.h"
+#include "mathematics/quaternion.h"
 #include "fixed.h"

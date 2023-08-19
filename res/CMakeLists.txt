@@ -49,6 +49,8 @@ add_resource("quad.obj")
 add_resource("test.png")
 add_resource("dirt.png")
 add_resource("earth.png")
+add_resource("mars.png")
+add_resource("moon.png")
 
 
 file(MAKE_DIRECTORY build/generated)

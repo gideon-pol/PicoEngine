@@ -10,9 +10,14 @@
 #include "mathematics.h"
 #include "rendering/renderer.h"
 #include "tests/rendering_tests.h"
+#include "hardware/input.h"
+#include "time.hpp"
 // #include "common.h"
 
-extern "C" const uint16_t main_font[];
+extern void game_init();
+extern void game_update();
+extern void game_render();
+
 
 // void setupWindow(vec2i16 resolution){
 //     if(SDL_Init(SDL_INIT_VIDEO) == -1)
@@ -53,9 +58,6 @@ extern "C" const uint16_t main_font[];
 
 int main(int argc, char** argv){
     // setupWindow(vec2i16(1000));
-    Renderer::Init(45, 0.1, 100);
-
-    printf("Running rendering unit tests\n");
 
     struct timespec start, now;
     clock_gettime(CLOCK_REALTIME, &start);
@@ -64,7 +66,7 @@ int main(int argc, char** argv){
     // printf("%x\n", Color(0, 255, 0, 128));
     // printf("%x\n", Color(0, 0, 255, 128));
 
-    drawCubeTest();
+    // drawCubeTest();
 
     fixed t = 1.5fp;
     fixed d = 0.5fp;
@@ -91,20 +93,23 @@ int main(int argc, char** argv){
     mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
     vec4f p = vec4f(1, 0, 0, 1);
 
-    for(int y = 0; y < 4; y++){
-        for(int x = 0; x < 4; x++){
-            printf("%f ", (float)m2(y)(x));
-        }
-        printf("\n");
-    }
- 
-    p = m2 * p;
-    printf("%f %f %f %f\n", (float)p.x(), (float)p.y(), (float)p.z(), (float)p.w());
 
     // clock_gettime(CLOCK_REALTIME, &now);
     // // calculate difference in seconds
     // double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
     // printf("Drawing took %lf s\n", diff);
+
+    Input::Init();
+    Renderer::Init();
+    game_init();
+
+    while(true){
+        // Time::Update();
+        // Input::Poll();
+        // game_update();
+
+        game_render();
+    }
 
     Color* pixels = new Color[FRAME_WIDTH * FRAME_HEIGHT];
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){

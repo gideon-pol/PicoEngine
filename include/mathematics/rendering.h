@@ -64,10 +64,3 @@ class BoundingVolume {
 FORCE_INLINE constexpr fixed edgeFunction(vec3f a, vec3f b, vec3f c){
     return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
 }
-
-// first applies yaw, then pitch, then roll
-FORCE_INLINE mat4f getRotationalMatrix(vec3f rot){
-    return mat4f::rotate(rot.y(), vec3f::up) *
-           mat4f::rotate(rot.z(), vec3f::forward) *
-           mat4f::rotate(rot.x(), vec3f::right);
-}

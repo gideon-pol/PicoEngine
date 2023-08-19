@@ -13,6 +13,10 @@ Camera::Camera(fixed fov, fixed near, fixed far, fixed aspect){
     updateViewMatrix();
 }
 
+mat4f Camera::GetModelMatrix(){
+    return mat4f::translate(position) * rotation.ToMatrix();
+}
+
 // Some internal caching. TODO: measure performance impact of this
 mat4f& Camera::GetViewMatrix(){
     if(orientationUpdated){
@@ -20,6 +24,7 @@ mat4f& Camera::GetViewMatrix(){
         orientationUpdated = false;
     }
     return view;
+    // return GetModelMatrix().inverse();
 }
 
 // Frustum intersection test that checks if any of the bounding volume's corners
@@ -30,14 +35,9 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
     vec3f corners[8];
     volume.GetCorners(&corners);
 
-    printf("Checkpoint --\n");
-
     mat4f MVP = GetProjectionMatrix() * GetViewMatrix() * translationMat;
     for(int i = 0; i < 8; i++){
-        printf("Checkpoint ---\n");
         vec3f corner = (MVP * vec4f(corners[i], 1)).homogenize();
-        printf("Checkpoint ----\n");
-
         if( corner.x() >= -1 && corner.x() <= 1 &&
             corner.y() >= -1 && corner.y() <= 1 &&
             corner.z() >= 0 && corner.z() <= 1){
@@ -49,9 +49,9 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
 }
 
 void Camera::updateViewMatrix(){
-    view = mat4f::translate(-position) * getRotationalMatrix(rotation);
+    view = rotation.ToMatrix() * mat4f::translate(-position);
+    // view = GetModelMatrix().inverse();
 }
-
 
 void Renderer::Init(){
     bounds = BoundingBox2D(vec2f(0, 0), vec2f(FRAME_WIDTH, FRAME_HEIGHT));
@@ -177,21 +177,21 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
     }
 }
 
-void Renderer:: DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
+void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
     // TODO: do not calculate this for every mesh
-    printf("Checkpoint 1\n");
+    // printf("Checkpoint 1\n");
     mat4f rMVP = rasterizationMat *
                     MainCamera.GetProjectionMatrix() *
                     MainCamera.GetViewMatrix() * 
                     modelMat;
 
-    printf("Checkpoint 2\n");
+    // printf("Checkpoint 2\n");
 
     if(!MainCamera.IntersectsFrustrum(mesh.Volume, modelMat)){
         return;
     }
 
-    printf("Checkpoint 3\n");
+    // printf("Checkpoint 3\n");
     
     for(int i = 0; i < mesh.PolygonCount; i++){
         uint32_t idx = i * 3;
@@ -209,21 +209,20 @@ void Renderer:: DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material
             material._Shader.TriangleProgram(t, material.Parameters);
         }
 
-        printf("Checkpoint 4\n");
+        // printf("Checkpoint 4\n");
 
         vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
         vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
         vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
 
-        printf("Checkpoint 5\n");
-
+        // printf("Checkpoint 5\n");
 
         BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
         BoundingBox2D bbi = bounds.Intersect(bb);
 
         if(bbi.IsEmpty()) continue;
 
-#ifdef RENDER_DEBUG_TRIANGLE_DRAW_BOUNDING
+#ifdef RENDER_DEBUG_TRIANGLE_BOUNDING
         DrawBorder(bbi, 1, Color::Yellow);
 #endif
 
@@ -234,7 +233,7 @@ void Renderer:: DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material
 
         area = edgeFunction(pv1, pv2, pv3);
 
-        printf("Checkpoint 6\n");
+        // printf("Checkpoint 6\n");
 
         for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
             for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
@@ -295,7 +294,7 @@ void Renderer:: DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material
             }
         }
 
-        printf("Checkpoint 7\n");
+        // printf("Checkpoint 7\n");
 
         // TODO: this doesn't properly render because the drawing of other triangles
         //       will overwrite the debug drawings
@@ -321,7 +320,7 @@ void Renderer:: DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material
             Renderer::DrawLine(pos, pos + normal, Color::White);
         #endif
 
-        printf("Checkpoint 8\n");
+        // printf("Checkpoint 8\n");
 
         continue;
     }

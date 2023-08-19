@@ -6,6 +6,7 @@
 #include "rendering/mesh.h"
 #include "rendering/shader.h"
 #include "rendering/color.h"
+#include "ecs/object.h"
 
 class Camera {
     public:
@@ -16,7 +17,7 @@ class Camera {
         orientationUpdated = true;
     };
 
-    FORCE_INLINE void SetRotation(const vec3f rotation){
+    FORCE_INLINE void SetRotation(const Quaternion rotation){
         this->rotation = rotation;
         orientationUpdated = true;
     };
@@ -25,11 +26,12 @@ class Camera {
         return position;
     };
 
-    FORCE_INLINE vec3f GetRotation(){
+    FORCE_INLINE Quaternion GetRotation(){
         return rotation;
     };
 
     mat4f& GetViewMatrix();
+    mat4f GetModelMatrix();
 
     FORCE_INLINE mat4f& GetProjectionMatrix(){
         return projection;
@@ -45,7 +47,9 @@ class Camera {
         fixed far;
 
         vec3f position;
-        vec3f rotation;
+        Quaternion rotation;
+        // vec3f rotation;
+
 
         mat4f projection;
         mat4f view;

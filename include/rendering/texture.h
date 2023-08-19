@@ -29,7 +29,6 @@ public:
             int x = SCAST<int>(mod(abs(uv(0)), 1) * fixed(Width));
             int y = SCAST<int>(mod(abs(uv(1)), 1) * fixed(Height));
             return Color(Data[y * Width + x]);
-
         // This mode is probably mostly useless as colors are reduced to 16 bits anyway
         } else if(Mode == SampleMode::Bilinear){
             fixed x = uv(0) * fixed(Width);

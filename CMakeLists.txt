@@ -7,7 +7,7 @@ if(TARGET_NATIVE)
 
     include_directories(include)
     file(GLOB_RECURSE SOURCES src/*.cpp)
-    file(GLOB_RECURSE RESOURCES res/build/*.cpp)
+    file(GLOB_RECURSE RESOURCES res/build/generated/*.cpp)
     add_subdirectory(lib)
     # add_subdirectory(res)
 

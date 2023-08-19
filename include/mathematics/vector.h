@@ -106,6 +106,27 @@ struct vec {
         return result;
     };
 
+    constexpr vec<T, C>& operator+=(const vec<T, C>& other) {
+        for (int i = 0; i < C; i++) {
+            data[i] += other(i);
+        }
+        return *this;
+    };
+
+    constexpr vec<T, C>& operator-=(const vec<T, C>& other) {
+        for (int i = 0; i < C; i++) {
+            data[i] -= other(i);
+        }
+        return *this;
+    };
+
+    constexpr vec<T, C>& operator*=(const T& other) {
+        for (int i = 0; i < C; i++) {
+            data[i] *= other;
+        }
+        return *this;
+    };
+
     constexpr bool operator==(const vec<T, C>& other) const {
         for (int i = 0; i < C; i++) {
             if (data[i] != other(i)) {
@@ -124,18 +145,17 @@ struct vec {
         for (int i = 0; i < C; i++) {
             result += data[i] * data[i];
         }
-        
         return sqrt(result);
     };
 
     constexpr vec<T, C> normalize() const {
         vec<T, C> result = vec<T, C>();
-        fixed mag = SCAST<fixed>(magnitude());
+        T mag = magnitude();
 
-        if(mag == 0fp) return vec<T, C>();
+        if(mag == SCAST<T>(0)) return vec<T, C>();
 
         for (int i = 0; i < C; i++) {
-            result[i] = SCAST<T>(data[i] / mag);
+            result[i] = data[i] / mag;
         }
         return result;
     };
@@ -215,7 +235,7 @@ struct vec4 : public vec<T, 4> {
     using vec<T, 4>::data;
     using vec<T, 4>::vec;
     constexpr vec4(T x, T y, T z, T w) : vec<T, 4>({x, y, z, w}) {};
-    constexpr vec4(const vec<T, 4>& other) : vec<T, 4>(other) {};
+    constexpr vec4(const vec<T, 4>& other) : vec<T, 4>(other) { };
     constexpr vec4(const vec3<T>& other, T w) : vec<T, 4>({other(0), other(1), other(2), w}) {};
 
     template <typename U>
@@ -242,7 +262,6 @@ struct vec4 : public vec<T, 4> {
 
     constexpr vec3<T> homogenize() const {
         if(data[3] == SCAST<T>(0)) return vec3<T>(0);
-        printf("%f\n", (float)data[3]);
         return vec3<T>(data[0] / data[3], data[1] / data[3], data[2] / data[3]);
     };
 };
