@@ -24,19 +24,16 @@ class Object {
         };
 
         FORCE_INLINE constexpr void SetPosition(const vec3f& position) {
-            printf("Setting position\n");
             this->position = position;
             translationUpdated = true;
         };
 
         FORCE_INLINE constexpr void SetRotation(const Quaternion& rotation) {
-            printf("Setting rotation\n");
             this->rotation = rotation;
             translationUpdated = true;
         };
 
         FORCE_INLINE constexpr void SetScale(const vec3f& scale) {
-            printf("Setting scale\n");
             this->scale = scale;
             translationUpdated = true;
         };

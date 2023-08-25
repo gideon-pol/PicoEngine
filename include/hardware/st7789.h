@@ -48,7 +48,7 @@ namespace ST7789 {
         RST = 21,
         BL = 22
     };
-    
+
     namespace {
         uint32_t dmaChannel = 0;
         uint screenSM = 0;
@@ -61,7 +61,7 @@ namespace ST7789 {
         volatile bool dmaBusy = false;
 
         void transmitScanline() {
-            uint32_t* s = (uint32_t*)&fb[((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * FRAME_WIDTH];
+            uint32_t* s = (uint32_t*)&fb[(dma_scanline == 119 ? 118 : dma_scanline) * FRAME_WIDTH];// [((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * FRAME_WIDTH];
             dmaBusy = true;
             dma_channel_transfer_from_buffer_now(dmaChannel, s, FRAME_WIDTH);
         }
@@ -134,8 +134,7 @@ namespace ST7789 {
             -- Left to right refresh
         */
         sendCommand(MADCTL, 1, "\x04");
-        sendCommand(TEON, 1,"\x00");
-        sendCommand(FRMCTR2, 5, "\x0C\x0C\x00\x33\x33");
+        // sendCommand(TEON, 1,"\x00");
         sendCommand(COLMOD, 1, "\x03");
         sendCommand(GAMSET, 1, "\x02");
         // sendCommand(TEON, 1, "\b00000000");

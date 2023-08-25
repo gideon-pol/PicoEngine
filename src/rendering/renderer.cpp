@@ -1,8 +1,13 @@
 #include "rendering/renderer.h"
 
-Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 100fp, FRAME_WIDTH / FRAME_HEIGHT);
+extern const uint8_t font_psf[];
+
+Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 1000fp, FRAME_WIDTH / FRAME_HEIGHT);
 Color16 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
+Font Renderer::TextFont = Font((uint8_t*)&font_psf);
+DepthTest Renderer::DepthTestMode = DepthTest::Less;
+Culling Renderer::CullingMode = Culling::Back;
 
 Camera::Camera(fixed fov, fixed near, fixed far, fixed aspect){
     this->fov = fov;
@@ -65,12 +70,6 @@ void Renderer::Clear(Color color){
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
         FrameBuffer[i] = color.ToColor16();
         Zbuffer[i] = 65535;
-    }
-}
-
-FORCE_INLINE void Renderer::PutPixel(vec2i16 pos, Color color){
-    if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
-        FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor16();
     }
 }
 
@@ -166,8 +165,66 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
     DrawLine(v1.xy(), v2.xy(), color, lineWidth);
 }
 
+// void Renderer::DrawCircle(vec2i16 pos, uint8_t radius, Color color){
+//     int32_t x = radius;
+//     int32_t y = 0;
+//     int32_t err = 0;
+
+//     while(x >= y){
+//         PutPixel(vec2i16(pos.x() + x, pos.y() + y), color);
+//         PutPixel(vec2i16(pos.x() + y, pos.y() + x), color);
+//         PutPixel(vec2i16(pos.x() - y, pos.y() + x), color);
+//         PutPixel(vec2i16(pos.x() - x, pos.y() + y), color);
+//         PutPixel(vec2i16(pos.x() - x, pos.y() - y), color);
+//         PutPixel(vec2i16(pos.x() - y, pos.y() - x), color);
+//         PutPixel(vec2i16(pos.x() + y, pos.y() - x), color);
+//         PutPixel(vec2i16(pos.x() + x, pos.y() - y), color);
+
+//         if(err <= 0){
+//             y += 1;
+//             err += 2 * y + 1;
+//         }
+
+//         if(err > 0){
+//             x -= 1;
+//             err -= 2 * x + 1;
+//         }
+//     }
+// }
+
+void Renderer::DrawText(const char* text, vec2i16 pos, Color color){
+    int16_t x = pos.x();
+    int16_t y = pos.y();
+
+    for(int i = 0; text[i] != '\0'; i++){
+        char c = text[i];
+        if(c == '\n'){
+            y += TextFont.GlyphSize.y();
+            x = pos.x();
+            continue;
+        }
+
+        const uint8_t* glyph = TextFont.GetGlyph(c);
+
+        for(int gy = 0; gy < TextFont.GlyphSize.y(); gy++){
+            int mask = 0b10000000;
+
+            for(int gx = 0; gx < TextFont.GlyphSize.x(); gx++){
+                if(*glyph & mask){
+                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor16();
+                }
+                mask >>= 1;
+            }
+
+            glyph += (TextFont.GlyphSize.x() + 7) / 8;
+        }
+
+        x += TextFont.GlyphSize.x();
+    }
+}
+
 void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
-    BoundingBox2D bbi = BoundingBox2D(vec2i16(pos), vec2i16(tex.Width, tex.Height))
+    BoundingBox2D bbi = BoundingBox2D(pos, pos + vec2i16(tex.Width, tex.Height))
                         .Intersect(bounds);
 
     for(int y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
@@ -229,7 +286,16 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         fixed area;
         vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
-        if(windingOrder.z() > 0) goto render_debug;
+        switch(CullingMode){
+            case Culling::None:
+                break;
+            case Culling::Front:
+                if(windingOrder.z() < 0) goto render_debug;
+                break;
+            case Culling::Back:
+                if(windingOrder.z() > 0) goto render_debug;
+                break;
+        }
 
         area = edgeFunction(pv1, pv2, pv3);
 
@@ -251,8 +317,36 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     // so we convert to float for the calculation
                     uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
-                    if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    switch(DepthTestMode){
+                        case DepthTest::Never:
+                            break;
+                        case DepthTest::Less:
+                            if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        case DepthTest::Greater:
+                            if(z16 <= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        case DepthTest::Equal:
+                            if(z16 != Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        case DepthTest::NotEqual:
+                            if(z16 == Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        case DepthTest::LessEqual:
+                            if(z16 > Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        case DepthTest::GreaterEqual:
+                            if(z16 < Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z16;
+                            break;
+                        default:
+                            break;
+                    }
 
                     Color fragmentColor = t.TriangleColor;
 
@@ -324,6 +418,15 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
         continue;
     }
+}
+
+vec3f Renderer::WorldToScreen(vec3f worldPos){
+    mat4f rMVP = rasterizationMat *
+                    MainCamera.GetProjectionMatrix() *
+                    MainCamera.GetViewMatrix();
+
+    return (rMVP * vec4f(worldPos, 1)).homogenize();
+    // return vec2i16(SCAST<int16_t>(p.x()), SCAST<int16_t>(p.y()));
 }
 
 void Renderer::Debug::DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color color){

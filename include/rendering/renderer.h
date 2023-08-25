@@ -6,6 +6,7 @@
 #include "rendering/mesh.h"
 #include "rendering/shader.h"
 #include "rendering/color.h"
+#include "rendering/font.h"
 #include "ecs/object.h"
 
 class Camera {
@@ -57,25 +58,51 @@ class Camera {
         bool orientationUpdated = false;
 };
 
+enum DepthTest {
+    Never,
+    Less,
+    Equal,
+    LessEqual,
+    Greater,
+    NotEqual,
+    GreaterEqual,
+};
+
+enum Culling {
+    None,
+    Front,
+    Back,
+};
+
 namespace Renderer{
     extern Camera MainCamera;
     extern Color16 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
     extern uint16_t Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
+    extern Font TextFont;
+    extern DepthTest DepthTestMode;
+    extern Culling CullingMode;
 
     namespace {
         BoundingBox2D bounds = BoundingBox2D(vec2f(0), vec2f(0));
         mat4f rasterizationMat;
-    }
+    };
 
     void Init();
     void Clear(Color color);
-    FORCE_INLINE void PutPixel(vec2i16 pos, Color color);
+    FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
+        if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
+            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor16();
+        }
+    }
     void DrawBox(BoundingBox2D box, Color color);
     void DrawBorder(BoundingBox2D box, uint8_t width, Color color);
     void DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWidth = 1);
     void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1);
-    void Blit(const Texture2D& tex, vec2i16 pos);
+    void DrawText(const char* text, vec2i16 pos, Color color);
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material);
+    void Blit(const Texture2D& tex, vec2i16 pos);
+
+    vec3f WorldToScreen(vec3f worldPos);
 
     namespace Debug {
         void DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color color);

@@ -12,7 +12,6 @@
 #include "tests/rendering_tests.h"
 #include "hardware/input.h"
 #include "time.hpp"
-// #include "common.h"
 
 extern void game_init();
 extern void game_update();
@@ -70,14 +69,14 @@ int main(int argc, char** argv){
 
     fixed t = 1.5fp;
     fixed d = 0.5fp;
-    fixed e = sqrt(t);
+    fixed e = fpsqrt(t);
     fixed f = cos(2);
     fixed g = sin(2);
     fixed h = abs(-t);
     fixed i = mod(3.5fp, 1.2fp);
     fixed j = floor(3.5fp);
     fixed k = ceil(3.5fp);
-    fixed l = sqrt(0fp);
+    fixed l = fpsqrt(0fp);
     printf("%f\n", (float)(t / d));
     printf("%f\n", (float)d);
     printf("%f\n", (float)e);
@@ -93,7 +92,6 @@ int main(int argc, char** argv){
     mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
     vec4f p = vec4f(1, 0, 0, 1);
 
-
     // clock_gettime(CLOCK_REALTIME, &now);
     // // calculate difference in seconds
     // double diff = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
@@ -104,12 +102,14 @@ int main(int argc, char** argv){
     game_init();
 
     while(true){
-        // Time::Update();
-        // Input::Poll();
-        // game_update();
+        Time::Update();
+        Input::Poll();
+        game_update();
 
         game_render();
     }
+
+    // Renderer::DrawText("ABCDEFGHabcdefgh\n0123456789-=+[]{};:'\"", vec2i16(0, 0), Color::White);
 
     Color* pixels = new Color[FRAME_WIDTH * FRAME_HEIGHT];
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){

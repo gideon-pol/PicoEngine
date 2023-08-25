@@ -23,7 +23,7 @@ struct FragmentShaderData {
     Color FragmentColor;
 };
 
-enum ShaderType { None, Flat, Texture, Custom };
+enum ShaderType { NoShader, Flat, Texture, Custom };
 
 class Shader {
 public:
