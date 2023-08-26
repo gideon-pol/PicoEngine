@@ -7,7 +7,7 @@
     #include <iostream>
 #endif
 
-#define FIXED_32_FRAC_BITS 10
+#define FIXED_32_FRAC_BITS 16
 #define FIXED_32_FRAC_MASK ((1 << FIXED_32_FRAC_BITS) - 1)
 
 struct fixed {
@@ -57,6 +57,10 @@ struct fixed {
         return fixed(-value, 0);
     }
 
+    FORCE_INLINE constexpr fixed operator%(const fixed& other) const {
+        return fixed(value % other.value, 0);
+    }
+
     FORCE_INLINE constexpr fixed operator+=(const fixed& other) {
         value += other.value;
         return *this;
@@ -74,6 +78,11 @@ struct fixed {
 
     FORCE_INLINE constexpr fixed operator/=(const fixed& other) {
         value = (int64_t)value << FIXED_32_FRAC_BITS / (int64_t)other.value;
+        return *this;
+    }
+
+    FORCE_INLINE constexpr fixed operator%=(const fixed& other) {
+        value %= other.value;
         return *this;
     }
 
@@ -201,20 +210,23 @@ FORCE_INLINE constexpr fixed max(fixed a, fixed b) {
 // }
 
 FORCE_INLINE constexpr fixed sqrt(fixed f) {
-    if(f == 0fp) return 0fp;
-    fixed x = f;
-    fixed x2 = x * x;
-    fixed dx = (x2 - f) / (x * 2fp);
-    while(abs(dx) > 0.01fp) {
-        x -= dx;
-        x2 = x * x;
-        dx = (x2 - f) / (x * 2fp);
-    }
-    return x;
-}
+    // if(f == 0fp) return 0fp;
+    // if(f == 1fp) return 1fp;
 
-FORCE_INLINE constexpr fixed mod(fixed a, fixed b) {
-    return fixed(a.value % b.value, 0);
+    // fixed x = f;
+    // fixed x2 = x * x;
+    // fixed dx = (x2 - f) / (x * 2fp);
+    
+    // while(abs(dx) > 0.001fp) {
+    //     x -= dx;
+    //     x2 = x * x;
+    //     dx = (x2 - f) / (x * 2fp);
+    // }
+
+    // printf("Input: %f, output: %f\n", (float)f, (float)x);
+    // return x;
+
+    return fixed(sqrt(SCAST<float>(f)));
 }
 
 FORCE_INLINE constexpr fixed floor(fixed f) {
@@ -229,6 +241,10 @@ FORCE_INLINE constexpr fixed ceil(fixed f) {
 
 FORCE_INLINE constexpr fixed clamp(fixed f, fixed min, fixed max) {
     return f < min ? min : (f > max ? max : f);
+}
+
+FORCE_INLINE constexpr fixed lerp(fixed a, fixed b, fixed t) {
+    return a + (b - a) * t;
 }
 
 // FORCE_INLINE constexpr fixed sin(fixed f) {

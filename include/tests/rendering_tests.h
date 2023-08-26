@@ -187,9 +187,6 @@ void picoCubeTest(){
 
         Input::Poll();
 
-        // yaw = mod(yaw + Input::GetAxis(Input::Axis::X), 360fp);
-        // pitch = mod(pitch + Input::GetAxis(Input::Axis::Y), 360fp);
-
         yaw = Input::GetAxis(Input::Axis::X) * 90;
         pitch = Input::GetAxis(Input::Axis::Y) * 90;
 

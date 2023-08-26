@@ -38,7 +38,7 @@ class Object {
             translationUpdated = true;
         };
 
-        mat4f GetModelMatrix() {
+        mat4f& GetModelMatrix() {
             if (translationUpdated) {
                 modelMatrix = mat4f::translate(position) * rotation.ToMatrix() * mat4f::scale(scale);
                 if(Parent != nullptr) modelMatrix = modelMatrix * Parent->GetModelMatrix();

@@ -4,6 +4,10 @@
 
 #include "fixed.h"
 
+#ifdef PLATFORM_NATIVE
+#include <SDL2/SDL.h>
+#endif
+
 #define BUTTON_A_PIN 0
 #define BUTTON_B_PIN 1
 #define BUTTON_C_PIN 2
@@ -38,6 +42,9 @@ namespace Input {
     };
 
     void Init();
+    #ifdef PLATFORM_NATIVE
+    void HandleEvent(SDL_Event* event);
+    #endif
     void Poll();
     bool GetButtonDown(Button button);
     bool GetButtonPress(Button button);

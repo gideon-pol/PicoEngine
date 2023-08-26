@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.13)
 
 option(TARGET_NATIVE "Build for build platform" OFF)
 
+# clean target that clears the build folder
+
+
+
 if(TARGET_NATIVE)
     project(game-engine CXX C ASM)
 
@@ -9,7 +13,6 @@ if(TARGET_NATIVE)
     file(GLOB_RECURSE SOURCES src/*.cpp)
     file(GLOB_RECURSE RESOURCES res/build/generated/*.cpp)
     add_subdirectory(lib)
-    # add_subdirectory(res)
 
     add_executable(build
         native_main.cpp
@@ -17,23 +20,20 @@ if(TARGET_NATIVE)
         ${RESOURCES}
     )
 
-    # find_package(SDL2 REQUIRED)
+    find_package(SDL2 REQUIRED)
 
     target_include_directories(build PUBLIC include)
     target_include_directories(build PUBLIC lodepng)
-    # target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
+    target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
     target_link_directories(build PRIVATE lodepng)
-    # target_link_directories(build PRIVATE resources)
     set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2")
     set_property(TARGET build PROPERTY CXX_STANDARD 20)
-    # target_compile_options(build PRIVATE -DPLATFORM_NATIVE=1)
     add_compile_definitions(PLATFORM_NATIVE=1)
 
     target_link_libraries(
         build
         lodepng
-        # resources
-        # ${SDL2_LIBRARIES}
+        ${SDL2_LIBRARIES}
     )
 else()
     include(pico-sdk/pico_sdk_init.cmake)

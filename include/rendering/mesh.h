@@ -10,7 +10,6 @@ typedef struct {
     vec2f UV;
 } Vertex;
 
-
 class Mesh {
     public:
         Vertex* Vertices;

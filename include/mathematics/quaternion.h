@@ -37,6 +37,22 @@ struct Quaternion {
         return *this = *this * other;
     };
 
+    FORCE_INLINE constexpr Quaternion operator*(const float& other) const {
+        return Quaternion(x * other, y * other, z * other, w * other);
+    };
+
+    FORCE_INLINE constexpr Quaternion operator/(const float& other) const {
+        return Quaternion(x / other, y / other, z / other, w / other);
+    };
+
+    FORCE_INLINE constexpr Quaternion operator*=(const float& other) {
+        return *this = *this * other;
+    };
+
+    FORCE_INLINE constexpr Quaternion operator/=(const float& other) {
+        return *this = *this / other;
+    };
+
     FORCE_INLINE constexpr static Quaternion RotateAround(const vec3f& axis, float angle) {
         float halfAngle = angle * 0.5f / 180.0f * PI;
         float sinHalfAngle = sin(halfAngle);

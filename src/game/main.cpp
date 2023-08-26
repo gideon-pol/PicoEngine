@@ -24,40 +24,35 @@ extern const Color16 uranus_png[80000];
 extern const Color16 neptune_png[80000];
 
 extern const Color16 flare_png[22800];
-class PlanetShader : Shader {
-    public:
+
+class PlanetShader : public Shader {
+public:
     struct Parameters {
         Texture2D* _Texture;
-        vec3f LightPosition;
         Color LightColor;
+        vec3f DirectionToLight;
     };
 
     PlanetShader(){
         Type = ShaderType::Custom;
-        TriangleProgram = [](TriangleShaderData& i, void* p){
-            // caluculate normal
-            Parameters* parameters = (Parameters*)p;
-            vec3f normal = (i.v2.Position - i.v1.Position).cross(i.v3.Position - i.v1.Position).normalize();
-            // fixed diff = clamp(dot(normal, (parameters->LightPosition - i.v1.Position).normalize()), 0fp, 1fp);
+        TriangleProgram =  nullptr;
+        FragmentProgram = [](FragmentShaderData& data, void* parameters){
+            Parameters* params = (Parameters*)parameters;
+            Texture2D* texture = params->_Texture;
 
-            
-            // i.TriangleColor = parameters->LightColor
-        };
-        FragmentProgram = [](FragmentShaderData& i, void* p){
-            // Texture2D* texture = ((Parameters*)p)->_Texture;
-            // vec3f lightPosition = ((Parameters*)p)->LightPosition;
-            // Color lightColor = ((Parameters*)p)->LightColor;
+            fixed diff = max(data.Normal.dot(params->DirectionToLight), 0fp) + 0.1fp;
+            data.FragmentColor = texture->Sample(data.UV);
 
-            // vec3f normal = i.Normal.normalize();
-            // vec3f lightDirection = (lightPosition - i.FragCoord).normalize();
-            // fixed lightIntensity = clamp(dot(normal, lightDirection), 0fp, 1fp);
-
-            // Color textureColor = texture->Sample(i.UV);
-            // i.FragmentColor = textureColor * lightColor * lightIntensity;
+            data.FragmentColor = Color(
+                SCAST<uint8_t>(diff * ((uint16_t)data.FragmentColor.r * params->LightColor.r >> 8)),
+                SCAST<uint8_t>(diff * ((uint16_t)data.FragmentColor.g * params->LightColor.g >> 8)),
+                SCAST<uint8_t>(diff * ((uint16_t)data.FragmentColor.b * params->LightColor.b >> 8)),
+                255
+            );
         };
     }
-    
-    Parameters* CreateParameters() override {
+
+    void* CreateParameters(){
         return new Parameters();
     }
 };
@@ -66,7 +61,7 @@ class PlanetShader : Shader {
 
 struct Body : public Object {
     vec3<float> Velocity;
-    vec3<float> RotationalVelocity;
+    Quaternion RotationalVelocity;
     float Mass;
     Material* _Material;
     vec3f LinePoints[LINE_SIZE];
@@ -101,10 +96,9 @@ Texture2D mars = Texture2D((Color16*)&mars_png, 400, 200);
 // Texture2D uranus = Texture2D((Color16*)&uranus_png, 400, 200);
 // Texture2D neptune = Texture2D((Color16*)&neptune_png, 400, 200);
 
-
 Texture2D flare = Texture2D((Color16*)&flare_png, 200, 114);
 TextureShader t = TextureShader();
-FlatShader f = FlatShader();
+PlanetShader p = PlanetShader();
 
 Body planets[10];
 
@@ -112,44 +106,30 @@ fixed yaw, pitch;
 
 const float G = 1;
 
+Color lightColor = Color(255, 255, 255, 255);
+
 void game_init(){
     printf("Initializing game\n");
 
-    Material* mercuryMat = new Material(t);
-    ((TextureShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
-    ((TextureShader::Parameters*)mercuryMat->Parameters)->TextureScale = vec2f(1);
+    Material* mercuryMat = new Material(p);
+    ((PlanetShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
+    ((PlanetShader::Parameters*)mercuryMat->Parameters)->LightColor = lightColor;
 
-    Material* venusMat = new Material(t);
-    ((TextureShader::Parameters*)venusMat->Parameters)->_Texture = &venus;
-    ((TextureShader::Parameters*)venusMat->Parameters)->TextureScale = vec2f(1);
+    Material* venusMat = new Material(p);
+    ((PlanetShader::Parameters*)venusMat->Parameters)->_Texture = &venus;
+    ((PlanetShader::Parameters*)venusMat->Parameters)->LightColor = lightColor;
 
-    Material* earthMat = new Material(t);
-    ((TextureShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
-    ((TextureShader::Parameters*)earthMat->Parameters)->TextureScale = vec2f(1);
+    Material* earthMat = new Material(p);
+    ((PlanetShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
+    ((PlanetShader::Parameters*)earthMat->Parameters)->LightColor = lightColor;
 
-    Material* moonMat = new Material(t);
-    ((TextureShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
-    ((TextureShader::Parameters*)moonMat->Parameters)->TextureScale = vec2f(1);
+    Material* moonMat = new Material(p);
+    ((PlanetShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
+    ((PlanetShader::Parameters*)moonMat->Parameters)->LightColor = lightColor;
 
-    Material* marsMat = new Material(t);
-    ((TextureShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
-    ((TextureShader::Parameters*)marsMat->Parameters)->TextureScale = vec2f(1);
-
-    // Material* jupiterMat = new Material(t);
-    // ((TextureShader::Parameters*)jupiterMat->Parameters)->_Texture = &jupiter;
-    // ((TextureShader::Parameters*)jupiterMat->Parameters)->TextureScale = vec2f(1);
-
-    // Material* saturnMat = new Material(t);
-    // ((TextureShader::Parameters*)saturnMat->Parameters)->_Texture = &saturn;
-    // ((TextureShader::Parameters*)saturnMat->Parameters)->TextureScale = vec2f(1);
-
-    // Material* uranusMat = new Material(t);
-    // ((TextureShader::Parameters*)uranusMat->Parameters)->_Texture = &uranus;
-    // ((TextureShader::Parameters*)uranusMat->Parameters)->TextureScale = vec2f(1);
-
-    // Material* neptuneMat = new Material(t);
-    // ((TextureShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
-    // ((TextureShader::Parameters*)neptuneMat->Parameters)->TextureScale = vec2f(1);
+    Material* marsMat = new Material(p);
+    ((PlanetShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
+    ((PlanetShader::Parameters*)marsMat->Parameters)->LightColor = lightColor;
 
     planets[0].Mass = 10000;
     planets[0].SetPosition(vec3f(0, 0, 0));
@@ -173,13 +153,14 @@ void game_init(){
     planets[3].SetScale(vec3f(1));
     planets[3].SetPosition(vec3f(0, 0, 100));
     planets[3].Velocity = vec3<float>(0);
+    planets[3].RotationalVelocity = Quaternion::Euler(vec3f(0, 360fp, 0));
     strcpy(planets[3].Name, "Earth");
 
     planets[4]._Material = moonMat;
     planets[4].Mass = 0.0123;
     planets[4].SetScale(vec3f(0.27));
     planets[4].SetPosition(vec3f(0, 0, 104));
-    planets[4].Velocity = vec3<float>(0.5, 0, 0);
+    // planets[4].Velocity = vec3<float>(0.5, 0, 0);
     strcpy(planets[4].Name, "Moon");
 
     planets[5]._Material = marsMat;
@@ -192,20 +173,18 @@ void game_init(){
         planets[i].Enabled = false;
     }
 
-    for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
-        // calculate orbital velocity for circular orbit
-        fixed distance = (planets[i].GetPosition() - planets[0].GetPosition()).magnitude();
-        float v = sqrt(G * (planets[0].Mass + planets[i].Mass) / SCAST<float>(distance));
-        printf("Orbital velocity for %s: %f\n", planets[i].Name, v);
-        planets[i].Velocity = vec3f(v, 0, 0);
-    }
+    // for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
+        // fixed distance = (planets[i].GetPosition() - planets[0].GetPosition()).magnitude();
+        // float v = sqrt(G * (planets[0].Mass + planets[i].Mass) / SCAST<float>(distance));
+        // printf("Orbital velocity for %s: %f\n", planets[i].Name, v);
+        // planets[i].Velocity = vec3f(v, 0, 0);
+    // }
 
     // planets[5]._Material = jupiterMat;
     // planets[5].Mass = 317.8;
     // planets[5].SetScale(vec3f(11.2));
     // planets[5].SetPosition(vec3f(0, 0, 520));
     // planets[5].Enabled = false;
-    
     // strcpy(planets[5].Name, "Jupiter");
 
     // planets[6]._Material = saturnMat;
@@ -229,24 +208,28 @@ void game_init(){
     // planets[8].Enabled = false;
     // strcpy(planets[8].Name, "Neptune");
 
-    
-
-    
-
-
-    // planets[2].Velocity = vec3f(0, 0, sqrt(G * (planets[0].Mass + planets[2].Mass) / (planets[2].GetPosition() - planets[0].GetPosition()).magnitude() / 2));
-
     printf("Finished initializing game\n");
 }
 
-int targetPlanet = 2;
+int targetPlanet = 3;
+
+enum CameraMode {
+    Close,
+    Medium,
+    Far,
+};
+
+CameraMode camMode = CameraMode::Medium;
+fixed camDistance = 3fp;
+fixed targetCamDistance = 3fp;
+
 
 void game_update(){
     printf("Delta time: %f\n", Time::GetDeltaTime());
     yaw += Input::GetAxis(Input::Axis::X) * 50fp * Time::GetDeltaTime();
     pitch += Input::GetAxis(Input::Axis::Y) * 50fp * Time::GetDeltaTime();
 
-    yaw = mod(yaw, 360fp);
+    yaw %= 360fp;
     pitch = clamp(pitch, -90fp, 90fp);
 
     for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
@@ -256,10 +239,11 @@ void game_update(){
             if(i == j) continue;
             vec3<float> direction = planets[j].GetPosition() - planets[i].GetPosition();
             float distance = direction.magnitude();
-            float g = ((planets[i].Mass * planets[j].Mass) / (distance * distance) * G);
+            if(distance == 0) continue;
+            float g = (planets[i].Mass * planets[j].Mass) / (distance * distance) * G;
             vec3<float> force = direction.normalize() * g * Time::GetDeltaTime();
-            planets[i].Velocity += force / planets[i].Mass;
-            planets[j].Velocity -= force / planets[j].Mass;
+            // planets[i].Velocity += force / planets[i].Mass;
+            // planets[j].Velocity -= force / planets[j].Mass;
         }
     }
 
@@ -267,6 +251,12 @@ void game_update(){
         // planets[i].Rotation += planets[i].RotationalVelocity * Time::GetDeltaTime();
         if(!planet.Enabled) continue;
         planet.Translate(planet.Velocity * Time::GetDeltaTime());
+        planet.Rotate(planet.RotationalVelocity * Time::GetDeltaTime());
+    }
+
+    for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
+        if(!planets[i].Enabled || !planets[i].Render) continue;
+        ((PlanetShader::Parameters*)planets[i]._Material->Parameters)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
     }
 
     if(Time::GetFrameCount() % 50 == 0){
@@ -286,27 +276,61 @@ void game_update(){
 
     if(Input::GetButtonPress(Input::Button::Stick)){
         while(!planets[(++targetPlanet%=6)].Enabled);
+
+        switch (camMode)
+        {
+            case CameraMode::Close:
+                camDistance = planets[targetPlanet].GetScale().x() * 3fp;
+                break;
+            case CameraMode::Medium:
+                camDistance = planets[targetPlanet].GetScale().x() * 5fp;
+                break;
+            case CameraMode::Far:
+                camDistance = planets[targetPlanet].GetScale().x() * 7.5fp;
+                break;
+        }
+
+        targetCamDistance = camDistance;
     }
 
-    cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * 5fp);
+    if(Input::GetButtonPress(Input::Button::A)){
+        camMode = (CameraMode)(((int)camMode + 1) % 3);
+
+        switch (camMode)
+        {
+            case CameraMode::Close:
+                targetCamDistance = planets[targetPlanet].GetScale().x() * 3fp;
+                break;
+            case CameraMode::Medium:
+                targetCamDistance = planets[targetPlanet].GetScale().x() * 5fp;
+                break;
+            case CameraMode::Far:
+                targetCamDistance = planets[targetPlanet].GetScale().x() * 7.5fp;
+                break;
+        }
+    }
+
+    camDistance = lerp(camDistance, targetCamDistance, Time::GetDeltaTime());
+
+    cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * camDistance);
 }
 
 void game_render(){
     Renderer::Clear(Color::Black);
 
     {
-        // Renderer::CullingMode = Culling::None;
-        // Renderer::DepthTestMode = DepthTest::Never;
+    //     Renderer::CullingMode = Culling::Front;
+    //     Renderer::DepthTestMode = DepthTest::Never;
 
-        // static TextureShader t = TextureShader();
-        // static Material starsMat = Material(t);
-        // ((TextureShader::Parameters*)starsMat.Parameters)->_Texture = &earth;
-        // ((TextureShader::Parameters*)starsMat.Parameters)->TextureScale = vec2f(1);
+    //     static TextureShader t = TextureShader();
+    //     static Material starsMat = Material(t);
+    //     ((TextureShader::Parameters*)starsMat.Parameters)->_Texture = &earth;
+    //     ((TextureShader::Parameters*)starsMat.Parameters)->TextureScale = vec2f(1);
 
-        // Renderer::DrawMesh(sphere, mat4f::translate(cam.GetPosition()), starsMat);
+    //     Renderer::DrawMesh(sphere, mat4f::translate(cam.GetPosition()), starsMat);
 
-        // Renderer::CullingMode = Culling::Back;
-        // Renderer::DepthTestMode = DepthTest::Less;
+    //     Renderer::CullingMode = Culling::Back;
+    //     Renderer::DepthTestMode = DepthTest::Less;
     }
 
     vec3f sunPos = Renderer::WorldToScreen(planets[0].GetPosition());

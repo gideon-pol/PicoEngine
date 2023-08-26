@@ -3,7 +3,7 @@
 extern const uint8_t font_psf[];
 
 Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 1000fp, FRAME_WIDTH / FRAME_HEIGHT);
-Color16 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+Color565 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 Font Renderer::TextFont = Font((uint8_t*)&font_psf);
 DepthTest Renderer::DepthTestMode = DepthTest::Less;
@@ -68,7 +68,7 @@ void Renderer::Init(){
 
 void Renderer::Clear(Color color){
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
-        FrameBuffer[i] = color.ToColor16();
+        FrameBuffer[i] = color.ToColor565();
         Zbuffer[i] = 65535;
     }
 }
@@ -78,7 +78,7 @@ void Renderer::DrawBox(BoundingBox2D box, Color color){
 
     for(int y = SCAST<int>(bbi.Min.y()); y < SCAST<int>(bbi.Max.y()); y++){
         for(int x = SCAST<int>(bbi.Min.x()); x < SCAST<int>(bbi.Max.x()); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
         }
     }
 }
@@ -211,7 +211,7 @@ void Renderer::DrawText(const char* text, vec2i16 pos, Color color){
 
             for(int gx = 0; gx < TextFont.GlyphSize.x(); gx++){
                 if(*glyph & mask){
-                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor16();
+                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor565();
                 }
                 mask >>= 1;
             }
@@ -229,7 +229,7 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
 
     for(int y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
         for(int x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
+            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor565();
         }
     }
 }
@@ -254,6 +254,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         uint32_t idx = i * 3;
 
         TriangleShaderData t = {
+            modelMat,
             mesh.Vertices[mesh.Indices[idx]],
             mesh.Vertices[mesh.Indices[idx+1]],
             mesh.Vertices[mesh.Indices[idx+2]],
@@ -299,7 +300,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
         area = edgeFunction(pv1, pv2, pv3);
 
-        // printf("Checkpoint 6\n");
+        if(area == 0) continue;
 
         for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
             for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
@@ -356,17 +357,20 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             Texture2D* tex = params->_Texture;
                             vec2f uv = (t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z());
                             uv = vec2f(uv.x() * params->TextureScale.x(), uv.y() * params->TextureScale.y());
-                            fragmentColor = tex->Sample(uv).ToColor16();
+                            fragmentColor = tex->Sample(uv).ToColor565();
                             break;
                         }
                         case ShaderType::Custom: {
                             if(material._Shader.FragmentProgram){
                                 vec3f normal = t.v1.Normal * uvw.x() + t.v2.Normal * uvw.y() + t.v3.Normal * uvw.z();
                                 normal = (modelMat * vec4f(normal, 0)).xyz().normalize();
+                                vec3f pos = t.v1.Position * uvw.x() + t.v2.Position * uvw.y() + t.v3.Position * uvw.z();
+                                pos = (modelMat * vec4f(pos, 1)).homogenize();
                                 vec3f fragCoord = vec3f(x, y, z);
                                 vec2f uv = t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z();
 
                                 FragmentShaderData data = {
+                                    pos,
                                     normal,
                                     fragCoord,
                                     uv,
@@ -383,7 +387,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor16();
+                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
                 }
             }
         }

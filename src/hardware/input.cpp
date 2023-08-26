@@ -59,6 +59,89 @@ void Input::Poll(){
     
     // printf("X: %f, Y: %f, Stick: %d\n", (float)joystickAxis[Axis::X], (float)joystickAxis[Axis::Y], buttonStick);
 };
+#endif
+
+#ifdef PLATFORM_NATIVE
+void Input::Init(){};
+
+// This is separated from the HandleEvent function, as key presses are separated into multiple events
+// that are given from further up the engine. We don't want to reset presses for every event.
+void Input::Poll(){
+    buttonsPressed[Button::A] = false;
+    buttonsPressed[Button::B] = false;
+    buttonsPressed[Button::C] = false;
+    buttonsPressed[Button::Stick] = false;
+};
+
+void Input::HandleEvent(SDL_Event* event){
+    switch(event->type){
+        case SDL_KEYDOWN:
+            switch(event->key.keysym.sym){
+                case SDLK_a:
+                    buttonsPressed[Button::A] = true;
+                    buttonsDown[Button::A] = true;
+                    break;
+                case SDLK_s:
+                    buttonsPressed[Button::B] = true;
+                    buttonsDown[Button::B] = true;
+                    break;
+                case SDLK_d:
+                    buttonsPressed[Button::C] = true;
+                    buttonsDown[Button::C] = true;
+                    break;
+                case SDLK_SPACE:
+                    buttonsPressed[Button::Stick] = true;
+                    buttonsDown[Button::Stick] = true;
+                    break;
+                case SDLK_RIGHT:
+                    joystickAxis[Axis::X] = 1fp;
+                    break;
+                case SDLK_LEFT:
+                    joystickAxis[Axis::X] = -1fp;
+                    break;
+                case SDLK_UP:
+                    joystickAxis[Axis::Y] = -1fp;
+                    break;
+                case SDLK_DOWN:
+                    joystickAxis[Axis::Y] = 1fp;
+                    break;
+            }
+            break;
+        case SDL_KEYUP:
+            switch(event->key.keysym.sym){
+                case SDLK_a:
+                    buttonsDown[Button::A] = false;
+                    break;
+                case SDLK_s:
+                    buttonsDown[Button::B] = false;
+                    break;
+                case SDLK_d:
+                    buttonsDown[Button::C] = false;
+                    break;
+                case SDLK_SPACE:
+                    buttonsDown[Button::Stick] = false;
+                    break;
+                case SDLK_RIGHT:
+                    joystickAxis[Axis::X] = 0fp;
+                    break;
+                case SDLK_LEFT:
+                    joystickAxis[Axis::X] = 0fp;
+                    break;
+                case SDLK_UP:
+                    joystickAxis[Axis::Y] = 0fp;
+                    break;
+                case SDLK_DOWN:
+                    joystickAxis[Axis::Y] = 0fp;
+                    break;
+            }
+            break;
+        case SDL_MOUSEMOTION:
+            joystickAxis[Axis::X] = fixed(event->motion.xrel) / fixed(SCREEN_WIDTH);
+            joystickAxis[Axis::Y] = fixed(event->motion.yrel) / fixed(SCREEN_HEIGHT);
+            break;
+    }
+};
+#endif
 
 bool Input::GetButtonDown(Button button){
     return buttonsDown[button];
@@ -74,12 +157,3 @@ fixed Input::GetAxis(Axis axis){
         0fp :
         (joystickAxis[axis] - JOYSTICK_AXIS_DEADZONE) / (1.0fp - JOYSTICK_AXIS_DEADZONE);
 };
-#endif
-
-#ifdef PLATFORM_NATIVE
-void Input::Init(){};
-void Input::Poll(){};
-bool Input::GetButtonDown(Button button){return false;};
-bool Input::GetButtonPress(Button button){return false;};
-fixed Input::GetAxis(Axis axis){return 0fp;};
-#endif

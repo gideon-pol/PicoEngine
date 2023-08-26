@@ -76,7 +76,7 @@ enum Culling {
 
 namespace Renderer{
     extern Camera MainCamera;
-    extern Color16 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+    extern Color565 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
     extern uint16_t Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
     extern Font TextFont;
     extern DepthTest DepthTestMode;
@@ -91,7 +91,7 @@ namespace Renderer{
     void Clear(Color color);
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
-            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor16();
+            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor565();
         }
     }
     void DrawBox(BoundingBox2D box, Color color);
