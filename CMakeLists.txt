@@ -27,6 +27,7 @@ if(TARGET_NATIVE)
     target_include_directories(build PUBLIC ${SDL2_INCLUDE_DIRS})
     target_link_directories(build PRIVATE lodepng)
     set_target_properties(build PROPERTIES COMPILE_FLAGS "-g -lSDL2")
+    set_target_properties(build PROPERTIES LINK_FLAGS "-fsanitize=undefined")
     set_property(TARGET build PROPERTY CXX_STANDARD 20)
     add_compile_definitions(PLATFORM_NATIVE=1)
 

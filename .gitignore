@@ -36,3 +36,4 @@ lib
 *.app
 .vscode/settings.json
 *.mtl
+.vscode/launch.json

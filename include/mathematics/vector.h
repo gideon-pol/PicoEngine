@@ -141,11 +141,14 @@ struct vec {
     };
 
     constexpr T magnitude() const {
-        T result = SCAST<T>(0);
+        // This calculation is done using floats, despite the loss of performance.
+        // Results tend to get so big that they overflow any other type.
+
+        float result = 0;
         for (int i = 0; i < C; i++) {
-            result += data[i] * data[i];
+            result += SCAST<float>(data[i]) * SCAST<float>(data[i]);
         }
-        return sqrt(result);
+        return SCAST<T>(sqrt(result));
     };
 
     constexpr vec<T, C> normalize() const {

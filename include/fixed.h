@@ -7,7 +7,7 @@
     #include <iostream>
 #endif
 
-#define FIXED_32_FRAC_BITS 16
+#define FIXED_32_FRAC_BITS 12
 #define FIXED_32_FRAC_MASK ((1 << FIXED_32_FRAC_BITS) - 1)
 
 struct fixed {
@@ -46,6 +46,12 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator*(const fixed& other) const {
+
+        if((float)(*this) * (float)(other) > 524288) {
+            printf("Overflow: %f * %f\n", (float)(*this), (float)(other));
+            int d = 0;
+            // printf("%d\n", 1 / d);
+        }
         return fixed((int64_t)value * (int64_t)other.value, FIXED_32_FRAC_BITS);
     }
 
@@ -72,7 +78,7 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator*=(const fixed& other) {
-        value = (int64_t)value * (int64_t)other.value >> FIXED_32_FRAC_BITS;
+        value = ((int64_t)value * (int64_t)other.value) >> FIXED_32_FRAC_BITS;
         return *this;
     }
 

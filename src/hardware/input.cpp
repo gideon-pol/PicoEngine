@@ -71,6 +71,9 @@ void Input::Poll(){
     buttonsPressed[Button::B] = false;
     buttonsPressed[Button::C] = false;
     buttonsPressed[Button::Stick] = false;
+
+    joystickAxis[Axis::X] = 0fp;
+    joystickAxis[Axis::Y] = 0fp;
 };
 
 void Input::HandleEvent(SDL_Event* event){
@@ -136,8 +139,8 @@ void Input::HandleEvent(SDL_Event* event){
             }
             break;
         case SDL_MOUSEMOTION:
-            joystickAxis[Axis::X] = fixed(event->motion.xrel) / fixed(SCREEN_WIDTH);
-            joystickAxis[Axis::Y] = fixed(event->motion.yrel) / fixed(SCREEN_HEIGHT);
+            joystickAxis[Axis::X] = fixed(event->motion.xrel) / fixed(SCREEN_WIDTH) * 512;
+            joystickAxis[Axis::Y] = fixed(event->motion.yrel) / fixed(SCREEN_HEIGHT) * 512;
             break;
     }
 };
