@@ -35,3 +35,4 @@ lib
 *.out
 *.app
 .vscode/settings.json
+*.mtl
