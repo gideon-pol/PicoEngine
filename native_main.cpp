@@ -48,7 +48,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    // SDL_SetRelativeMouseMode(SDL_TRUE);
 
     fixed t = 1.5fp;
     fixed d = 0.5fp;
@@ -77,6 +77,7 @@ int main(int argc, char** argv){
     mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
     vec4f p = vec4f(1, 0, 0, 1);
 
+    Time::Init();
     Input::Init();
     Renderer::Init();
     game_init();
@@ -98,6 +99,8 @@ int main(int argc, char** argv){
         }
 
         game_update();
+
+        Renderer::Prepare();
 
         game_render();
 

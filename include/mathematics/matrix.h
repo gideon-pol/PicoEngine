@@ -33,6 +33,13 @@ struct mat {
         }
     };
 
+    template<typename T2>
+    constexpr mat(const mat<T2, C, R>& other) {
+        for (int i = 0; i < R; i++) {
+            data[i] = vec<T, C>(other(i));
+        }
+    };
+
     FORCE_INLINE constexpr vec<T, C>& operator[](int i){
         return data[i];
     };
@@ -179,9 +186,9 @@ struct mat4f : public mat<fixed, 4, 4> {
     };
 
     constexpr static mat4f euler(const vec<fixed, 3>& v){
-        return  mat4f::rotate(v(2), vec3f::forward) *
-                mat4f::rotate(v(0), vec3f::right) *
-                mat4f::rotate(v(1), vec3f::up);
+        return mat4f::rotate(v(2), vec3f::forward) *
+               mat4f::rotate(v(0), vec3f::right) *
+               mat4f::rotate(v(1), vec3f::up);
     }
 
     constexpr static mat4f perspective(fixed fov, fixed aspect, fixed near, fixed far) {

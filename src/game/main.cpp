@@ -94,8 +94,10 @@ Texture2D moon = Texture2D((Color16*)&moon_png, 400, 200);
 Texture2D mars = Texture2D((Color16*)&mars_png, 400, 200);
 Texture2D jupiter = Texture2D((Color16*)&jupiter_png, 400, 200);
 Texture2D saturn = Texture2D((Color16*)&saturn_png, 400, 200);
-// Texture2D uranus = Texture2D((Color16*)&uranus_png, 400, 200);
-// Texture2D neptune = Texture2D((Color16*)&neptune_png, 400, 200);
+Texture2D uranus = Texture2D((Color16*)&uranus_png, 400, 200);
+Texture2D neptune = Texture2D((Color16*)&neptune_png, 400, 200);
+
+FlatShader debug = FlatShader();
 
 Texture2D flare = Texture2D((Color16*)&flare_png, 200, 114);
 TextureShader t = TextureShader();
@@ -105,12 +107,13 @@ Body planets[10];
 
 fixed yaw, pitch;
 
-const float G = 1;
+const float G = 0.1f;
 
 Color lightColor = Color(255, 255, 255, 255);
 
 void game_init(){
     printf("Initializing game\n");
+
 
     Material* mercuryMat = new Material(p);
     ((PlanetShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
@@ -139,6 +142,14 @@ void game_init(){
     Material* saturnMat = new Material(p);
     ((PlanetShader::Parameters*)saturnMat->Parameters)->_Texture = &saturn;
     ((PlanetShader::Parameters*)saturnMat->Parameters)->LightColor = lightColor;
+
+    Material* uranusMat = new Material(p);
+    ((PlanetShader::Parameters*)uranusMat->Parameters)->_Texture = &uranus;
+    ((PlanetShader::Parameters*)uranusMat->Parameters)->LightColor = lightColor;
+
+    Material* neptuneMat = new Material(p);
+    ((PlanetShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
+    ((PlanetShader::Parameters*)neptuneMat->Parameters)->LightColor = lightColor;
 
     planets[0].Mass = 10000;
     planets[0].SetPosition(vec3f(0, 0, 0));
@@ -178,7 +189,9 @@ void game_init(){
     planets[5].SetPosition(vec3f(0, 0, 152));
     strcpy(planets[5].Name, "Mars");
 
-    planets[6]._Material = jupiterMat;
+    Material* debugMat = new Material(debug);
+    ((FlatShader::Parameters*)debugMat->Parameters)->_Color = Color::Purple;
+    planets[6]._Material = debugMat;
     planets[6].Mass = 317.8;
     planets[6].SetScale(vec3f(11.2));
     planets[6].SetPosition(vec3f(0, 0, 520));
@@ -196,26 +209,28 @@ void game_init(){
         planets[i].Enabled = false;
     }
 
-    // for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
-        // fixed distance = (planets[i].GetPosition() - planets[0].GetPosition()).magnitude();
-        // float v = sqrt(G * (planets[0].Mass + planets[i].Mass) / SCAST<float>(distance));
-        // printf("Orbital velocity for %s: %f\n", planets[i].Name, v);
-        // planets[i].Velocity = vec3f(v, 0, 0);
-    // }
+    planets[7]._Material = uranusMat;
+    planets[7].Mass = 14.5;
+    planets[7].SetScale(vec3f(4));
+    planets[7].SetPosition(vec3f(0, 0, 1920));
+    planets[7].Enabled = true;
+    strcpy(planets[7].Name, "Uranus");
 
-    // planets[7]._Material = uranusMat;
-    // planets[7].Mass = 14.5;
-    // planets[7].SetScale(vec3f(4));
-    // planets[7].SetPosition(vec3f(0, 0, 1920));
-    // planets[7].Enabled = false;
-    // strcpy(planets[7].Name, "Uranus");
+    planets[8]._Material = neptuneMat;
+    planets[8].Mass = 17.1;
+    planets[8].SetScale(vec3f(3.88));
+    planets[8].SetPosition(vec3f(0, 0, 3006));
+    planets[8].Enabled = true;
+    strcpy(planets[8].Name, "Neptune");
 
-    // planets[8]._Material = neptuneMat;
-    // planets[8].Mass = 17.1;
-    // planets[8].SetScale(vec3f(3.88));
-    // planets[8].SetPosition(vec3f(0, 0, 3006));
-    // planets[8].Enabled = false;
-    // strcpy(planets[8].Name, "Neptune");
+    for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
+        if(!planets[i].Enabled) continue;
+
+        fixed distance = (planets[i].GetPosition() - planets[0].GetPosition()).magnitude();
+        float v = sqrt(G * (planets[0].Mass + planets[i].Mass) / SCAST<float>(distance));
+        printf("Orbital velocity for %s: %f\n", planets[i].Name, v);
+        planets[i].Velocity = vec3f(v, 0, 0);
+    }
 
     printf("Finished initializing game\n");
 }
@@ -232,9 +247,9 @@ CameraMode camMode = CameraMode::Medium;
 fixed camDistance = 3fp;
 fixed targetCamDistance = 3fp;
 
-
 void game_update(){
     printf("Delta time: %f\n", Time::GetDeltaTime());
+
     yaw -= Input::GetAxis(Input::Axis::X) * 50fp * Time::GetDeltaTime();
     pitch += Input::GetAxis(Input::Axis::Y) * 50fp * Time::GetDeltaTime();
 
@@ -243,24 +258,30 @@ void game_update(){
 
     for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
         if(!planets[i].Enabled) continue;
+
         for(int j = i+1; j < sizeof(planets)/sizeof(Body); j++){
             if(!planets[j].Enabled) continue;
             if(i == j) continue;
+
             vec3<float> direction = planets[j].GetPosition() - planets[i].GetPosition();
             float distance = direction.magnitude();
             if(distance == 0) continue;
+
             float g = (planets[i].Mass * planets[j].Mass) / (distance * distance) * G;
             vec3<float> force = direction.normalize() * g * Time::GetDeltaTime();
-            // planets[i].Velocity += force / planets[i].Mass;
-            // planets[j].Velocity -= force / planets[j].Mass;
+            planets[i].Velocity += force / planets[i].Mass;
+            planets[j].Velocity -= force / planets[j].Mass;
         }
     }
 
     for(Body& planet : planets){
         // planets[i].Rotation += planets[i].RotationalVelocity * Time::GetDeltaTime();
         if(!planet.Enabled) continue;
+
         planet.Translate(planet.Velocity * Time::GetDeltaTime());
-        planet.Rotate(planet.RotationalVelocity * Time::GetDeltaTime());
+        // planet.Rotate(planet.RotationalVelocity * Time::GetDeltaTime());
+
+        // printf("%s: %f, %f, %f\n", planet.Name, (float)planet.GetPosition().x(), (float)planet.GetPosition().y(), (float)planet.GetPosition().z());
     }
 
     for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
@@ -284,7 +305,7 @@ void game_update(){
     vec3f camForward = cam.GetModelMatrix()(2).xyz();
 
     if(Input::GetButtonPress(Input::Button::Stick)){
-        while(!planets[(++targetPlanet%=8)].Enabled);
+        while(!planets[(++targetPlanet%=9)].Enabled);
 
         switch (camMode)
         {
@@ -325,8 +346,6 @@ void game_update(){
 }
 
 void game_render(){
-    Renderer::Clear(Color::Black);
-
     {
     //     Renderer::CullingMode = Culling::Front;
     //     Renderer::DepthTestMode = DepthTest::Never;
@@ -344,12 +363,19 @@ void game_render(){
 
     vec3f sunPos = Renderer::WorldToScreen(planets[0].GetPosition());
 
-    if(sunPos.z() <= 1 && sunPos.z() >= 0){
+    // vec3f dir = (planets[0].GetPosition() - cam.GetPosition());
+    // printf("dir: %f, %f, %f\n", (float)dir.x(), (float)dir.y(), (float)dir.z());
+
+    // printf("raster pos: %f, %f, %f\n", (float)sunPos.x(), (float)sunPos.y(), (float)sunPos.z());
+
+
+    if(sunPos.z() < 1 && sunPos.z() >= 0){
         Renderer::Blit(flare, vec2i16(sunPos.xy()) - vec2i16(flare.Width, flare.Height) / 2);
     }
 
     for(Body& planet : planets){
         if(!planet.Enabled || !planet.Render) continue;
+
         Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
 
         // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);

@@ -78,17 +78,26 @@ namespace Renderer{
     extern Camera MainCamera;
     extern Color565 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
     extern uint16_t Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
+
     extern Font TextFont;
+
     extern DepthTest DepthTestMode;
     extern Culling CullingMode;
 
+    extern Color ClearColor;
+
+
     namespace {
         BoundingBox2D bounds = BoundingBox2D(vec2f(0), vec2f(0));
-        mat4f rasterizationMat;
+        mat4f rasterizationMat = mat4f::identity();
+        mat4f VP = mat4f::identity();
+        mat4f RVP = mat4f::identity();
     };
 
     void Init();
     void Clear(Color color);
+    void Prepare();
+
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
             FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor565();

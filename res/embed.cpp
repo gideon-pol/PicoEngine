@@ -100,7 +100,7 @@ void convertOBJ(std::ifstream& in, std::ofstream& out, const char* sym){
     out << "};" << std::endl;
 }
 
-void convertPNG(const char* path, std::ofstream& out, const char* sym){
+void convertPNG(const char* path, std::ofstream& fout, const char* sym){
     std::vector<unsigned char> image;
     unsigned width, height;
 
@@ -111,16 +111,18 @@ void convertPNG(const char* path, std::ofstream& out, const char* sym){
         exit(1);
     }
 
-    out << "#include \"rendering/texture.h\"\n#include \"rendering/color.h\"\n\n";
-    out << "extern const Color16 " << sym << "[" << width * height << "] = {\n";
+    fout << "#include \"rendering/texture.h\"\n#include \"rendering/color.h\"\n\n";
+    fout << "extern const Color16 " << sym << "[" << width * height << "] = {\n";
 
     for(int i = 0; i < image.size(); i+=4){
         Color color = Color(image[i], image[i+1], image[i+2], image[i+3]);
-        out << "0x" << std::hex << color.ToColor16() << ", ";
+        // Color332 color332 = color.ToColor332();
+        Color16 color16 = color.ToColor16();
+        fout << "0x" << std::hex << color16 << ", ";
     }
-    out.seekp(-2, std::ios_base::end);
+    fout.seekp(-2, std::ios_base::end);
 
-    out << "};\n" << "extern const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
+    fout << "};\n" << "extern const size_t " << sym << "_len = sizeof(" << sym << ");\n\n";
 }
 
 void outputAsBytes(std::ifstream& in, std::ofstream& out, const char* sym){
@@ -167,27 +169,27 @@ int main(int argc, char** argv)
     std::cout << "Writing to " << symfile << std::endl;
     std::cout << "Writing to " << path << std::endl;
 
-    std::ofstream out(path, std::ios::out | std::ios::binary);
-    if(!out){
+    std::ofstream fout(path, std::ios::out | std::ios::binary);
+    if(!fout){
         std::cout << "Cannot open output file.\n";
         return 1;
     }
 
-    out << 
+    fout << 
         "#include <stdlib.h>\n#include <stdint.h>\n" << std::endl;
 
     char* ext = strrchr(argv[3], '.');
 
     if (ext != NULL){
         if (strcmp(ext, ".obj") == 0){
-            convertOBJ(in, out, sym);
+            convertOBJ(in, fout, sym);
         } else if(strcmp(ext, ".png") == 0){
-            convertPNG(argv[3], out, sym);
+            convertPNG(argv[3], fout, sym);
         } else {
-            outputAsBytes(in, out, sym);
+            outputAsBytes(in, fout, sym);
         }
     } else {
-        outputAsBytes(in, out, sym);
+        outputAsBytes(in, fout, sym);
     }
 
 
@@ -208,6 +210,6 @@ int main(int argc, char** argv)
 
 
     in.close();
-    out.close();
+    fout.close();
     return EXIT_SUCCESS;
 }

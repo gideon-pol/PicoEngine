@@ -9,7 +9,6 @@
 // The framebuffers however hold 16-bit colors to conserve space.
 // In terms of computational speed, there is little difference. Memory requirements may vary though.
 
-
 typedef uint16_t Color16;
 
 struct Color4444 {
@@ -25,7 +24,11 @@ struct Color565 {
     uint8_t b : 5;
 };
 
-
+struct Color332 {
+    uint8_t b : 2;
+    uint8_t g : 3;
+    uint8_t r : 3;
+};
 
 struct Color {
     uint8_t r;
@@ -47,6 +50,10 @@ struct Color {
 
     FORCE_INLINE constexpr Color565 ToColor565() const {
         return (Color565){ r >> 3, g >> 2, b >> 3 };
+    }
+
+    FORCE_INLINE constexpr Color332 ToColor332(){
+        return (Color332){ .b = b >> 6, .g = g >> 5, .r = r >> 5};
     }
 
     FORCE_INLINE constexpr Color(Color16 c) :

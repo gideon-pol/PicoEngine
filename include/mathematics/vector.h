@@ -35,6 +35,13 @@ struct vec {
         }
     };
 
+    template<typename T2>
+    constexpr vec(const vec<T2, C>& other) {
+        for (int i = 0; i < C; i++) {
+            data[i] = SCAST<T>(other(i));
+        }
+    };
+
     FORCE_INLINE constexpr T& operator[](int i) {
         return data[i];
     };

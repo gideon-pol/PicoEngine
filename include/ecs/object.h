@@ -40,11 +40,20 @@ class Object {
 
         mat4f& GetModelMatrix() {
             if (translationUpdated) {
+                // std::cout << "Translating pos: x: " << position.x() << " y: " << position.y() << " z: " << position.z() << std::endl;
                 modelMatrix = mat4f::translate(position) * rotation.ToMatrix() * mat4f::scale(scale);
                 if(Parent != nullptr) modelMatrix = modelMatrix * Parent->GetModelMatrix();
 
                 translationUpdated = false;
             }
+
+            // std::cout << "Model mat: " << std::endl;
+            // for(int i = 0; i < 4; i++){
+            //     for(int j = 0; j < 4; j++){
+            //         std::cout << (float)modelMatrix(i)[j] << " ";
+            //     }
+            //     std::cout << std::endl;
+            // }
 
             return modelMatrix;
         };

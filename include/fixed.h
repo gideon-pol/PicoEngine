@@ -1,7 +1,8 @@
 #pragma once
 #include <stdint.h>
-
+#include <math.h>
 #include "common.h"
+
 
 #ifndef PLATFORM_PICO
     #include <iostream>
@@ -38,6 +39,9 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator+(const fixed& other) const {
+        if(abs((float)(*this) + (float)(other)) > pow(2, 32-FIXED_32_FRAC_BITS-1)) {
+            printf("Overflow: %f + %f\n", (float)(*this), (float)(other));
+        }
         return fixed(value + other.value, 0);
     }
 
@@ -46,11 +50,8 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator*(const fixed& other) const {
-
-        if((float)(*this) * (float)(other) > 524288) {
+        if(abs((float)(*this) * (float)(other)) > pow(2, 32-FIXED_32_FRAC_BITS-1)) {
             printf("Overflow: %f * %f\n", (float)(*this), (float)(other));
-            int d = 0;
-            // printf("%d\n", 1 / d);
         }
         return fixed((int64_t)value * (int64_t)other.value, FIXED_32_FRAC_BITS);
     }

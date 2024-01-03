@@ -9,12 +9,14 @@ Font Renderer::TextFont = Font((uint8_t*)&font_psf);
 DepthTest Renderer::DepthTestMode = DepthTest::Less;
 Culling Renderer::CullingMode = Culling::Back;
 
+Color Renderer::ClearColor = Color::Black;
+
 Camera::Camera(fixed fov, fixed near, fixed far, fixed aspect){
     this->fov = fov;
     this->near = near;
     this->far = far;
 
-    projection = mat4f::perspective(fov, aspect, near, far);
+    projection = mat4f::perspective(fov, (float)aspect, (float)near, (float)far);
     updateViewMatrix();
 }
 
@@ -29,7 +31,6 @@ mat4f& Camera::GetViewMatrix(){
         orientationUpdated = false;
     }
     return view;
-    // return GetModelMatrix().inverse();
 }
 
 // Frustum intersection test that checks if any of the bounding volume's corners
@@ -40,12 +41,14 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
     vec3f corners[8];
     volume.GetCorners(&corners);
 
+    // mat4f MVP = ((mat<float, 4, 4>)GetProjectionMatrix() * (mat<float, 4, 4>)GetViewMatrix() * (mat<float, 4, 4>)translationMat);
     mat4f MVP = GetProjectionMatrix() * GetViewMatrix() * translationMat;
+
     for(int i = 0; i < 8; i++){
         vec3f corner = (MVP * vec4f(corners[i], 1)).homogenize();
         if( corner.x() >= -1 && corner.x() <= 1 &&
             corner.y() >= -1 && corner.y() <= 1 &&
-            corner.z() >= 0 && corner.z() <= 1){
+            corner.z() > 0 && corner.z() < 1){
             return true;
         }
     };
@@ -71,6 +74,14 @@ void Renderer::Clear(Color color){
         FrameBuffer[i] = color.ToColor565();
         Zbuffer[i] = 65535;
     }
+}
+
+void Renderer::Prepare(){
+    Clear(ClearColor);
+    mat<float, 4, 4> vp = (mat<float, 4, 4>)MainCamera.GetProjectionMatrix() *
+                          (mat<float, 4, 4>)MainCamera.GetViewMatrix();
+    VP = vp;
+    RVP = (mat<float, 4, 4>)rasterizationMat * vp;
 }
 
 void Renderer::DrawBox(BoundingBox2D box, Color color){
@@ -157,10 +168,8 @@ void Renderer::DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWid
 }
 
 void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
-    mat4f rVP = rasterizationMat * MainCamera.GetProjectionMatrix() * MainCamera.GetViewMatrix();
-
-    vec3f v1 = (rVP * vec4f(p1, 1)).homogenize();
-    vec3f v2 = (rVP * vec4f(p2, 1)).homogenize();
+    vec3f v1 = (RVP * vec4f(p1, 1)).homogenize();
+    vec3f v2 = (RVP * vec4f(p2, 1)).homogenize();
 
     DrawLine(v1.xy(), v2.xy(), color, lineWidth);
 }
@@ -235,18 +244,21 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
 }
 
 void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
-    // TODO: do not calculate this for every mesh
-    // printf("Checkpoint 1\n");
-    mat4f rMVP = rasterizationMat *
-                    MainCamera.GetProjectionMatrix() *
-                    MainCamera.GetViewMatrix() * 
-                    modelMat;
-
-    // printf("Checkpoint 2\n");
-
     if(!MainCamera.IntersectsFrustrum(mesh.Volume, modelMat)){
         return;
     }
+
+    // TODO: do not calculate this for every mesh
+    // printf("Checkpoint 1\n");
+    // mat<float, 4, 4> rMVP = ((mat<float, 4, 4>)rasterizationMat *
+    //              (mat<float, 4, 4>)MainCamera.GetProjectionMatrix() *
+    //              (mat<float, 4, 4>)MainCamera.GetViewMatrix() * 
+    //              (mat<float, 4, 4>)modelMat);
+
+    mat4f rMVP = RVP * modelMat;
+
+    // printf("Checkpoint 2\n");
+
 
     // printf("Checkpoint 3\n");
     
@@ -269,9 +281,14 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
         // printf("Checkpoint 4\n");
 
+        // vec3<float> pv1 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v1.Position, 1))).homogenize();
+        // vec3<float> pv2 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v2.Position, 1))).homogenize();
+        // vec3<float> pv3 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v3.Position, 1))).homogenize();
+
         vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
         vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
         vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
+
 
         // printf("Checkpoint 5\n");
 
@@ -312,7 +329,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                 if(w0 >= 0 && w1 >= 0 && w2 >= 0){
                     vec3f uvw = vec3f(w0, w1, w2) / area;
                     fixed z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
-                    if(z > 1.0f || z < 0.0f) continue;
+                    if(z >= 1.0f || z <= 0.0f) continue;
 
                     // The precision of a fixed point is not good enough to multiply by 65535
                     // so we convert to float for the calculation
@@ -425,12 +442,8 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 }
 
 vec3f Renderer::WorldToScreen(vec3f worldPos){
-    mat4f rMVP = rasterizationMat *
-                    MainCamera.GetProjectionMatrix() *
-                    MainCamera.GetViewMatrix();
-
-    return (rMVP * vec4f(worldPos, 1)).homogenize();
-    // return vec2i16(SCAST<int16_t>(p.x()), SCAST<int16_t>(p.y()));
+    // return SCAST<vec4<float>>((RVP * vec4<float>(worldPos, 1))).homogenize();
+    return (RVP * vec4f(worldPos, 1)).homogenize();
 }
 
 void Renderer::Debug::DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color color){
