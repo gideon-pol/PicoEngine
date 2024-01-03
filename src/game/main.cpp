@@ -378,10 +378,12 @@ void game_render(){
 
         Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
 
-        // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
-        // for(int i = 0; i < LINE_SIZE-1; i++){
-        //     Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
-        // }
+        if((planet.GetPosition() - cam.GetPosition()).magnitude() > 50) continue;
+
+        Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
+        for(int i = 0; i < LINE_SIZE-1; i++){
+            Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
+        }
     }
 
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);

@@ -167,11 +167,90 @@ void Renderer::DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWid
     }
 }
 
+// 3D Bresenham that respects the camera's frustrum and depth buffer
 void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
-    vec3f v1 = (RVP * vec4f(p1, 1)).homogenize();
-    vec3f v2 = (RVP * vec4f(p2, 1)).homogenize();
+    vec3f pv1 = (RVP * vec4f(p1, 1)).homogenize();
+    vec3f pv2 = (RVP * vec4f(p2, 1)).homogenize();
 
-    DrawLine(v1.xy(), v2.xy(), color, lineWidth);
+    int32_t x0 = SCAST<int32_t>(pv1.x());
+    int32_t y0 = SCAST<int32_t>(pv1.y());
+    int32_t x1 = SCAST<int32_t>(pv2.x());
+    int32_t y1 = SCAST<int32_t>(pv2.y());
+    
+    if(pv1.z() <= 0 || pv1.z() >= 1 || pv2.z() <= 0 || pv2.z() >= 1) return;
+
+    int32_t z0 = SCAST<int32_t>((float)pv1.z() * 65535.0f);
+    int32_t z1 = SCAST<int32_t>((float)pv2.z() * 65535.0f);
+
+    int32_t dx = abs(x1 - x0);
+    int32_t dy = abs(y1 - y0);
+    int32_t dz = abs(z1 - z0);
+
+    int32_t sx = x0 < x1 ? 1 : -1;
+    int32_t sy = y0 < y1 ? 1 : -1;
+    int32_t sz = z0 < z1 ? 1 : -1;
+
+    int32_t err = dx - dy;
+
+    while(true){
+        for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
+            for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
+                if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
+
+                int32_t z = z0 + (z1 - z0) * (x - x0) / (x1 - x0 == 0 ? 1 : x1 - x0);
+                if(z >= 1 && z <= 65535){
+                    switch(DepthTestMode){
+                        case DepthTest::Never:
+                            break;
+                        case DepthTest::Less:
+                            if(z >= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        case DepthTest::Greater:
+                            if(z <= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        case DepthTest::Equal:
+                            if(z != Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        case DepthTest::NotEqual:
+                            if(z == Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        case DepthTest::LessEqual:
+                            if(z > Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        case DepthTest::GreaterEqual:
+                            if(z < Zbuffer[y * FRAME_WIDTH + x]) continue;
+                            Zbuffer[y * FRAME_WIDTH + x] = z;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
+                }
+            }
+        }
+
+        if(x0 == x1 && y0 == y1) break;
+
+        int32_t e2 = 2 * err;
+
+        if(e2 > -dy){
+            err -= dy;
+            x0 += sx;
+            z0 += sz;
+        }
+
+        if(e2 < dx){
+            err += dx;
+            y0 += sy;
+            z0 += sz;
+        }
+    }
 }
 
 // void Renderer::DrawCircle(vec2i16 pos, uint8_t radius, Color color){
