@@ -2,8 +2,8 @@
 
 extern const uint8_t font_psf[];
 
-Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 1000fp, FRAME_WIDTH / FRAME_HEIGHT);
-Color565 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 500fp, FRAME_WIDTH / FRAME_HEIGHT);
+Color16 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 Font Renderer::TextFont = Font((uint8_t*)&font_psf);
 DepthTest Renderer::DepthTestMode = DepthTest::Less;
@@ -71,13 +71,16 @@ void Renderer::Init(){
 
 void Renderer::Clear(Color color){
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
-        FrameBuffer[i] = color.ToColor565();
+        FrameBuffer[i] = color.ToColor16();
         Zbuffer[i] = 65535;
     }
 }
 
 void Renderer::Prepare(){
     Clear(ClearColor);
+
+    // Since this is run only once per frame, we do the calculations with floats instead of fixed
+    // for better precision. Not doing so will lead to overflows during the multiplication.
     mat<float, 4, 4> vp = (mat<float, 4, 4>)MainCamera.GetProjectionMatrix() *
                           (mat<float, 4, 4>)MainCamera.GetViewMatrix();
     VP = vp;
@@ -89,7 +92,7 @@ void Renderer::DrawBox(BoundingBox2D box, Color color){
 
     for(int y = SCAST<int>(bbi.Min.y()); y < SCAST<int>(bbi.Max.y()); y++){
         for(int x = SCAST<int>(bbi.Min.x()); x < SCAST<int>(bbi.Max.x()); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
+            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
         }
     }
 }
@@ -177,7 +180,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
     int32_t x1 = SCAST<int32_t>(pv2.x());
     int32_t y1 = SCAST<int32_t>(pv2.y());
     
-    if(pv1.z() <= 0 || pv1.z() >= 1 || pv2.z() <= 0 || pv2.z() >= 1) return;
+    if((pv1.z() <= 0 || pv1.z() >= 1) || (pv2.z() <= 0 || pv2.z() >= 1)) return;
 
     int32_t z0 = SCAST<int32_t>((float)pv1.z() * 65535.0f);
     int32_t z1 = SCAST<int32_t>((float)pv2.z() * 65535.0f);
@@ -190,8 +193,94 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
     int32_t sy = y0 < y1 ? 1 : -1;
     int32_t sz = z0 < z1 ? 1 : -1;
 
-    int32_t err = dx - dy;
+    if(dx >= dy && dx >= dz){
+        int p1 = 2 * dy - dx;
+        int p2 = 2 * dz - dx;
 
+        while(x0 != x1){
+            x0 += sx;
+            if(p1 >= 0){
+                y0 += sy;
+                p1 -= 2 * dx;
+            }
+            if(p2 >= 0){
+                z0 += sz;
+                p2 -= 2 * dx;
+            }
+            p1 += 2 * dy;
+            p2 += 2 * dz;
+
+            if(z0 <= 0 || z0 >= 65535) continue;
+
+            for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
+                for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
+                    if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
+
+                    if(testDepth(vec2i16(x, y), z0)){
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                    }
+                }
+            }
+        }
+    } else if(dy >= dx && dy >= dz){
+        int p1 = 2 * dx - dy;
+        int p2 = 2 * dz - dy;
+
+        while(y0 != y1){
+            y0 += sy;
+            if(p1 >= 0){
+                x0 += sx;
+                p1 -= 2 * dy;
+            }
+            if(p2 >= 0){
+                z0 += sz;
+                p2 -= 2 * dy;
+            }
+            p1 += 2 * dx;
+            p2 += 2 * dz;
+
+            if(z0 <= 0 || z0 >= 65535) continue;
+            for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
+                for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
+                    if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
+
+                    if(testDepth(vec2i16(x, y), z0)){
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                    }
+                }
+            }
+        }
+    } else if(dz >= dx && dz >= dy){
+        int p1 = 2 * dy - dz;
+        int p2 = 2 * dx - dz;
+
+        while(z0 != z1){
+            z0 += sz;
+            if(p1 >= 0){
+                y0 += sy;
+                p1 -= 2 * dz;
+            }
+            if(p2 >= 0){
+                x0 += sx;
+                p2 -= 2 * dz;
+            }
+            p1 += 2 * dy;
+            p2 += 2 * dx;
+
+            if(z0 <= 0 || z0 >= 65535) continue;
+            for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
+                for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
+                    if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
+
+                    if(testDepth(vec2i16(x, y), z0)){
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                    }
+                }
+            }
+        }
+    }
+
+    /*
     while(true){
         for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
             for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
@@ -230,7 +319,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
+                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
                 }
             }
         }
@@ -238,6 +327,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
         if(x0 == x1 && y0 == y1) break;
 
         int32_t e2 = 2 * err;
+        int32_t e22 = 2 * err2;
 
         if(e2 > -dy){
             err -= dy;
@@ -245,12 +335,25 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
             z0 += sz;
         }
 
+        if(e22 > -dz){
+            err2 -= dz;
+            x0 += sx;
+            y0 += sy;
+        }
+
         if(e2 < dx){
             err += dx;
             y0 += sy;
             z0 += sz;
         }
+
+        if(e22 < dx){
+            err2 += dx;
+            z0 += sz;
+            y0 += sy;
+        }
     }
+    */
 }
 
 // void Renderer::DrawCircle(vec2i16 pos, uint8_t radius, Color color){
@@ -299,7 +402,7 @@ void Renderer::DrawText(const char* text, vec2i16 pos, Color color){
 
             for(int gx = 0; gx < TextFont.GlyphSize.x(); gx++){
                 if(*glyph & mask){
-                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor565();
+                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor16();
                 }
                 mask >>= 1;
             }
@@ -317,7 +420,7 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
 
     for(int y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
         for(int x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor565();
+            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
         }
     }
 }
@@ -414,36 +517,38 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     // so we convert to float for the calculation
                     uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
-                    switch(DepthTestMode){
-                        case DepthTest::Never:
-                            break;
-                        case DepthTest::Less:
-                            if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        case DepthTest::Greater:
-                            if(z16 <= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        case DepthTest::Equal:
-                            if(z16 != Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        case DepthTest::NotEqual:
-                            if(z16 == Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        case DepthTest::LessEqual:
-                            if(z16 > Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        case DepthTest::GreaterEqual:
-                            if(z16 < Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z16;
-                            break;
-                        default:
-                            break;
-                    }
+                    // switch(DepthTestMode){
+                    //     case DepthTest::Never:
+                    //         break;
+                    //     case DepthTest::Less:
+                    //         if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     case DepthTest::Greater:
+                    //         if(z16 <= Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     case DepthTest::Equal:
+                    //         if(z16 != Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     case DepthTest::NotEqual:
+                    //         if(z16 == Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     case DepthTest::LessEqual:
+                    //         if(z16 > Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     case DepthTest::GreaterEqual:
+                    //         if(z16 < Zbuffer[y * FRAME_WIDTH + x]) continue;
+                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
+                    //         break;
+                    //     default:
+                    //         break;
+                    // }
+
+                    if(!testDepth(vec2i16(x, y), z16)) continue;
 
                     Color fragmentColor = t.TriangleColor;
 
@@ -453,7 +558,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             Texture2D* tex = params->_Texture;
                             vec2f uv = (t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z());
                             uv = vec2f(uv.x() * params->TextureScale.x(), uv.y() * params->TextureScale.y());
-                            fragmentColor = tex->Sample(uv).ToColor565();
+                            fragmentColor = tex->Sample(uv);
                             break;
                         }
                         case ShaderType::Custom: {
@@ -483,7 +588,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
+                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor16();
                 }
             }
         }

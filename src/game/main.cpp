@@ -35,7 +35,7 @@ public:
 
     PlanetShader(){
         Type = ShaderType::Custom;
-        TriangleProgram =  nullptr;
+        TriangleProgram = nullptr;
         FragmentProgram = [](FragmentShaderData& data, void* parameters){
             Parameters* params = (Parameters*)parameters;
             Texture2D* texture = params->_Texture;
@@ -58,7 +58,7 @@ public:
     }
 };
 
-#define LINE_SIZE 5
+#define LINE_SIZE 10
 
 struct Body : public Object {
     vec3<float> Velocity;
@@ -103,7 +103,7 @@ Texture2D flare = Texture2D((Color16*)&flare_png, 200, 114);
 TextureShader t = TextureShader();
 PlanetShader p = PlanetShader();
 
-Body planets[10];
+Body planets[9];
 
 fixed yaw, pitch;
 
@@ -114,42 +114,88 @@ Color lightColor = Color(255, 255, 255, 255);
 void game_init(){
     printf("Initializing game\n");
 
+    Renderer::ClearColor = Color::Red;
 
-    Material* mercuryMat = new Material(p);
-    ((PlanetShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
-    ((PlanetShader::Parameters*)mercuryMat->Parameters)->LightColor = lightColor;
+    {
+        Material* mercuryMat = new Material(p);
+        ((PlanetShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
+        ((PlanetShader::Parameters*)mercuryMat->Parameters)->LightColor = lightColor;
 
-    Material* venusMat = new Material(p);
-    ((PlanetShader::Parameters*)venusMat->Parameters)->_Texture = &venus;
-    ((PlanetShader::Parameters*)venusMat->Parameters)->LightColor = lightColor;
+        Material* venusMat = new Material(p);
+        ((PlanetShader::Parameters*)venusMat->Parameters)->_Texture = &venus;
+        ((PlanetShader::Parameters*)venusMat->Parameters)->LightColor = lightColor;
 
-    Material* earthMat = new Material(p);
-    ((PlanetShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
-    ((PlanetShader::Parameters*)earthMat->Parameters)->LightColor = lightColor;
+        Material* earthMat = new Material(p);
+        ((PlanetShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
+        ((PlanetShader::Parameters*)earthMat->Parameters)->LightColor = lightColor;
 
-    Material* moonMat = new Material(p);
-    ((PlanetShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
-    ((PlanetShader::Parameters*)moonMat->Parameters)->LightColor = lightColor;
+        Material* moonMat = new Material(p);
+        ((PlanetShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
+        ((PlanetShader::Parameters*)moonMat->Parameters)->LightColor = lightColor;
 
-    Material* marsMat = new Material(p);
-    ((PlanetShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
-    ((PlanetShader::Parameters*)marsMat->Parameters)->LightColor = lightColor;
+        Material* marsMat = new Material(p);
+        ((PlanetShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
+        ((PlanetShader::Parameters*)marsMat->Parameters)->LightColor = lightColor;
 
-    Material* jupiterMat = new Material(p);
-    ((PlanetShader::Parameters*)jupiterMat->Parameters)->_Texture = &jupiter;
-    ((PlanetShader::Parameters*)jupiterMat->Parameters)->LightColor = lightColor;
+        Material* jupiterMat = new Material(p);
+        ((PlanetShader::Parameters*)jupiterMat->Parameters)->_Texture = &jupiter;
+        ((PlanetShader::Parameters*)jupiterMat->Parameters)->LightColor = lightColor;
 
-    Material* saturnMat = new Material(p);
-    ((PlanetShader::Parameters*)saturnMat->Parameters)->_Texture = &saturn;
-    ((PlanetShader::Parameters*)saturnMat->Parameters)->LightColor = lightColor;
+        Material* saturnMat = new Material(p);
+        ((PlanetShader::Parameters*)saturnMat->Parameters)->_Texture = &saturn;
+        ((PlanetShader::Parameters*)saturnMat->Parameters)->LightColor = lightColor;
 
-    Material* uranusMat = new Material(p);
-    ((PlanetShader::Parameters*)uranusMat->Parameters)->_Texture = &uranus;
-    ((PlanetShader::Parameters*)uranusMat->Parameters)->LightColor = lightColor;
+        Material* uranusMat = new Material(p);
+        ((PlanetShader::Parameters*)uranusMat->Parameters)->_Texture = &uranus;
+        ((PlanetShader::Parameters*)uranusMat->Parameters)->LightColor = lightColor;
 
-    Material* neptuneMat = new Material(p);
-    ((PlanetShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
-    ((PlanetShader::Parameters*)neptuneMat->Parameters)->LightColor = lightColor;
+        Material* neptuneMat = new Material(p);
+        ((PlanetShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
+        ((PlanetShader::Parameters*)neptuneMat->Parameters)->LightColor = lightColor;
+    }
+
+    
+    Material* mercuryMat = new Material(t);
+    ((TextureShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
+    ((TextureShader::Parameters*)mercuryMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* venusMat = new Material(t);
+    ((TextureShader::Parameters*)venusMat->Parameters)->_Texture = &venus;
+    ((TextureShader::Parameters*)venusMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* earthMat = new Material(t);
+    ((TextureShader::Parameters*)earthMat->Parameters)->_Texture = &earth;
+    ((TextureShader::Parameters*)earthMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* moonMat = new Material(t);
+    ((TextureShader::Parameters*)moonMat->Parameters)->_Texture = &moon;
+    ((TextureShader::Parameters*)moonMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* marsMat = new Material(t);
+    ((TextureShader::Parameters*)marsMat->Parameters)->_Texture = &mars;
+    ((TextureShader::Parameters*)marsMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* jupiterMat = new Material(t);
+    ((TextureShader::Parameters*)jupiterMat->Parameters)->_Texture = &jupiter;
+    ((TextureShader::Parameters*)jupiterMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* saturnMat = new Material(t);
+    ((TextureShader::Parameters*)saturnMat->Parameters)->_Texture = &saturn;
+    ((TextureShader::Parameters*)saturnMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* uranusMat = new Material(t);
+    ((TextureShader::Parameters*)uranusMat->Parameters)->_Texture = &uranus;
+    ((TextureShader::Parameters*)uranusMat->Parameters)->TextureScale = vec2f(1);
+
+    Material* neptuneMat = new Material(t);
+    ((TextureShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
+    ((TextureShader::Parameters*)neptuneMat->Parameters)->TextureScale = vec2f(1);
+    
+
+    Material* debugMat = new Material(debug);
+    ((FlatShader::Parameters*)debugMat->Parameters)->_Color = Color::Purple;
+
+    
 
     planets[0].Mass = 10000;
     planets[0].SetPosition(vec3f(0, 0, 0));
@@ -172,15 +218,13 @@ void game_init(){
     planets[3].Mass = 1;
     planets[3].SetScale(vec3f(1));
     planets[3].SetPosition(vec3f(0, 0, 100));
-    planets[3].Velocity = vec3<float>(0);
-    planets[3].RotationalVelocity = Quaternion::Euler(vec3f(0, 360fp, 0));
+    planets[3].RotationalVelocity = Quaternion::Euler(vec3f(0, 1fp, 0));
     strcpy(planets[3].Name, "Earth");
 
     planets[4]._Material = moonMat;
     planets[4].Mass = 0.0123;
     planets[4].SetScale(vec3f(0.27));
     planets[4].SetPosition(vec3f(0, 0, 104));
-    // planets[4].Velocity = vec3<float>(0.5, 0, 0);
     strcpy(planets[4].Name, "Moon");
 
     planets[5]._Material = marsMat;
@@ -189,9 +233,7 @@ void game_init(){
     planets[5].SetPosition(vec3f(0, 0, 152));
     strcpy(planets[5].Name, "Mars");
 
-    Material* debugMat = new Material(debug);
-    ((FlatShader::Parameters*)debugMat->Parameters)->_Color = Color::Purple;
-    planets[6]._Material = debugMat;
+    planets[6]._Material = jupiterMat;
     planets[6].Mass = 317.8;
     planets[6].SetScale(vec3f(11.2));
     planets[6].SetPosition(vec3f(0, 0, 520));
@@ -204,10 +246,6 @@ void game_init(){
     planets[7].SetPosition(vec3f(0, 0, 954));
     planets[7].Enabled = true;
     strcpy(planets[7].Name, "Saturn");
-
-    for(int i = 8; i < 10; i++){
-        planets[i].Enabled = false;
-    }
 
     planets[7]._Material = uranusMat;
     planets[7].Mass = 14.5;
@@ -279,14 +317,12 @@ void game_update(){
         if(!planet.Enabled) continue;
 
         planet.Translate(planet.Velocity * Time::GetDeltaTime());
-        // planet.Rotate(planet.RotationalVelocity * Time::GetDeltaTime());
-
-        // printf("%s: %f, %f, %f\n", planet.Name, (float)planet.GetPosition().x(), (float)planet.GetPosition().y(), (float)planet.GetPosition().z());
+        // planet.Rotate(planet.RotationalVelocity);
     }
 
     for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
         if(!planets[i].Enabled || !planets[i].Render) continue;
-        ((PlanetShader::Parameters*)planets[i]._Material->Parameters)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
+        // ((PlanetShader::Parameters*)planets[i]._Material->Parameters)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
     }
 
     if(Time::GetFrameCount() % 50 == 0){
@@ -335,7 +371,7 @@ void game_update(){
                 targetCamDistance = planets[targetPlanet].GetScale().x() * 5fp;
                 break;
             case CameraMode::Far:
-                targetCamDistance = planets[targetPlanet].GetScale().x() * 7.5fp;
+                targetCamDistance = planets[targetPlanet].GetScale().x() * 10fp;
                 break;
         }
     }
@@ -346,6 +382,24 @@ void game_update(){
 }
 
 void game_render(){
+    for(int y = 0; y < FRAME_HEIGHT; y++){
+        // Color c = Color::FromHSV(360.0 / FRAME_HEIGHT * y, 1, 1);
+        Color c = Color(0, 255.0 / FRAME_HEIGHT * y, 0, 255);
+        Color565 c565 = c.ToColor565();
+        // printf("Color: %d %d %d\n", c.r, c.g, c.b);
+        // printf("Color565: %d %d %d\n", c565.r, c565.g, c565.b);
+    }
+
+
+    for(int y = 0; y < FRAME_HEIGHT; y++){
+        // Color c = Color::FromHSV(360.0 / FRAME_HEIGHT * y, 1, 1);
+        // Color c = Color(0, 255.0 / FRAME_HEIGHT * y, 0, 255);
+        Color c = Color::White;
+        for(int x = 0; x < FRAME_WIDTH; x++){
+            Renderer::FrameBuffer[y * FRAME_WIDTH + x] = c.ToColor16();
+        }
+    }
+
     {
     //     Renderer::CullingMode = Culling::Front;
     //     Renderer::DepthTestMode = DepthTest::Never;
@@ -363,12 +417,6 @@ void game_render(){
 
     vec3f sunPos = Renderer::WorldToScreen(planets[0].GetPosition());
 
-    // vec3f dir = (planets[0].GetPosition() - cam.GetPosition());
-    // printf("dir: %f, %f, %f\n", (float)dir.x(), (float)dir.y(), (float)dir.z());
-
-    // printf("raster pos: %f, %f, %f\n", (float)sunPos.x(), (float)sunPos.y(), (float)sunPos.z());
-
-
     if(sunPos.z() < 1 && sunPos.z() >= 0){
         Renderer::Blit(flare, vec2i16(sunPos.xy()) - vec2i16(flare.Width, flare.Height) / 2);
     }
@@ -376,17 +424,20 @@ void game_render(){
     for(Body& planet : planets){
         if(!planet.Enabled || !planet.Render) continue;
 
+        fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
+
         Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
 
-        if((planet.GetPosition() - cam.GetPosition()).magnitude() > 50) continue;
+        if(dst > 50) continue;
 
-        Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
-        for(int i = 0; i < LINE_SIZE-1; i++){
-            Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
-        }
+        // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
+        // for(int i = 0; i < LINE_SIZE-1; i++){
+            // Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
+        // }
     }
 
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);
+
     // vec3f upV = mat4f::euler(planets[0].Rotation).col(1).xyz();
     // vec3f rightV = mat4f::euler(planets[0].Rotation).col(0).xyz();
     // vec3f forwardV = mat4f::euler(planets[0].Rotation).col(2).xyz();

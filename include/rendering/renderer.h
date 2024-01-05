@@ -49,8 +49,6 @@ class Camera {
 
         vec3f position;
         Quaternion rotation;
-        // vec3f rotation;
-
 
         mat4f projection;
         mat4f view;
@@ -76,7 +74,7 @@ enum Culling {
 
 namespace Renderer{
     extern Camera MainCamera;
-    extern Color565 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+    extern Color16 FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
     extern uint16_t Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 
     extern Font TextFont;
@@ -86,12 +84,34 @@ namespace Renderer{
 
     extern Color ClearColor;
 
-
     namespace {
         BoundingBox2D bounds = BoundingBox2D(vec2f(0), vec2f(0));
         mat4f rasterizationMat = mat4f::identity();
         mat4f VP = mat4f::identity();
         mat4f RVP = mat4f::identity();
+
+        bool testDepth(vec2i16 pos, uint16_t val){
+            if(pos.x() < 0 || pos.x() >= FRAME_WIDTH || pos.y() < 0 || pos.y() >= FRAME_HEIGHT) return false;
+
+            switch(DepthTestMode){
+                case DepthTest::Never:
+                    return true && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::Less:
+                    return val < Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::Greater:
+                    return val > Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::Equal:
+                    return val == Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::NotEqual:
+                    return val != Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::LessEqual:
+                    return val <= Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                case DepthTest::GreaterEqual:
+                    return val >= Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                default:
+                    return false;
+            }
+        }
     };
 
     void Init();
@@ -100,7 +120,7 @@ namespace Renderer{
 
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){
-            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor565();
+            FrameBuffer[pos.y() * FRAME_WIDTH + pos.x()] = color.ToColor16();
         }
     }
     void DrawBox(BoundingBox2D box, Color color);

@@ -10,7 +10,7 @@ namespace Time {
     };
 
     void Init();
-    void Update();
+    void Tick();
     void Sleep(uint64_t microseconds);
     uint64_t GetFrameCount();
     float GetDeltaTime();

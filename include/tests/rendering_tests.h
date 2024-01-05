@@ -59,17 +59,8 @@ uint32_t pyramidIndices[] = {
     1, 3, 2,
 };
 
-Vertex quadVerts[] = {
-    (Vertex){vec3f(-1, -1, 0), vec3f(0), vec2f(0, 0)},
-    (Vertex){vec3f(1, -1, 0), vec3f(0), vec2f(1, 0)},
-    (Vertex){vec3f(-1, 1, 0), vec3f(0), vec2f(0, 1)},
-    (Vertex){vec3f(1, 1, 0), vec3f(0), vec2f(1, 1)},
-};
-
-uint32_t quadIndices[] = {
-    0, 1, 2,
-    2, 1, 3,
-};
+extern Vertex quadVerts[];
+extern uint32_t quadIndices[];
 
 void drawCubeTest(){
     Mesh cube = Mesh((Vertex*)&cubeVerts, 8, (uint32_t*)&cubeIndices, 12);
@@ -101,7 +92,6 @@ void drawCubeTest(){
     Material mat = Material(s);
     ((LightingShader::Parameters*)mat.Parameters)->LightDirection = vec3f::forward;
     ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
-    ((LightingShader::Parameters*)mat.Parameters)->ModelMatrix = &M2;
 
     Material mat2 = Material(f);
     ((FlatShader::Parameters*)mat2.Parameters)->_Color = Color::Green;
@@ -209,14 +199,15 @@ void picoCubeTest(){
 
         while(ST7789::IsFlipping());
 
-        if(Input::IsButtonDown(Input::Buttons::Stick)){
-            clearColor = randomColors[rand() % 11];
+        if(Input::GetButtonDown(Input::Button::Stick)){
+            Renderer::ClearColor = randomColors[rand() % 11];
         }
-        Renderer::Clear(clearColor);
+        
+        Renderer::Prepare();
 
         time = get_absolute_time();
 
-        ((LightingShader::Parameters*)lightingMat1.Parameters)->ModelMatrix = &M;
+        ((LightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
         // ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
 
         // Renderer::DrawMesh(suzanne, M, lightingMat1);

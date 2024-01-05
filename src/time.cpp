@@ -11,7 +11,7 @@ void Time::Init(){
     lastFrameTime = time_us_64();
 };
 
-void Time::Update(){
+void Time::Tick(){
     uint64_t currentTime = time_us_64();
     deltaTime = currentTime - lastFrameTime;
     lastFrameTime = currentTime;
@@ -51,7 +51,7 @@ void Time::Init(){
     lastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 };
 
-void Time::Update(){
+void Time::Tick(){
     uint64_t currentTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
     deltaTime = currentTime - lastFrameTime;
     lastFrameTime = currentTime;

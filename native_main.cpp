@@ -83,7 +83,7 @@ int main(int argc, char** argv){
     game_init();
 
     while(true){
-        Time::Update();
+        Time::Tick();
         Input::Poll();
 
         SDL_Event event;

@@ -61,7 +61,7 @@ namespace ST7789 {
         volatile bool dmaBusy = false;
 
         void transmitScanline() {
-            uint32_t* s = (uint32_t*)&fb[(dma_scanline == 119 ? 118 : dma_scanline) * FRAME_WIDTH];// [((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * FRAME_WIDTH];
+            uint32_t* s = (uint32_t*)&fb[(dma_scanline == 119 ? 118 : dma_scanline) * FRAME_WIDTH]; // [((dma_scanline - 1) < 0 ? 0 : (dma_scanline - 1)) * FRAME_WIDTH];
             dmaBusy = true;
             dma_channel_transfer_from_buffer_now(dmaChannel, s, FRAME_WIDTH);
         }

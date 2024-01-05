@@ -11,7 +11,7 @@
 #include "hardware/input.h"
 
 #include "rendering/renderer.h"
-// #include "tests/rendering_tests.h"
+#include "tests/rendering_tests.h"
 
 extern void game_init();
 extern void game_update();
@@ -24,7 +24,6 @@ int main() {
     gpio_set_dir(25, GPIO_OUT);
     
     // multicore_launch_core1(core1_entry);
-    sleep_ms(5000);
 
 #ifdef ENABLE_OVERCLOCK
     vreg_set_voltage(VREG_VOLTAGE_1_20);
@@ -33,18 +32,22 @@ int main() {
 
     ST7789::Init();
     ST7789::SetBrightness(65535);
+
+    Time::Init();
     Input::Init();
     Renderer::Init();
 
     game_init();
-    // picoCubeTest();
 
     while (true) {
-        Time::Update();
+        Time::Tick();
         Input::Poll();
+
         game_update();
 
         while(ST7789::IsFlipping());
+
+        Renderer::Prepare();
         game_render();
         ST7789::Flip((Color16*)&Renderer::FrameBuffer);
     }

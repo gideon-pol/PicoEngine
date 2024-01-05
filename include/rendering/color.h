@@ -16,19 +16,19 @@ struct Color4444 {
     uint8_t b : 4;
     uint8_t a : 4;
     uint8_t r : 4;
-};
+} __attribute__((packed));
 
 struct Color565 {
-    uint8_t r : 5;
     uint8_t g : 6;
+    uint8_t r : 5;
     uint8_t b : 5;
-};
+} __attribute__((packed));
 
 struct Color332 {
     uint8_t b : 2;
     uint8_t g : 3;
     uint8_t r : 3;
-};
+} __attribute__((packed));
 
 struct Color {
     uint8_t r;
@@ -45,11 +45,11 @@ struct Color {
     }
 
     FORCE_INLINE constexpr Color4444 ToColor4444() const {
-        return (Color4444){ g >> 4, b >> 4, a >> 4, r >> 4 };
+        return (Color4444){ .g = g >> 4, .b = b >> 4, .a = a >> 4, .r = r >> 4 };
     }
 
     FORCE_INLINE constexpr Color565 ToColor565() const {
-        return (Color565){ r >> 3, g >> 2, b >> 3 };
+        return (Color565){ .g = g >> 2, .r = r >> 3, .b = b >> 3 };
     }
 
     FORCE_INLINE constexpr Color332 ToColor332(){
