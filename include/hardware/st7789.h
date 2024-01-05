@@ -54,7 +54,7 @@ namespace ST7789 {
         uint screenSM = 0;
         PIO screenPIO = pio0;
         
-        Color16* fb;
+        Color565* fb;
 
         volatile int16_t dma_scanline = 0;
 
@@ -135,7 +135,7 @@ namespace ST7789 {
         */
         sendCommand(MADCTL, 1, "\x04");
         // sendCommand(TEON, 1,"\x00");
-        sendCommand(COLMOD, 1, "\x03");
+        sendCommand(COLMOD, 1, "\x55");
         sendCommand(GAMSET, 1, "\x02");
         // sendCommand(TEON, 1, "\b00000000");
         sendCommand(INVON);
@@ -197,7 +197,7 @@ namespace ST7789 {
         printf("Set up DMA\n");
     };
 
-    void Flip(Color16* data){
+    void Flip(Color565* data){
         // gpio_put(Pin::CS, 0);
         // gpio_put(Pin::DC, 1);
         // spi_set_format(spi0, 16, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);

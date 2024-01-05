@@ -49,7 +49,7 @@ int main() {
 
         Renderer::Prepare();
         game_render();
-        ST7789::Flip((Color16*)&Renderer::FrameBuffer);
+        ST7789::Flip((Color565*)&Renderer::FrameBuffer);
     }
 
     return 0;

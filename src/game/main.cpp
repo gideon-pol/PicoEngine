@@ -382,24 +382,6 @@ void game_update(){
 }
 
 void game_render(){
-    for(int y = 0; y < FRAME_HEIGHT; y++){
-        // Color c = Color::FromHSV(360.0 / FRAME_HEIGHT * y, 1, 1);
-        Color c = Color(0, 255.0 / FRAME_HEIGHT * y, 0, 255);
-        Color565 c565 = c.ToColor565();
-        // printf("Color: %d %d %d\n", c.r, c.g, c.b);
-        // printf("Color565: %d %d %d\n", c565.r, c565.g, c565.b);
-    }
-
-
-    for(int y = 0; y < FRAME_HEIGHT; y++){
-        // Color c = Color::FromHSV(360.0 / FRAME_HEIGHT * y, 1, 1);
-        // Color c = Color(0, 255.0 / FRAME_HEIGHT * y, 0, 255);
-        Color c = Color::White;
-        for(int x = 0; x < FRAME_WIDTH; x++){
-            Renderer::FrameBuffer[y * FRAME_WIDTH + x] = c.ToColor16();
-        }
-    }
-
     {
     //     Renderer::CullingMode = Culling::Front;
     //     Renderer::DepthTestMode = DepthTest::Never;

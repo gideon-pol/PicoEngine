@@ -3,7 +3,7 @@
 extern const uint8_t font_psf[];
 
 Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 500fp, FRAME_WIDTH / FRAME_HEIGHT);
-Color16 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
+Color565 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 Font Renderer::TextFont = Font((uint8_t*)&font_psf);
 DepthTest Renderer::DepthTestMode = DepthTest::Less;
@@ -71,7 +71,7 @@ void Renderer::Init(){
 
 void Renderer::Clear(Color color){
     for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
-        FrameBuffer[i] = color.ToColor16();
+        FrameBuffer[i] = color.ToColor565();
         Zbuffer[i] = 65535;
     }
 }
@@ -92,7 +92,7 @@ void Renderer::DrawBox(BoundingBox2D box, Color color){
 
     for(int y = SCAST<int>(bbi.Min.y()); y < SCAST<int>(bbi.Max.y()); y++){
         for(int x = SCAST<int>(bbi.Min.x()); x < SCAST<int>(bbi.Max.x()); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+            FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
         }
     }
 }
@@ -217,7 +217,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
                     if(testDepth(vec2i16(x, y), z0)){
-                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
             }
@@ -245,7 +245,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
                     if(testDepth(vec2i16(x, y), z0)){
-                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
             }
@@ -273,7 +273,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
                     if(testDepth(vec2i16(x, y), z0)){
-                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                        FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
             }
@@ -319,7 +319,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor16();
+                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                 }
             }
         }
@@ -402,7 +402,7 @@ void Renderer::DrawText(const char* text, vec2i16 pos, Color color){
 
             for(int gx = 0; gx < TextFont.GlyphSize.x(); gx++){
                 if(*glyph & mask){
-                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor16();
+                    FrameBuffer[(y + gy) * FRAME_WIDTH + (x + gx)] = color.ToColor565();
                 }
                 mask >>= 1;
             }
@@ -420,7 +420,7 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
 
     for(int y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
         for(int x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
-            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor16();
+            FrameBuffer[y * FRAME_WIDTH + x] = tex.GetPixel(vec2i16(x - pos.x(), y - pos.y())).ToColor565();
         }
     }
 }
@@ -588,7 +588,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor16();
+                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
                 }
             }
         }

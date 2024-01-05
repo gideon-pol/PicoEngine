@@ -37,3 +37,8 @@ lib
 .vscode/settings.json
 *.mtl
 .vscode/launch.json
+.vscode/settings.json
+.vscode/settings.json
+res/CMakeFiles/CMakeOutput.log
+res/CMakeFiles/3.22.1/CMakeSystem.cmake
+res/CMakeFiles/3.22.1/CompilerIdCXX/CMakeCXXCompilerId.cpp

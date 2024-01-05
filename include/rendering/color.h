@@ -18,10 +18,17 @@ struct Color4444 {
     uint8_t r : 4;
 } __attribute__((packed));
 
+// struct Color565 {
+//     uint8_t g : 6;
+//     uint8_t r : 5;
+//     uint8_t b : 5;
+// } __attribute__((packed));
+
 struct Color565 {
-    uint8_t g : 6;
+    uint8_t g1 : 3;
     uint8_t r : 5;
     uint8_t b : 5;
+    uint8_t g2 : 3;
 } __attribute__((packed));
 
 struct Color332 {
@@ -39,7 +46,6 @@ struct Color {
     constexpr Color() : r(0), g(0), b(0), a(255) {};
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r(r), g(g), b(b), a(a) {};
 
-// #ifdef PLATFORM_PICO
     FORCE_INLINE constexpr Color16 ToColor16() const {
         return (g & 0xf0) << 8 | (b & 0xf0) << 4 | (a & 0xf0) | (r >> 4);
     }
@@ -48,8 +54,12 @@ struct Color {
         return (Color4444){ .g = g >> 4, .b = b >> 4, .a = a >> 4, .r = r >> 4 };
     }
 
+    // FORCE_INLINE constexpr Color565 ToColor565() const {
+    //     return (Color565){ .g = g >> 2, .r = r >> 3, .b = b >> 3 };
+    // }
+
     FORCE_INLINE constexpr Color565 ToColor565() const {
-        return (Color565){ .g = g >> 2, .r = r >> 3, .b = b >> 3 };
+        return (Color565){ .g1 = g >> 5, .r = r >> 3, .b = b >> 3, .g2 = g >> 2 };
     }
 
     FORCE_INLINE constexpr Color332 ToColor332(){
@@ -62,8 +72,11 @@ struct Color {
     FORCE_INLINE constexpr Color(Color4444 c) :
         r(c.r << 4), g(c.g << 4), b(c.b << 4), a(c.a << 4) {};
 
+    // FORCE_INLINE constexpr Color(Color565 c) :
+    //     r(c.r << 3), g(c.g << 2), b(c.b << 3), a(255) {};
+
     FORCE_INLINE constexpr Color(Color565 c) :
-        r(c.r << 3), g(c.g << 2), b(c.b << 3), a(255) {};
+        r(c.r << 3), g((c.g1 << 5) | (c.g2 << 2)), b(c.b << 3), a(255) {};
 
     static const Color White;
     static const Color Black;

@@ -223,7 +223,7 @@ void picoCubeTest(){
 
         // Renderer::Blit(dirt, vec2i16(0));
 
-        ST7789::Flip((Color16*)&Renderer::FrameBuffer);
+        ST7789::Flip((Color565*)&Renderer::FrameBuffer);
 
         printf("FPS: %f\n", 1.0 / (to_ms_since_boot(get_absolute_time()) - to_ms_since_boot(time)) * 1000.0);
     }
