@@ -58,7 +58,6 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
 
 void Camera::updateViewMatrix(){
     view = rotation.ToMatrix() * mat4f::translate(-position);
-    // view = GetModelMatrix().inverse();
 }
 
 void Renderer::Init(){
@@ -279,109 +278,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
             }
         }
     }
-
-    /*
-    while(true){
-        for(int y = y0 - lineWidth; y < y0 + lineWidth; y++){
-            for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
-                if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
-
-                int32_t z = z0 + (z1 - z0) * (x - x0) / (x1 - x0 == 0 ? 1 : x1 - x0);
-                if(z >= 1 && z <= 65535){
-                    switch(DepthTestMode){
-                        case DepthTest::Never:
-                            break;
-                        case DepthTest::Less:
-                            if(z >= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        case DepthTest::Greater:
-                            if(z <= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        case DepthTest::Equal:
-                            if(z != Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        case DepthTest::NotEqual:
-                            if(z == Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        case DepthTest::LessEqual:
-                            if(z > Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        case DepthTest::GreaterEqual:
-                            if(z < Zbuffer[y * FRAME_WIDTH + x]) continue;
-                            Zbuffer[y * FRAME_WIDTH + x] = z;
-                            break;
-                        default:
-                            break;
-                    }
-
-                    FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
-                }
-            }
-        }
-
-        if(x0 == x1 && y0 == y1) break;
-
-        int32_t e2 = 2 * err;
-        int32_t e22 = 2 * err2;
-
-        if(e2 > -dy){
-            err -= dy;
-            x0 += sx;
-            z0 += sz;
-        }
-
-        if(e22 > -dz){
-            err2 -= dz;
-            x0 += sx;
-            y0 += sy;
-        }
-
-        if(e2 < dx){
-            err += dx;
-            y0 += sy;
-            z0 += sz;
-        }
-
-        if(e22 < dx){
-            err2 += dx;
-            z0 += sz;
-            y0 += sy;
-        }
-    }
-    */
 }
-
-// void Renderer::DrawCircle(vec2i16 pos, uint8_t radius, Color color){
-//     int32_t x = radius;
-//     int32_t y = 0;
-//     int32_t err = 0;
-
-//     while(x >= y){
-//         PutPixel(vec2i16(pos.x() + x, pos.y() + y), color);
-//         PutPixel(vec2i16(pos.x() + y, pos.y() + x), color);
-//         PutPixel(vec2i16(pos.x() - y, pos.y() + x), color);
-//         PutPixel(vec2i16(pos.x() - x, pos.y() + y), color);
-//         PutPixel(vec2i16(pos.x() - x, pos.y() - y), color);
-//         PutPixel(vec2i16(pos.x() - y, pos.y() - x), color);
-//         PutPixel(vec2i16(pos.x() + y, pos.y() - x), color);
-//         PutPixel(vec2i16(pos.x() + x, pos.y() - y), color);
-
-//         if(err <= 0){
-//             y += 1;
-//             err += 2 * y + 1;
-//         }
-
-//         if(err > 0){
-//             x -= 1;
-//             err -= 2 * x + 1;
-//         }
-//     }
-// }
 
 void Renderer::DrawText(const char* text, vec2i16 pos, Color color){
     int16_t x = pos.x();
@@ -430,19 +327,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         return;
     }
 
-    // TODO: do not calculate this for every mesh
-    // printf("Checkpoint 1\n");
-    // mat<float, 4, 4> rMVP = ((mat<float, 4, 4>)rasterizationMat *
-    //              (mat<float, 4, 4>)MainCamera.GetProjectionMatrix() *
-    //              (mat<float, 4, 4>)MainCamera.GetViewMatrix() * 
-    //              (mat<float, 4, 4>)modelMat);
-
     mat4f rMVP = RVP * modelMat;
-
-    // printf("Checkpoint 2\n");
-
-
-    // printf("Checkpoint 3\n");
     
     for(int i = 0; i < mesh.PolygonCount; i++){
         uint32_t idx = i * 3;
@@ -463,14 +348,9 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
         // printf("Checkpoint 4\n");
 
-        // vec3<float> pv1 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v1.Position, 1))).homogenize();
-        // vec3<float> pv2 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v2.Position, 1))).homogenize();
-        // vec3<float> pv3 = SCAST<vec4<float>>((rMVP * vec4<float>(t.v3.Position, 1))).homogenize();
-
         vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
         vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
         vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
-
 
         // printf("Checkpoint 5\n");
 
@@ -516,37 +396,6 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     // The precision of a fixed point is not good enough to multiply by 65535
                     // so we convert to float for the calculation
                     uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
-
-                    // switch(DepthTestMode){
-                    //     case DepthTest::Never:
-                    //         break;
-                    //     case DepthTest::Less:
-                    //         if(z16 >= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     case DepthTest::Greater:
-                    //         if(z16 <= Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     case DepthTest::Equal:
-                    //         if(z16 != Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     case DepthTest::NotEqual:
-                    //         if(z16 == Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     case DepthTest::LessEqual:
-                    //         if(z16 > Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     case DepthTest::GreaterEqual:
-                    //         if(z16 < Zbuffer[y * FRAME_WIDTH + x]) continue;
-                    //         Zbuffer[y * FRAME_WIDTH + x] = z16;
-                    //         break;
-                    //     default:
-                    //         break;
-                    // }
 
                     if(!testDepth(vec2i16(x, y), z16)) continue;
 
@@ -626,7 +475,6 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 }
 
 vec3f Renderer::WorldToScreen(vec3f worldPos){
-    // return SCAST<vec4<float>>((RVP * vec4<float>(worldPos, 1))).homogenize();
     return (RVP * vec4f(worldPos, 1)).homogenize();
 }
 

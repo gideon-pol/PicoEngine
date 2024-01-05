@@ -24,6 +24,8 @@ struct Color4444 {
 //     uint8_t b : 5;
 // } __attribute__((packed));
 
+// TODO: This is a hacky solution to the problem of the 565 color format.
+//       A better way would be to sync the display by sending 3 dummy bits first.
 struct Color565 {
     uint8_t g1 : 3;
     uint8_t r : 5;
