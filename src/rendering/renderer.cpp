@@ -215,7 +215,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -243,7 +243,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -271,7 +271,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -340,11 +340,13 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
             Color::Purple
         };
 
+        Time::Profiler::Enter("TriangleProgram");
         if(material._Shader.Type == ShaderType::Flat){
             t.TriangleColor = ((FlatShader::Parameters*)material.Parameters)->_Color;
         } else if(material._Shader.TriangleProgram){
             material._Shader.TriangleProgram(t, material.Parameters);
         }
+        Time::Profiler::Exit("TriangleProgram");
 
         // printf("Checkpoint 4\n");
 
@@ -381,12 +383,15 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
         if(area == 0) continue;
 
+        Time::Profiler::Enter("Rasterization");
         for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
             for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
                 vec3f p = vec3f(x, y, 0);
+                Time::Profiler::Enter("Edge");
                 fixed w0 = edgeFunction(pv2, pv3, p);
                 fixed w1 = edgeFunction(pv3, pv1, p);
                 fixed w2 = edgeFunction(pv1, pv2, p);
+                Time::Profiler::Exit("Edge");
 
                 if(w0 >= 0 && w1 >= 0 && w2 >= 0){
                     vec3f uvw = vec3f(w0, w1, w2) / area;
@@ -397,10 +402,11 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     // so we convert to float for the calculation
                     uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
-                    if(!testDepth(vec2i16(x, y), z16)) continue;
+                    if(!testAndSetDepth(vec2i16(x, y), z16)) continue;
 
                     Color fragmentColor = t.TriangleColor;
 
+                    /*
                     switch(material._Shader.Type){
                         case ShaderType::Texture: {
                             TextureShader::Parameters* params = (TextureShader::Parameters*)material.Parameters;
@@ -437,10 +443,14 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             break;
                     }
 
-                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
+                    */
+
+                    FrameBuffer[y * FRAME_WIDTH + x] = Color::Red.ToColor565(); // fragmentColor.ToColor565();
                 }
             }
         }
+
+        Time::Profiler::Exit("Rasterization");
 
         // printf("Checkpoint 7\n");
 
@@ -500,4 +510,17 @@ void Renderer::Debug::DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color 
     Renderer::DrawLine(corners[1], corners[5], color);
     Renderer::DrawLine(corners[2], corners[6], color);
     Renderer::DrawLine(corners[3], corners[7], color);
+}
+
+void Renderer::Debug::DrawOrientation(mat4f& modelMat){
+    vec3f pos = modelMat.col(3).xyz();
+    vec3f forward = modelMat.col(2).xyz();
+    vec3f up = modelMat.col(1).xyz();
+    vec3f right = modelMat.col(0).xyz();
+
+    Renderer::DepthTestMode = DepthTest::Never;
+    Renderer::DrawLine(pos, pos + forward, Color::White);
+    Renderer::DrawLine(pos, pos + up, Color::Green);
+    Renderer::DrawLine(pos, pos + right, Color::Red);
+    Renderer::DepthTestMode = DepthTest::Less;
 }

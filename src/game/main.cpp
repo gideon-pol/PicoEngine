@@ -114,8 +114,6 @@ Color lightColor = Color(255, 255, 255, 255);
 void game_init(){
     printf("Initializing game\n");
 
-    Renderer::ClearColor = Color::Red;
-
     {
         Material* mercuryMat = new Material(p);
         ((PlanetShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
@@ -408,9 +406,11 @@ void game_render(){
 
         fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
 
-        Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
+        if(dst > 200) continue;
 
-        if(dst > 50) continue;
+        Time::Profiler::Enter("DrawMesh");
+        Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
+        Time::Profiler::Exit("DrawMesh");
 
         // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
         // for(int i = 0; i < LINE_SIZE-1; i++){
@@ -418,12 +418,13 @@ void game_render(){
         // }
     }
 
+    // for(Body& planet : planets){
+        // if(!planet.Enabled || !planet.Render) continue;
+        // Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
+    // }
+
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);
 
-    // vec3f upV = mat4f::euler(planets[0].Rotation).col(1).xyz();
-    // vec3f rightV = mat4f::euler(planets[0].Rotation).col(0).xyz();
-    // vec3f forwardV = mat4f::euler(planets[0].Rotation).col(2).xyz();
-    // Renderer::DrawLine(planets[0].Position, planets[0].Position + upV, Color::Yellow, 2);
-    // Renderer::DrawLine(planets[0].Position, planets[0].Position + rightV, Color::Blue, 2);
-    // Renderer::DrawLine(planets[0].Position, planets[0].Position + forwardV, Color::Cyan, 2);
+    Time::Profiler::Print();
+    Time::Profiler::Reset();
 }

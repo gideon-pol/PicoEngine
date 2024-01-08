@@ -43,6 +43,50 @@ uint64_t Time::NowMicroseconds(){
 };
 #endif
 
+// void Time::Profiler::Enter(bool increaseLevel){
+//     if(current >= 10) return;
+
+//     last_enter[current] = Now();
+//     current++;
+// };
+
+// void Time::Profiler::Exit(){
+//     if(current <= 0) return;
+
+//     current--;
+//     times[current] += Now() - last_enter[current];
+
+//     if(current == 0){
+//         for(int i = 0; i < 10; i++){
+//             printf("%f\n", times[i]);
+//             times[i] = 0;
+//         }
+//     }
+// };
+
+void Time::Profiler::Enter(std::string name){
+    last_enter_map[name] = Now();
+};
+
+void Time::Profiler::Exit(std::string name){
+    times_map[name] += Now() - last_enter_map[name];
+};
+
+void Time::Profiler::Print(){
+    for(auto& [key, value] : times_map){
+        printf("%s: %f\n", key.c_str(), value);
+    }
+};
+
+void Time::Profiler::Reset(){
+    // for(int i = 0; i < 10; i++){
+    //     times[i] = 0;
+    //     last_enter[i] = 0;
+    // }
+
+    times_map.clear();
+};
+
 #ifdef PLATFORM_NATIVE
 #include <chrono>
 #include <thread>

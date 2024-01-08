@@ -1,5 +1,6 @@
 #pragma once
-
+#include <map>
+#include <string>
 #include "common.h"
 
 namespace Time {
@@ -17,6 +18,20 @@ namespace Time {
     uint64_t GetDeltaTimeMicroseconds();
     float Now();
     uint64_t NowMicroseconds();
+
+    namespace Profiler {
+        namespace {
+            // int current = 0;
+
+            std::map<std::string, float> times_map;
+            std::map<std::string, float> last_enter_map;
+        };
+
+        void Enter(std::string name);
+        void Exit(std::string name);
+        void Print();
+        void Reset();
+    };
 
     // float GetDeltaTimeSeconds(){
     //     return (float)deltaTime / 1000000.0f;

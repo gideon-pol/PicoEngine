@@ -90,12 +90,12 @@ namespace Renderer{
         mat4f VP = mat4f::identity();
         mat4f RVP = mat4f::identity();
 
-        bool testDepth(vec2i16 pos, uint16_t val){
+        bool testAndSetDepth(vec2i16 pos, uint16_t val){
             if(pos.x() < 0 || pos.x() >= FRAME_WIDTH || pos.y() < 0 || pos.y() >= FRAME_HEIGHT) return false;
 
             switch(DepthTestMode){
                 case DepthTest::Never:
-                    return true && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                    return true;
                 case DepthTest::Less:
                     return val < Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
                 case DepthTest::Greater:
@@ -107,7 +107,8 @@ namespace Renderer{
                 case DepthTest::LessEqual:
                     return val <= Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
                 case DepthTest::GreaterEqual:
-                    return val >= Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
+                    return val >= Zbuffer[pos.y() * FRAME_WIDTH
+                     + pos.x()] && (Zbuffer[pos.y() * FRAME_WIDTH + pos.x()] = val);
                 default:
                     return false;
             }
@@ -135,5 +136,6 @@ namespace Renderer{
 
     namespace Debug {
         void DrawVolume(BoundingVolume& volume, mat4f& modelMat, Color color);
+        void DrawOrientation(mat4f& modelMat);
     }
 };
