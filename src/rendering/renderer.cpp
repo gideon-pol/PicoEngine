@@ -368,6 +368,14 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         fixed area;
         vec3f windingOrder = (pv2 - pv1).cross(pv3 - pv1);
 
+        int A01, A12, A20, B01, B12, B20;
+        int w1_row, w2_row, w3_row;
+        vec2<int> min;
+
+        vec3<int> v1 = pv1;
+        vec3<int> v2 = pv2;
+        vec3<int> v3 = pv3;
+
         switch(CullingMode){
             case Culling::None:
                 break;
@@ -379,34 +387,42 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                 break;
         }
 
-        area = edgeFunction(pv1, pv2, pv3);
+        area = edgeFunctionFast(v1.xy(), v2.xy(), v3.xy());
 
         if(area == 0) continue;
 
-        Time::Profiler::Enter("Rasterization");
-        for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
-            for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
-                vec3f p = vec3f(x, y, 0);
-                Time::Profiler::Enter("Edge");
-                fixed w0 = edgeFunction(pv2, pv3, p);
-                fixed w1 = edgeFunction(pv3, pv1, p);
-                fixed w2 = edgeFunction(pv1, pv2, p);
-                Time::Profiler::Exit("Edge");
+        A01 = v2.y() - v1.y(); B01 = v1.x() - v2.x();
+        A12 = v3.y() - v2.y(); B12 = v2.x() - v3.x();
+        A20 = v1.y() - v3.y(); B20 = v3.x() - v1.x();
 
-                if(w0 >= 0 && w1 >= 0 && w2 >= 0){
-                    vec3f uvw = vec3f(w0, w1, w2) / area;
+        min = vec2<int>(SCAST<int>(floor(bbi.Min.x())), SCAST<int>(floor(bbi.Min.y())));
+
+        w1_row = edgeFunctionFast(v2.xy(), v3.xy(), min);
+        w2_row = edgeFunctionFast(v3.xy(), v1.xy(), min);
+        w3_row = edgeFunctionFast(v1.xy(), v2.xy(), min);
+
+        Time::Profiler::Enter("Rasterization");
+        for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
+            int w1 = w1_row;
+            int w2 = w2_row;
+            int w3 = w3_row;
+
+            for(int16_t x = SCAST<int16_t>(floor(bbi.Min.x())); x < SCAST<int16_t>(ceil(bbi.Max.x())); x++){
+                if((w1 | w2 | w3) >= 0){
+                    vec3f uvw = vec3f(w1, w2, w3) / area;
                     fixed z = vec3f(pv1.z(), pv2.z(), pv3.z()) * uvw;
-                    if(z >= 1.0f || z <= 0.0f) continue;
+
+                    Color fragmentColor = t.TriangleColor;
+                    uint16_t z16;
+
+                    if(z >= 1.0f || z <= 0.0f) goto update_baricentric;
 
                     // The precision of a fixed point is not good enough to multiply by 65535
                     // so we convert to float for the calculation
-                    uint16_t z16 = SCAST<uint16_t>((float)z * 65535.0f);
+                    z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
-                    if(!testAndSetDepth(vec2i16(x, y), z16)) continue;
+                    if(!testAndSetDepth(vec2i16(x, y), z16)) goto update_baricentric;
 
-                    Color fragmentColor = t.TriangleColor;
-
-                    /*
                     switch(material._Shader.Type){
                         case ShaderType::Texture: {
                             TextureShader::Parameters* params = (TextureShader::Parameters*)material.Parameters;
@@ -443,11 +459,18 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                             break;
                     }
 
-                    */
-
-                    FrameBuffer[y * FRAME_WIDTH + x] = Color::Red.ToColor565(); // fragmentColor.ToColor565();
+                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
                 }
+
+                update_baricentric:
+                w1 += A12;
+                w2 += A20;
+                w3 += A01;
             }
+
+            w1_row += B12;
+            w2_row += B20;
+            w3_row += B01;
         }
 
         Time::Profiler::Exit("Rasterization");

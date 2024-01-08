@@ -64,3 +64,11 @@ class BoundingVolume {
 FORCE_INLINE constexpr fixed edgeFunction(vec3f a, vec3f b, vec3f c){
     return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
 }
+
+FORCE_INLINE constexpr int edgeFunctionFast(vec2<int> a, vec2<int> b, vec2<int> c){
+    return (c.x() - a.x()) * (b.y() - a.y()) - (c.y() - a.y()) * (b.x() - a.x());
+}
+
+// FORCE_INLINE constexpr int edgeFunctionFast(vec2<int> a, vec2<int> b, vec2<int> c){
+    // return (b.x() - a.x()) * (c.y() - a.y()) - (b.y() - a.y()) * (c.x() - a.x());
+// }
