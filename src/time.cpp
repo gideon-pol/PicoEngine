@@ -79,11 +79,6 @@ void Time::Profiler::Print(){
 };
 
 void Time::Profiler::Reset(){
-    // for(int i = 0; i < 10; i++){
-    //     times[i] = 0;
-    //     last_enter[i] = 0;
-    // }
-
     times_map.clear();
 };
 

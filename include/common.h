@@ -16,6 +16,8 @@
 #define FRAME_HEIGHT                120
 
 #define ENABLE_OVERCLOCK            1
+
+#define DEFERRED_QUEUE_SIZE         32
 #endif
 
 #ifdef PLATFORM_NATIVE

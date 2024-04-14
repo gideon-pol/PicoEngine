@@ -7,7 +7,7 @@ Color565 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 Font Renderer::TextFont = Font((uint8_t*)&font_psf);
 DepthTest Renderer::DepthTestMode = DepthTest::Less;
-Culling Renderer::CullingMode = Culling::Back;
+// Culling Renderer::CullingMode = Culling::Back;
 
 Color Renderer::ClearColor = Color::Black;
 
@@ -60,12 +60,78 @@ void Camera::updateViewMatrix(){
     view = rotation.ToMatrix() * mat4f::translate(-position);
 }
 
+#ifdef PLATFORM_PICO
+
+#include <pico/multicore.h>
+#include <pico/util/queue.h>
+
+queue_t queue;
+
+void Renderer::Submit(const DrawCall& drawCall){
+    queue_add_blocking(&queue, &drawCall);
+}
+
+bool Renderer::Render(){
+    DrawCall* drawCall = (DrawCall*)malloc(sizeof(DrawCall));
+    bool valid = queue_try_remove(&queue, drawCall);
+
+    if(!valid){
+        free(drawCall);
+        return false;
+    }
+
+    DrawMesh(drawCall->_Mesh, drawCall->ModelMatrix, drawCall->_Material, drawCall->CullingMode, drawCall->DepthTestMode);
+
+    free(drawCall);
+
+    return !queue_is_empty(&queue);
+}
+
+#elif PLATFORM_NATIVE
+
+#include <queue>
+#include <mutex>
+
+std::mutex queueMutex;
+std::queue<DrawCall> drawQueue;
+
+void Renderer::Submit(const DrawCall& drawCall){
+    queueMutex.lock();
+    drawQueue.push(drawCall);
+    queueMutex.unlock();
+}
+
+bool Renderer::Render(){
+    queueMutex.lock();
+
+    if(drawQueue.empty()){
+        queueMutex.unlock();
+        return false;
+    }
+    
+    DrawCall drawCall = drawQueue.front();
+    drawQueue.pop();
+
+    bool empty = drawQueue.empty();
+    queueMutex.unlock();
+
+    DrawMesh(drawCall._Mesh, drawCall.ModelMatrix, drawCall._Material, drawCall.CullingMode, drawCall.DepthTestMode);
+
+    return !empty;
+}
+#endif
+
 void Renderer::Init(){
-    bounds = BoundingBox2D(vec2f(0, 0), vec2f(FRAME_WIDTH, FRAME_HEIGHT));
     rasterizationMat = 
         mat4f::scale(vec3f(FRAME_WIDTH, FRAME_HEIGHT, 1)) *
         mat4f::translate(vec3f(0.5, 0.5, 0)) *
         mat4f::scale(vec3f(0.5, 0.5, 1));
+
+    #ifdef PLATFORM_PICO
+    queue_init(&queue, sizeof(DrawCall), DEFERRED_QUEUE_SIZE);
+    #elif PLATFORM_NATIVE
+    drawQueue = std::queue<DrawCall>();
+    #endif
 }
 
 void Renderer::Clear(Color color){
@@ -85,6 +151,8 @@ void Renderer::Prepare(){
     VP = vp;
     RVP = (mat<float, 4, 4>)rasterizationMat * vp;
 }
+
+
 
 void Renderer::DrawBox(BoundingBox2D box, Color color){
     BoundingBox2D bbi = bounds.Intersect(box);
@@ -322,7 +390,7 @@ void Renderer::Blit(const Texture2D& tex, vec2i16 pos){
     }
 }
 
-void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material){
+void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material, const Culling cullingMode, const DepthTest depthTestMode){
     if(!MainCamera.IntersectsFrustrum(mesh.Volume, modelMat)){
         return;
     }
@@ -340,21 +408,17 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
             Color::Purple
         };
 
-        Time::Profiler::Enter("TriangleProgram");
+        // Time::Profiler::Enter("TriangleProgram");
         if(material._Shader.Type == ShaderType::Flat){
             t.TriangleColor = ((FlatShader::Parameters*)material.Parameters)->_Color;
         } else if(material._Shader.TriangleProgram){
             material._Shader.TriangleProgram(t, material.Parameters);
         }
-        Time::Profiler::Exit("TriangleProgram");
-
-        // printf("Checkpoint 4\n");
+        // Time::Profiler::Exit("TriangleProgram");
 
         vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
         vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
         vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
-
-        // printf("Checkpoint 5\n");
 
         BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
         BoundingBox2D bbi = bounds.Intersect(bb);
@@ -376,7 +440,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         vec3<int> v2 = pv2;
         vec3<int> v3 = pv3;
 
-        switch(CullingMode){
+        switch(cullingMode){
             case Culling::None:
                 break;
             case Culling::Front:
@@ -401,7 +465,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         w2_row = edgeFunctionFast(v3.xy(), v1.xy(), min);
         w3_row = edgeFunctionFast(v1.xy(), v2.xy(), min);
 
-        Time::Profiler::Enter("Rasterization");
+        // Time::Profiler::Enter("Rasterization");
         for(int16_t y = SCAST<int16_t>(floor(bbi.Min.y())); y < SCAST<int16_t>(ceil(bbi.Max.y())); y++){
             int w1 = w1_row;
             int w2 = w2_row;
@@ -421,7 +485,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     // so we convert to float for the calculation
                     z16 = SCAST<uint16_t>((float)z * 65535.0f);
 
-                    if(!testAndSetDepth(vec2i16(x, y), z16)) goto update_baricentric;
+                    if(!testAndSetDepth(vec2i16(x, y), z16, depthTestMode)) goto update_baricentric;
 
                     switch(material._Shader.Type){
                         case ShaderType::Texture: {
@@ -473,9 +537,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
             w3_row += B01;
         }
 
-        Time::Profiler::Exit("Rasterization");
-
-        // printf("Checkpoint 7\n");
+        // Time::Profiler::Exit("Rasterization");
 
         // TODO: this doesn't properly render because the drawing of other triangles
         //       will overwrite the debug drawings
@@ -500,8 +562,6 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
             Renderer::DrawLine(pos, pos + normal, Color::White);
         #endif
-
-        // printf("Checkpoint 8\n");
 
         continue;
     }

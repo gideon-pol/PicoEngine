@@ -2,6 +2,8 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <barrier>
+#include <condition_variable>
 #include <lodepng.h>
 #include <time.h>
 #include <SDL2/SDL.h>
@@ -14,8 +16,8 @@
 
 extern void game_init();
 extern void game_update();
+extern void game_render_prepare();
 extern void game_render();
-
 
 SDL_Window* setupWindow(){
     if(SDL_Init(SDL_INIT_VIDEO) == -1)
@@ -31,6 +33,19 @@ SDL_Window* setupWindow(){
     }
 
     return window;
+}
+
+std::mutex barrierStartMutex;
+std::barrier renderStartBarrier{2};
+std::mutex barrierDoneMutex;
+std::barrier renderDoneBarrier{2};
+
+void core1(){
+    while(true){
+        renderStartBarrier.arrive_and_wait();
+        while(Renderer::Render());
+        renderDoneBarrier.arrive_and_wait();
+    }
 }
 
 int main(int argc, char** argv){
@@ -50,37 +65,13 @@ int main(int argc, char** argv){
 
     // SDL_SetRelativeMouseMode(SDL_TRUE);
 
-    fixed t = 1.5fp;
-    fixed d = 0.5fp;
-    fixed e = sqrt(t);
-    fixed f = cos(2);
-    fixed g = sin(2);
-    fixed h = abs(-t);
-    fixed i = 3.5fp % 1.2fp;
-    fixed j = floor(3.5fp);
-    fixed k = ceil(3.5fp);
-    fixed l = sqrt(0fp);
-    fixed n = sqrt(5184fp);
-    printf("%f\n", (float)(t / d));
-    printf("%f\n", (float)d);
-    printf("%f\n", (float)e);
-    printf("%f\n", (float)f);
-    printf("%f\n", (float)g);
-    printf("%f\n", (float)h);
-    printf("%f\n", (float)i);
-    printf("%f\n", (float)j);
-    printf("%f\n", (float)k);
-    printf("%f\n", (float)l);
-    printf("%f\n", (float)n);
-
-    mat4f m = mat4f::translate(vec3f(1, 2, 3));
-    mat4f m2 = mat4f::rotate(90, vec3f(0, 1, 0));
-    vec4f p = vec4f(1, 0, 0, 1);
-
     Time::Init();
     Input::Init();
     Renderer::Init();
+
     game_init();
+
+    std::thread core1(core1);
 
     while(true){
         Time::Tick();
@@ -99,10 +90,15 @@ int main(int argc, char** argv){
         }
 
         game_update();
+        game_render_prepare();
 
         Renderer::Prepare();
 
+        renderStartBarrier.arrive_and_wait();
+
         game_render();
+
+        renderDoneBarrier.arrive_and_wait();
 
         SDL_LockSurface(surface);
         static Color pixels[FRAME_WIDTH * FRAME_HEIGHT];

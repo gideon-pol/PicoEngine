@@ -152,7 +152,6 @@ void game_init(){
         ((PlanetShader::Parameters*)neptuneMat->Parameters)->LightColor = lightColor;
     }
 
-    
     Material* mercuryMat = new Material(t);
     ((TextureShader::Parameters*)mercuryMat->Parameters)->_Texture = &mercury;
     ((TextureShader::Parameters*)mercuryMat->Parameters)->TextureScale = vec2f(1);
@@ -188,12 +187,9 @@ void game_init(){
     Material* neptuneMat = new Material(t);
     ((TextureShader::Parameters*)neptuneMat->Parameters)->_Texture = &neptune;
     ((TextureShader::Parameters*)neptuneMat->Parameters)->TextureScale = vec2f(1);
-    
 
     Material* debugMat = new Material(debug);
     ((FlatShader::Parameters*)debugMat->Parameters)->_Color = Color::Purple;
-
-    
 
     planets[0].Mass = 10000;
     planets[0].SetPosition(vec3f(0, 0, 0));
@@ -282,6 +278,8 @@ enum CameraMode {
 CameraMode camMode = CameraMode::Medium;
 fixed camDistance = 3fp;
 fixed targetCamDistance = 3fp;
+
+#include <iostream>
 
 void game_update(){
     printf("Delta time: %f\n", Time::GetDeltaTime());
@@ -379,6 +377,23 @@ void game_update(){
     cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * camDistance);
 }
 
+void game_render_prepare(){
+    for(Body& planet : planets){
+        if(!planet.Enabled || !planet.Render) continue;
+
+        fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
+
+        if(dst > 200) continue;
+
+        Renderer::Submit(DrawCall(sphere, planet.GetModelMatrix(), *planet._Material));
+
+        // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
+        // for(int i = 0; i < LINE_SIZE-1; i++){
+            // Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
+        // }
+    }
+}
+
 void game_render(){
     {
     //     Renderer::CullingMode = Culling::Front;
@@ -401,27 +416,14 @@ void game_render(){
         Renderer::Blit(flare, vec2i16(sunPos.xy()) - vec2i16(flare.Width, flare.Height) / 2);
     }
 
+    // Time::Profiler::Enter("DrawMesh");
+    while(Renderer::Render());
+    // Time::Profiler::Exit("DrawMesh");
+
     for(Body& planet : planets){
         if(!planet.Enabled || !planet.Render) continue;
-
-        fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
-
-        if(dst > 200) continue;
-
-        Time::Profiler::Enter("DrawMesh");
-        Renderer::DrawMesh(sphere, planet.GetModelMatrix(), *planet._Material);
-        Time::Profiler::Exit("DrawMesh");
-
-        // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
-        // for(int i = 0; i < LINE_SIZE-1; i++){
-            // Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
-        // }
+        Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
     }
-
-    // for(Body& planet : planets){
-        // if(!planet.Enabled || !planet.Render) continue;
-        // Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
-    // }
 
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);
 
