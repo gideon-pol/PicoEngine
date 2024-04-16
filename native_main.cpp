@@ -16,7 +16,6 @@
 
 extern void game_init();
 extern void game_update();
-extern void game_render_prepare();
 extern void game_render();
 
 SDL_Window* setupWindow(){
@@ -63,7 +62,7 @@ int main(int argc, char** argv){
         return 1;
     }
 
-    // SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     Time::Init();
     Input::Init();
@@ -71,7 +70,7 @@ int main(int argc, char** argv){
 
     game_init();
 
-    std::thread core1(core1);
+    std::thread secondThread(core1);
 
     while(true){
         Time::Tick();
@@ -90,15 +89,12 @@ int main(int argc, char** argv){
         }
 
         game_update();
-        game_render_prepare();
 
         Renderer::Prepare();
 
         renderStartBarrier.arrive_and_wait();
 
         game_render();
-
-        renderDoneBarrier.arrive_and_wait();
 
         SDL_LockSurface(surface);
         static Color pixels[FRAME_WIDTH * FRAME_HEIGHT];
@@ -115,13 +111,6 @@ int main(int argc, char** argv){
         SDL_RenderPresent(renderer);
         SDL_DestroyTexture(texture);
     }
-
-    // Color* pixels = new Color[FRAME_WIDTH * FRAME_HEIGHT];
-    // for(int i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++){
-        // pixels[i] = Color(Renderer::FrameBuffer[i]);
-    // }
-    // unsigned error = lodepng::encode("test.png", (unsigned char*)pixels, FRAME_WIDTH, FRAME_HEIGHT);
-    // if(error) printf("encoder error %d: %s", error, lodepng_error_text(error));
 
     SDL_DestroyWindow(window);
 

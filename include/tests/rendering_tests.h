@@ -74,7 +74,7 @@ void drawCubeTest(){
 
     Camera& main = Renderer::MainCamera;
 
-    LightingShader s = LightingShader(LightingShader::ShadingType::Flat);
+    FlatLightingShader s = FlatLightingShader();
     FlatShader f = FlatShader();
     RainbowTestShader r = RainbowTestShader();
     TextureShader t = TextureShader();
@@ -90,8 +90,8 @@ void drawCubeTest(){
     mat4f M3 = trans3 * rot * scale;
 
     Material mat = Material(s);
-    ((LightingShader::Parameters*)mat.Parameters)->LightDirection = vec3f::forward;
-    ((LightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
+    ((FlatLightingShader::Parameters*)mat.Parameters)->LightDirection = vec3f::forward;
+    ((FlatLightingShader::Parameters*)mat.Parameters)->LightColor = Color::Yellow;
 
     Material mat2 = Material(f);
     ((FlatShader::Parameters*)mat2.Parameters)->_Color = Color::Green;
@@ -136,14 +136,14 @@ void picoCubeTest(){
 
     Texture2D dirt = Texture2D((Color16*)&dirt_png, 400, 400);
 
-    LightingShader s = LightingShader(LightingShader::ShadingType::Smooth);
+    SmoothLightingShader s = SmoothLightingShader();
     Material lightingMat1 = Material(s);
-    ((LightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
-    ((LightingShader::Parameters*)lightingMat1.Parameters)->LightColor = Color::Yellow;
+    ((SmoothLightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
+    ((SmoothLightingShader::Parameters*)lightingMat1.Parameters)->LightColor = Color::Yellow;
 
     Material lightingMat2 = Material(s);
-    ((LightingShader::Parameters*)lightingMat2.Parameters)->LightDirection = vec3f::forward;
-    ((LightingShader::Parameters*)lightingMat2.Parameters)->LightColor = Color::Red;
+    ((SmoothLightingShader::Parameters*)lightingMat2.Parameters)->LightDirection = vec3f::forward;
+    ((SmoothLightingShader::Parameters*)lightingMat2.Parameters)->LightColor = Color::Red;
 
     FlatShader f = FlatShader();
     Material flatMat = Material(f);
@@ -207,7 +207,7 @@ void picoCubeTest(){
 
         time = get_absolute_time();
 
-        ((LightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
+        ((SmoothLightingShader::Parameters*)lightingMat1.Parameters)->LightDirection = vec3f::forward;
         // ((LightingShader::Parameters*)lightingMat2.Parameters)->ModelMatrix = &M3;
 
         // Renderer::DrawMesh(suzanne, M, lightingMat1);

@@ -4,6 +4,14 @@
 #include "rendering/mesh.h"
 #include "rendering/texture.h"
 
+#define SHADER_AUTO_ID(class, ...) \
+    inline static const uint64_t ID = __COUNTER__; \
+    class(Shader& shader) : Shader(ID) { } \
+    class(__VA_ARGS__) : Shader(ID)
+
+#define SHADER_PARAMS(class, obj) \
+    ((class::Parameters*)obj->Parameters)
+
 struct TriangleShaderData {
     const mat4f& ModelMatrix;
     const Vertex v1;
@@ -16,23 +24,29 @@ struct TriangleShaderData {
 };
 
 struct FragmentShaderData {
-    const vec3f Position;
-    // This is for now a face normal
-    const vec3f Normal;
+    const Vertex& V1, V2, V3;
+    const mat4f& ModelMatrix;
+    const vec3f UVW;
     const vec3f FragCoord;
-    const vec2f UV;
     const vec2i16 ScreenSize;
     Color FragmentColor;
 };
 
-enum ShaderType { NoShader, Flat, Texture, Custom };
-
 class Shader {
 public:
-    ShaderType Type;
+    inline static const uint64_t ID = -1;
+    const uint64_t _ID = -1;
+
+    Shader(uint64_t id = -1) : _ID(id) {}
+    
     // The triangle program runs for every triangle, regardless of visibility!
-    void (*TriangleProgram)(TriangleShaderData& input, void* parameters);
-    void (*FragmentProgram)(FragmentShaderData& input, void* parameters);
+    inline void TriangleProgram(TriangleShaderData& input, void* parameters){
+        
+    }
+
+    inline void FragmentProgram(FragmentShaderData& input, void* parameters){
+        
+    }
 
     virtual void* CreateParameters(){
         return nullptr;
@@ -45,15 +59,40 @@ public:
         Color _Color;
     };
 
-    FlatShader(){
-        // TODO: Test whether this is (significantly) slower than an engine implemented shader
-        // Type = ShaderType::Custom;
-        // TriangleProgram = [](TriangleShaderData& i, void* p){
-        //     i.TriangleColor = ((Parameters*)p)->_Color;
-        // };
-        Type = ShaderType::Flat;
-        TriangleProgram = nullptr;
-        FragmentProgram = nullptr;
+    SHADER_AUTO_ID(FlatShader){
+    }
+
+    inline void TriangleProgram(TriangleShaderData& data, void* parameters){
+        Parameters* params = (Parameters*)parameters;
+        data.TriangleColor = params->_Color;
+    }
+
+    void* CreateParameters(){
+        return new Parameters();
+    }
+};
+class FlatLightingShader : public Shader {
+public:
+    struct Parameters {
+        vec3f LightDirection;
+        Color LightColor;
+        Color AmbientColor;
+    };
+
+    SHADER_AUTO_ID(FlatLightingShader){
+    }
+
+    inline void TriangleProgram(TriangleShaderData& data, void* parameters){
+        Parameters* params = (Parameters*)parameters;
+        vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
+        normal = (data.ModelMatrix * vec4f(normal, 0)).xyz().normalize();
+        fixed diff = max(normal.dot(-params->LightDirection), 0fp);
+        data.TriangleColor = Color(
+                                SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
+                                SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
+                                SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
+                                255
+                            );
     }
 
     void* CreateParameters(){
@@ -61,47 +100,27 @@ public:
     }
 };
 
-// TODO: this shader is probably so common that it should be engine implemented
-class LightingShader : public Shader {
+class SmoothLightingShader : public Shader {
 public:
-    enum ShadingType { Flat, Smooth };
     struct Parameters {
         vec3f LightDirection;
         Color LightColor;
         Color AmbientColor;
     };
 
-    LightingShader(ShadingType type){
-        Type = ShaderType::Custom;
-        TriangleProgram = nullptr;
+    SHADER_AUTO_ID(SmoothLightingShader){
+    }
 
-        if(type == ShadingType::Flat){
-            FragmentProgram = nullptr;
-            TriangleProgram = [](TriangleShaderData& data, void* parameters){
-                Parameters* params = (Parameters*)parameters;
-                vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
-                normal = (data.ModelMatrix * vec4f(normal, 0)).xyz().normalize();
-                fixed diff = max(normal.dot(-params->LightDirection), 0fp);
-                data.TriangleColor = Color(
-                                        SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
-                                        SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
-                                        SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
-                                        255
-                                    );
-            };
-        } else if(type == ShadingType::Smooth){
-            TriangleProgram = nullptr;
-            FragmentProgram = [](FragmentShaderData& data, void* parameters){
-                Parameters* params = (Parameters*)parameters;
-                fixed diff = max(data.Normal.dot(-params->LightDirection), 0fp);
-                data.FragmentColor = Color(
-                                        SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
-                                        SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
-                                        SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
-                                        255
-                                    );
-            };
-        } 
+    inline void FragmentProgram(FragmentShaderData& data, void* parameters){
+        Parameters* params = (Parameters*)parameters;
+        vec3f normal = (data.V1.Normal * data.UVW(0) + data.V2.Normal * data.UVW(1) + data.V3.Normal * data.UVW(2)).normalize();
+        fixed diff = max(normal.dot(-params->LightDirection), 0fp);
+        data.FragmentColor = Color(
+                                SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
+                                SCAST<uint8_t>(fixed(params->LightColor.g) * diff),
+                                SCAST<uint8_t>(fixed(params->LightColor.b) * diff),
+                                255
+                            );
     }
 
     void* CreateParameters(){
@@ -111,15 +130,13 @@ public:
 
 class RainbowTestShader : public Shader {
 public:
-    RainbowTestShader(){
-        Type = ShaderType::Custom;
-        TriangleProgram = nullptr;
+    SHADER_AUTO_ID(RainbowTestShader){
+    }
 
-        FragmentProgram = [](FragmentShaderData& data, void* parameters){
-            vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
-            fixed h = uv(0) * 360fp;
-            data.FragmentColor = Color::FromHSV((float)h, 1, 1);
-        };
+    inline void FragmentProgram(FragmentShaderData& data, void* parameters){
+        vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
+        fixed h = uv(0) * 360fp;
+        data.FragmentColor = Color::FromHSV((float)h, 1, 1);
     }
 
     void* CreateParameters(){
@@ -134,15 +151,15 @@ public:
         vec2f TextureScale;
     };
 
-    TextureShader(){
-        Type = ShaderType::Texture;
-        TriangleProgram = nullptr;
-        // Engine implemented version is 20% to 30% faster 
-        FragmentProgram = nullptr;
-        // FragmentProgram = [](FragmentShaderData& data, void* parameters){
-        //     Parameters* params = (Parameters*)parameters;
-        //     data.FragmentColor = params->_Texture->Sample(data.UV);
-        // };
+    SHADER_AUTO_ID(TextureShader){
+    }
+
+    inline void FragmentProgram(FragmentShaderData& data, void* parameters){
+        TextureShader::Parameters* params = (TextureShader::Parameters*)parameters; \
+        Texture2D* tex = params->_Texture;
+        vec2f uv = (data.V1.UV * data.UVW(0) + data.V2.UV * data.UVW(1) + data.V3.UV * data.UVW(2)); \
+        uv = vec2f(uv.x() * params->TextureScale.x(), uv.y() * params->TextureScale.y()); \
+        data.FragmentColor = tex->Sample(uv);
     }
 
     void* CreateParameters(){
@@ -158,3 +175,46 @@ struct Material {
         Parameters = _Shader.CreateParameters();
     }
 };
+
+
+#define END(...) END_(__VA_ARGS__)
+#define END_(...) __VA_ARGS__##_END
+
+#define LOOP_FRAGMENT(seq) END(A_FRAGMENT seq)
+#define BODY_FRAGMENT(x) case x::ID: \
+        ((x)shader).FragmentProgram(data, parameters); \
+        break;
+#define A_FRAGMENT(x) BODY_FRAGMENT(x) B_FRAGMENT
+#define B_FRAGMENT(x) BODY_FRAGMENT(x) A_FRAGMENT
+#define A_FRAGMENT_END
+#define B_FRAGMENT_END
+
+#define LOOP_TRIANGLE(seq) END(A_TRIANGLE seq)
+#define BODY_TRIANGLE(x) case x::ID: \
+        ((x)shader).TriangleProgram(data, parameters); \
+        break;
+#define A_TRIANGLE(x) BODY_TRIANGLE(x) B_TRIANGLE
+#define B_TRIANGLE(x) BODY_TRIANGLE(x) A_TRIANGLE
+#define A_TRIANGLE_END
+#define B_TRIANGLE_END
+
+#define REGISTER_SHADERS(shaders) \
+FORCE_INLINE void executeTriangleProgram(Shader& shader, TriangleShaderData& data, void* parameters){ \
+    switch(shader._ID){ \
+        LOOP_TRIANGLE(shaders) \
+        default: \
+            break; \
+    } \
+} \
+\
+FORCE_INLINE void executeFragmentProgram(Shader& shader, FragmentShaderData& data, void* parameters){ \
+    switch(shader._ID){ \
+        LOOP_FRAGMENT(shaders) \
+        default: \
+            break; \
+    } \
+}
+
+extern FORCE_INLINE void executeTriangleProgram(Shader& shader, TriangleShaderData& data, void* parameters);
+extern FORCE_INLINE void executeFragmentProgram(Shader& shader, FragmentShaderData& data, void* parameters);
+

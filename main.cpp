@@ -17,7 +17,6 @@
 
 extern void game_init();
 extern void game_update();
-extern void game_render_prepare();
 extern void game_render();
 
 void core1() {
@@ -55,7 +54,6 @@ int main() {
         Input::Poll();
 
         game_update();
-        game_render_prepare();
 
         while(ST7789::IsFlipping());
 
@@ -63,7 +61,6 @@ int main() {
 
         multicore_fifo_push_blocking(0);
         game_render();
-        multicore_fifo_pop_blocking();
 
         ST7789::Flip((Color565*)&Renderer::FrameBuffer);
     }

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "common.h"
-#include "fixed.h"
+#include "mathematics.h"
 
 // Currently, the entire render pipeline may deal with 32-bit colors.
 // The framebuffers however hold 16-bit colors to conserve space.

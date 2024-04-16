@@ -9,6 +9,8 @@
 #include "rendering/font.h"
 #include "ecs/object.h"
 
+#include "game/shaders.h"
+
 class Camera {
     public:
     Camera(fixed fov, fixed near, fixed far, fixed aspect=1);
@@ -129,8 +131,10 @@ namespace Renderer{
     void Init();
     void Clear(Color color);
     void Prepare();
+
     void Submit(const DrawCall& call);
     bool Render();
+    void Finish();
 
     FORCE_INLINE void PutPixel(vec2i16 pos, Color color){
         if(pos.x() >= 0 && pos.x() < FRAME_WIDTH && pos.y() >= 0 && pos.y() < FRAME_HEIGHT){

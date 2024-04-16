@@ -1,8 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-
-#include "fixed.h"
+#include "mathematics.h"
 
 #ifdef PLATFORM_NATIVE
 #include <SDL2/SDL.h>

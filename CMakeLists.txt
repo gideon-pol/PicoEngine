@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 
 option(TARGET_NATIVE "Build for build platform" OFF)
 
-# clean target that clears the build folder
-
-
-
 if(TARGET_NATIVE)
     project(game-engine CXX C ASM)
 
@@ -46,18 +42,14 @@ else()
     include_directories(include)
     file(GLOB_RECURSE SOURCES src/*.cpp)
     file(GLOB_RECURSE RESOURCES res/build/generated/*.cpp)
-    # remove the CMakeCXXCompilerId.cpp 
 
     add_subdirectory(lib)
-    # add_subdirectory(res)
 
     add_executable(build
         main.cpp
         ${SOURCES}
         ${RESOURCES}
     )
-
-    # target_link_directories(build PRIVATE resources)
 
     target_link_libraries(build
         pico_stdlib
@@ -68,8 +60,6 @@ else()
         hardware_spi
         hardware_dma
         hardware_adc
-        
-        # ${CMAKE_CURRENT_SOURCE_DIR}/res/build/libresources.a
     )
 
     pico_generate_pio_header(build 
@@ -88,24 +78,4 @@ else()
         message(WARNING "not building because TinyUSB submodule is not initialized in the SDK")
     endif()
 endif()
-
-
-
-# function( add_resource input )
-#     string( MAKE_C_IDENTIFIER ${input} input_identifier )
-#     set( output "res/${input_identifier}.cpp" )
-#     set( RESOURCES ${RESOURCES} ${output} PARENT_SCOPE )
-# endfunction()
-
-# add_subdirectory(res)
-
-# add_resource("teapot.obj")
-
-
-
-
-# 
-
-
-
 

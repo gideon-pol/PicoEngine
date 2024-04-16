@@ -87,10 +87,15 @@ bool Renderer::Render(){
     return !queue_is_empty(&queue);
 }
 
+void Renderer::Finish(){
+    multicore_fifo_pop_blocking();
+}
+
 #elif PLATFORM_NATIVE
 
 #include <queue>
 #include <mutex>
+#include <barrier>
 
 std::mutex queueMutex;
 std::queue<DrawCall> drawQueue;
@@ -118,6 +123,12 @@ bool Renderer::Render(){
     DrawMesh(drawCall._Mesh, drawCall.ModelMatrix, drawCall._Material, drawCall.CullingMode, drawCall.DepthTestMode);
 
     return !empty;
+}
+
+extern std::barrier<> renderDoneBarrier;
+
+void Renderer::Finish(){
+    renderDoneBarrier.arrive_and_wait();
 }
 #endif
 
@@ -409,11 +420,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         };
 
         // Time::Profiler::Enter("TriangleProgram");
-        if(material._Shader.Type == ShaderType::Flat){
-            t.TriangleColor = ((FlatShader::Parameters*)material.Parameters)->_Color;
-        } else if(material._Shader.TriangleProgram){
-            material._Shader.TriangleProgram(t, material.Parameters);
-        }
+        executeTriangleProgram(material._Shader, t, material.Parameters);
         // Time::Profiler::Exit("TriangleProgram");
 
         vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
@@ -487,43 +494,18 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
 
                     if(!testAndSetDepth(vec2i16(x, y), z16, depthTestMode)) goto update_baricentric;
 
-                    switch(material._Shader.Type){
-                        case ShaderType::Texture: {
-                            TextureShader::Parameters* params = (TextureShader::Parameters*)material.Parameters;
-                            Texture2D* tex = params->_Texture;
-                            vec2f uv = (t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z());
-                            uv = vec2f(uv.x() * params->TextureScale.x(), uv.y() * params->TextureScale.y());
-                            fragmentColor = tex->Sample(uv);
-                            break;
-                        }
-                        case ShaderType::Custom: {
-                            if(material._Shader.FragmentProgram){
-                                vec3f normal = t.v1.Normal * uvw.x() + t.v2.Normal * uvw.y() + t.v3.Normal * uvw.z();
-                                normal = (modelMat * vec4f(normal, 0)).xyz().normalize();
-                                vec3f pos = t.v1.Position * uvw.x() + t.v2.Position * uvw.y() + t.v3.Position * uvw.z();
-                                pos = (modelMat * vec4f(pos, 1)).homogenize();
-                                vec3f fragCoord = vec3f(x, y, z);
-                                vec2f uv = t.v1.UV * uvw.x() + t.v2.UV * uvw.y() + t.v3.UV * uvw.z();
+                    FragmentShaderData data = {
+                        t.v1, t.v2, t.v3,
+                        modelMat,
+                        uvw,
+                        vec3f(x, y, z),
+                        vec2f(FRAME_WIDTH, FRAME_HEIGHT),
+                        fragmentColor
+                    };
 
-                                FragmentShaderData data = {
-                                    pos,
-                                    normal,
-                                    fragCoord,
-                                    uv,
-                                    vec2f(FRAME_WIDTH, FRAME_HEIGHT),
-                                    fragmentColor
-                                };
+                    executeFragmentProgram(material._Shader, data, material.Parameters);
 
-                                material._Shader.FragmentProgram(data, material.Parameters);
-                                fragmentColor = data.FragmentColor;
-                            }
-                            break;
-                        }
-                        default:
-                            break;
-                    }
-
-                    FrameBuffer[y * FRAME_WIDTH + x] = fragmentColor.ToColor565();
+                    FrameBuffer[y * FRAME_WIDTH + x] = data.FragmentColor.ToColor565();
                 }
 
                 update_baricentric:

@@ -39,9 +39,6 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator+(const fixed& other) const {
-        if(abs((float)(*this) + (float)(other)) > pow(2, 32-FIXED_32_FRAC_BITS-1)) {
-            printf("Overflow: %f + %f\n", (float)(*this), (float)(other));
-        }
         return fixed(value + other.value, 0);
     }
 
@@ -50,9 +47,6 @@ struct fixed {
     }
 
     FORCE_INLINE constexpr fixed operator*(const fixed& other) const {
-        if(abs((float)(*this) * (float)(other)) > pow(2, 32-FIXED_32_FRAC_BITS-1)) {
-            printf("Overflow: %f * %f\n", (float)(*this), (float)(other));
-        }
         return fixed((int64_t)value * (int64_t)other.value, FIXED_32_FRAC_BITS);
     }
 
