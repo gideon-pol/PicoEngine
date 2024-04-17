@@ -17,7 +17,8 @@ public:
         Parameters* params = (Parameters*)parameters;
         Texture2D* texture = params->_Texture;
 
-        vec3f normal = (data.V1.Normal * data.UVW(0) + data.V2.Normal * data.UVW(1) + data.V3.Normal * data.UVW(2)).normalize();
+        vec3f normal = (data.V1.Normal * data.UVW(0) + data.V2.Normal * data.UVW(1) + data.V3.Normal * data.UVW(2));
+        normal = (data.ModelMatrix * vec4f(normal, 0)).xyz().normalize();
         vec2f uv = (data.V1.UV * data.UVW(0) + data.V2.UV * data.UVW(1) + data.V3.UV * data.UVW(2));
         fixed diff = clamp(normal.dot(params->DirectionToLight), 0.02fp, 1fp);
         data.FragmentColor = texture->Sample(uv);
@@ -41,4 +42,5 @@ REGISTER_SHADERS(
     (SmoothLightingShader)
     (RainbowTestShader)
     (FlatShader)
+    (PlanetShader)
 )

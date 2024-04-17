@@ -15,23 +15,23 @@ struct fixed {
     int32_t value;
 
     FORCE_INLINE constexpr fixed() : value(0) {}
-    constexpr fixed(const fixed& other) : value(other.value) {}
+    FORCE_INLINE constexpr fixed(const fixed& other) : value(other.value) {}
 
-    constexpr fixed(int8_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
-    constexpr fixed(uint8_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(int8_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(uint8_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
 
-    constexpr fixed(int16_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
-    constexpr fixed(uint16_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(int16_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(uint16_t value) : value((int32_t)value << FIXED_32_FRAC_BITS) {}
 
-    constexpr fixed(int32_t value) : value(value << FIXED_32_FRAC_BITS) {}
-    constexpr fixed(uint32_t value) : value(value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(int32_t value) : value(value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(uint32_t value) : value(value << FIXED_32_FRAC_BITS) {}
 
-    constexpr fixed(int64_t value, int32_t shift) : value(value >> shift) {}
-    constexpr fixed(int64_t value) : value(value << FIXED_32_FRAC_BITS) {}
-    constexpr fixed(uint64_t value) : value(value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(int64_t value, int32_t shift) : value(value >> shift) {}
+    FORCE_INLINE constexpr fixed(int64_t value) : value(value << FIXED_32_FRAC_BITS) {}
+    FORCE_INLINE constexpr fixed(uint64_t value) : value(value << FIXED_32_FRAC_BITS) {}
     
-    constexpr fixed(float value) : value(value * (1 << FIXED_32_FRAC_BITS)) {}
-    constexpr fixed(double value) : value(value * (1 << FIXED_32_FRAC_BITS)) {}
+    FORCE_INLINE constexpr fixed(float value) : value(value * (1 << FIXED_32_FRAC_BITS)) {}
+    FORCE_INLINE constexpr fixed(double value) : value(value * (1 << FIXED_32_FRAC_BITS)) {}
 
     FORCE_INLINE constexpr fixed& operator=(const fixed& other) {
         value = other.value;
@@ -210,7 +210,7 @@ FORCE_INLINE constexpr fixed max(fixed a, fixed b) {
 //     }
 // }
 
-FORCE_INLINE constexpr fixed sqrt(fixed f) {
+// FORCE_INLINE constexpr fixed sqrt(fixed f) {
     // if(f == 0fp) return 0fp;
     // if(f == 1fp) return 1fp;
 
@@ -227,8 +227,8 @@ FORCE_INLINE constexpr fixed sqrt(fixed f) {
     // printf("Input: %f, output: %f\n", (float)f, (float)x);
     // return x;
 
-    return fixed(sqrt(SCAST<float>(f)));
-}
+//     return fixed(sqrt(SCAST<float>(f)));
+// }
 
 FORCE_INLINE constexpr fixed floor(fixed f) {
     return fixed(f.value & ~FIXED_32_FRAC_MASK, 0);

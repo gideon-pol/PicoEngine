@@ -32,11 +32,13 @@ extern const Color16 flare_png[22800];
 #define LINE_SIZE 10
 struct Body : public Object {
     vec3<float> Velocity;
-    Quaternion RotationalVelocity;
+    vec3f RotationalVelocity;
     float Mass;
     Material* _Material;
     vec3f LinePoints[LINE_SIZE];
+    Body* Parent;
     bool Render = true;
+    vec3<float> D;
     char Name[32];
 };
 
@@ -76,7 +78,7 @@ RainbowTestShader r = RainbowTestShader();
 FlatLightingShader l = FlatLightingShader();
 SmoothLightingShader s = SmoothLightingShader();
 
-Body planets[9];
+Body planets[10];
 
 fixed yaw, pitch;
 
@@ -163,7 +165,7 @@ void game_init(){
 
     Material* debugMat = new Material(r);
 
-    planets[0].Mass = 10000;
+    planets[0].Mass = 1000;
     planets[0].SetPosition(vec3f(0, 0, 0));
     planets[0].Render = false;
     strcpy(planets[0].Name, "Sun");
@@ -172,37 +174,58 @@ void game_init(){
     planets[1].Mass = 0.0553;
     planets[1].SetScale(vec3f(0.38));
     planets[1].SetPosition(vec3f(0, 0, 39));
+    planets[1].SetRotation(Quaternion::Euler(vec3f(7.01, 0, 0)));
+    planets[1].RotationalVelocity = vec3f(0, 0.086, 0);
+    planets[1].Parent = nullptr;
+    planets[1].Enabled = true;
     strcpy(planets[1].Name, "Mercury");
 
     planets[2]._Material = venusMat;
     planets[2].Mass = 0.815;
     planets[2].SetScale(vec3f(0.95));
     planets[2].SetPosition(vec3f(0, 0, 72));
+    planets[2].SetRotation(Quaternion::Euler(vec3f(17.74, 0, 0)));
+    planets[2].RotationalVelocity = vec3f(0, 0.02, 0);
+    planets[2].Parent = nullptr;
+    planets[2].Enabled = true;
     strcpy(planets[2].Name, "Venus");
 
     planets[3]._Material = earthMat;
     planets[3].Mass = 1;
     planets[3].SetScale(vec3f(1));
     planets[3].SetPosition(vec3f(0, 0, 100));
-    planets[3].RotationalVelocity = Quaternion::Euler(vec3f(0, 1fp, 0));
+    planets[3].SetRotation(Quaternion::Euler(vec3f(23, 0, 0)));
+    planets[3].RotationalVelocity = vec3f(0, 5, 0);
+    planets[3].Parent = nullptr;
+    planets[3].Enabled = true;
     strcpy(planets[3].Name, "Earth");
 
     planets[4]._Material = moonMat;
     planets[4].Mass = 0.0123;
     planets[4].SetScale(vec3f(0.27));
     planets[4].SetPosition(vec3f(0, 0, 104));
+    planets[4].SetRotation(Quaternion::Euler(vec3f(5.14, 0, 0)));
+    planets[4].Parent = &planets[3];
+    planets[4].Enabled = true;
     strcpy(planets[4].Name, "Moon");
 
     planets[5]._Material = marsMat;
     planets[5].Mass = 0.107;
     planets[5].SetScale(vec3f(0.53));
     planets[5].SetPosition(vec3f(0, 0, 152));
+    planets[5].SetRotation(Quaternion::Euler(vec3f(25.19, 0, 0)));
+    planets[5].RotationalVelocity = vec3f(0, 4.9, 0);
+    planets[5].Parent = nullptr;
+    planets[5].Enabled = true;
     strcpy(planets[5].Name, "Mars");
 
     planets[6]._Material = jupiterMat;
     planets[6].Mass = 317.8;
     planets[6].SetScale(vec3f(11.2));
     planets[6].SetPosition(vec3f(0, 0, 520));
+    planets[6].SetRotation(Quaternion::Euler(vec3f(3.13, 0, 0)));
+    planets[6].RotationalVelocity = vec3f(0, 12, 0);
+    planets[6].Parent = nullptr;
     planets[6].Enabled = true;
     strcpy(planets[6].Name, "Jupiter");
 
@@ -210,30 +233,53 @@ void game_init(){
     planets[7].Mass = 95.2;
     planets[7].SetScale(vec3f(9.45));
     planets[7].SetPosition(vec3f(0, 0, 954));
+    planets[7].SetRotation(Quaternion::Euler(vec3f(26.73, 0, 0)));
+    planets[7].RotationalVelocity = vec3f(0, 11.4, 0);
+    planets[7].Parent = nullptr;
     planets[7].Enabled = true;
     strcpy(planets[7].Name, "Saturn");
 
-    planets[7]._Material = uranusMat;
-    planets[7].Mass = 14.5;
-    planets[7].SetScale(vec3f(4));
-    planets[7].SetPosition(vec3f(0, 0, 1920));
-    planets[7].Enabled = true;
-    strcpy(planets[7].Name, "Uranus");
-
-    planets[8]._Material = neptuneMat;
-    planets[8].Mass = 17.1;
-    planets[8].SetScale(vec3f(3.88));
-    planets[8].SetPosition(vec3f(0, 0, 3006));
+    planets[8]._Material = uranusMat;
+    planets[8].Mass = 14.5;
+    planets[8].SetScale(vec3f(4));
+    planets[8].SetPosition(vec3f(0, 0, 1920));
+    planets[8].SetRotation(Quaternion::Euler(vec3f(97.77, 0, 0)));
+    planets[8].RotationalVelocity = vec3f(0, 7.1, 0);
+    planets[8].Parent = nullptr;
     planets[8].Enabled = true;
-    strcpy(planets[8].Name, "Neptune");
+    strcpy(planets[8].Name, "Uranus");
+
+    planets[9]._Material = neptuneMat;
+    planets[9].Mass = 17.1;
+    planets[9].SetScale(vec3f(3.88));
+    planets[9].SetPosition(vec3f(0, 0, 3006));
+    planets[9].SetRotation(Quaternion::Euler(vec3f(28.32, 0, 0)));
+    planets[9].RotationalVelocity = vec3f(0, 7.5, 0);
+    planets[9].Parent = nullptr;
+    planets[9].Enabled = true;
+    strcpy(planets[9].Name, "Neptune");
 
     for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
         if(!planets[i].Enabled) continue;
 
-        fixed distance = (planets[i].GetPosition() - planets[0].GetPosition()).magnitude();
-        float v = sqrt(G * (planets[0].Mass + planets[i].Mass) / SCAST<float>(distance));
+        Body* target = &planets[0];
+
+        if(planets[i].Parent){
+            planets[i].Velocity = planets[i].Parent->Velocity;
+            target = planets[i].Parent;
+        }
+
+        fixed distance = (planets[i].GetPosition() - target->GetPosition()).magnitude();
+        float v = sqrt(G * (target->Mass + planets[i].Mass) / SCAST<float>(distance));
         printf("Orbital velocity for %s: %f\n", planets[i].Name, v);
-        planets[i].Velocity = vec3f(v, 0, 0);
+        planets[i].Velocity += vec3f(v, 0, 0);
+    }
+
+    for(Body& planet : planets){
+        if(!planet.Enabled) continue;
+        for(int i = 0; i < LINE_SIZE; i++){
+            planet.LinePoints[i] = planet.GetPosition();
+        }
     }
 
     printf("Finished initializing game\n");
@@ -261,11 +307,14 @@ void game_update(){
     pitch = clamp(pitch, -90fp, 90fp);
 
     for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
+        planets[i].D = vec3f(0);
+    }
+
+    for(int i = 0; i < sizeof(planets)/sizeof(Body); i++){
         if(!planets[i].Enabled) continue;
 
         for(int j = i+1; j < sizeof(planets)/sizeof(Body); j++){
             if(!planets[j].Enabled) continue;
-            if(i == j) continue;
 
             vec3<float> direction = planets[j].GetPosition() - planets[i].GetPosition();
             float distance = direction.magnitude();
@@ -275,20 +324,23 @@ void game_update(){
             vec3<float> force = direction.normalize() * g * Time::GetDeltaTime();
             planets[i].Velocity += force / planets[i].Mass;
             planets[j].Velocity -= force / planets[j].Mass;
+            planets[i].D += force / planets[i].Mass;
+            planets[j].D -= force / planets[j].Mass;
         }
     }
 
     for(Body& planet : planets){
-        // planets[i].Rotation += planets[i].RotationalVelocity * Time::GetDeltaTime();
         if(!planet.Enabled) continue;
 
         planet.Translate(planet.Velocity * Time::GetDeltaTime());
-        // planet.Rotate(planet.RotationalVelocity);
+        planet.Rotate(planet.RotationalVelocity * Time::GetDeltaTime());
     }
 
     for(int i = 1; i < sizeof(planets)/sizeof(Body); i++){
         if(!planets[i].Enabled || !planets[i].Render) continue;
-        SHADER_PARAMS(PlanetShader, planets[i]._Material)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
+        if(planets[i]._Material->_Shader._ID == PlanetShader::ID){
+            SHADER_PARAMS(PlanetShader, planets[i]._Material)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
+        }
     }
 
     if(Time::GetFrameCount() % 50 == 0){
@@ -307,7 +359,7 @@ void game_update(){
     vec3f camForward = cam.GetModelMatrix()(2).xyz();
 
     if(Input::GetButtonPress(Input::Button::Stick)){
-        while(!planets[(++targetPlanet%=9)].Enabled);
+        while(!planets[(++targetPlanet%=10)].Enabled);
 
         switch (camMode)
         {
@@ -377,23 +429,26 @@ void game_render(){
         if(dst > 200) continue;
 
         Renderer::Submit(DrawCall(sphere, planet.GetModelMatrix(), *planet._Material));
-
-        // Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1);
-        // for(int i = 0; i < LINE_SIZE-1; i++){
-            // Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1);
-        // }
     }
-
 
     // Time::Profiler::Enter("DrawMesh");
     while(Renderer::Render());
     Renderer::Finish();
     // Time::Profiler::Exit("DrawMesh");
 
-
     // for(Body& planet : planets){
     //     if(!planet.Enabled || !planet.Render) continue;
-    //     Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
+    //     fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
+
+    //     if(dst > 200) continue;
+
+    //     // Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
+    //     Renderer::DrawLine(planet.GetPosition(), planet.GetPosition() + planet.D * 5000, Color::Cyan, 1, DepthTest::Never);
+
+    //     Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1, DepthTest::Never);
+    //     for(int i = 0; i < LINE_SIZE-1; i++){
+    //         Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1, DepthTest::Never);
+    //     }
     // }
 
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);

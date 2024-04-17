@@ -6,17 +6,15 @@
 #include "mathematics/basic.h"
 
 // Seems to be working, requires further testing however
-
-/*
 struct Quaternion {
     float x;
     float y;
     float z;
     float w;
 
-    constexpr Quaternion() : x(0), y(0), z(0), w(1) {};
-    constexpr Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {};
-    constexpr Quaternion(const Quaternion& other) : x(other.x), y(other.y), z(other.z), w(other.w) {};
+    FORCE_INLINE constexpr Quaternion() : x(0), y(0), z(0), w(1) {};
+    FORCE_INLINE constexpr Quaternion(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {};
+    FORCE_INLINE constexpr Quaternion(const Quaternion& other) : x(other.x), y(other.y), z(other.z), w(other.w) {};
 
     FORCE_INLINE constexpr Quaternion operator+(const Quaternion& other) const {
         return Quaternion(x + other.x, y + other.y, z + other.z, w + other.w);
@@ -39,22 +37,6 @@ struct Quaternion {
         return *this = *this * other;
     };
 
-    FORCE_INLINE constexpr Quaternion operator*(const float& other) const {
-        return Quaternion(x * other, y * other, z * other, w * other);
-    };
-
-    FORCE_INLINE constexpr Quaternion operator/(const float& other) const {
-        return Quaternion(x / other, y / other, z / other, w / other);
-    };
-
-    FORCE_INLINE constexpr Quaternion operator*=(const float& other) {
-        return *this = *this * other;
-    };
-
-    FORCE_INLINE constexpr Quaternion operator/=(const float& other) {
-        return *this = *this / other;
-    };
-
     FORCE_INLINE constexpr static Quaternion RotateAround(const vec3f& axis, float angle) {
         float halfAngle = angle * 0.5f / 180.0f * PI;
         float sinHalfAngle = sin(halfAngle);
@@ -70,7 +52,7 @@ struct Quaternion {
     };
 
     // Converts to quaternion from euler angles, with rotation order yxz (yaw, pitch roll)
-    constexpr static Quaternion Euler(const vec3f& euler) {
+    FORCE_INLINE constexpr static Quaternion Euler(const vec3f& euler) {
         vec3f e = euler * 0.5f / 180.0f * PI;
 
         float cy = cos(SCAST<float>(e(1))); // Rotation around Y (up)
@@ -99,7 +81,7 @@ struct Quaternion {
     };
 
     // converts the quaternion back to euler angles, with rotation order yxz
-    constexpr vec3f ToEuler() const {
+    FORCE_INLINE constexpr vec3f ToEuler() const {
         float sqw = w * w;
         float sqx = x * x;
         float sqy = y * y;
@@ -128,10 +110,21 @@ struct Quaternion {
             );
         }
     }
-};*/
+
+    FORCE_INLINE constexpr Quaternion normalize() const {
+        float length = sqrt(x * x + y * y + z * z + w * w);
+
+        if(length == 0.0){
+            return Quaternion(0, 0, 0, 0);
+        }
+
+        return Quaternion(x / length, y / length, z / length, w / length);
+    }
+};
 
 
 // Same quaternion implementation, but with fixed point math
+/*
 struct Quaternion {
     fixed x;
     fixed y;
@@ -163,22 +156,6 @@ struct Quaternion {
         return *this = *this * other;
     };
 
-    FORCE_INLINE constexpr Quaternion operator*(const fixed& other) const {
-        return Quaternion(x * other, y * other, z * other, w * other);
-    };
-
-    FORCE_INLINE constexpr Quaternion operator/(const fixed& other) const {
-        return Quaternion(x / other, y / other, z / other, w / other);
-    };
-
-    FORCE_INLINE constexpr Quaternion operator*=(const fixed& other) {
-        return *this = *this * other;
-    };
-
-    FORCE_INLINE constexpr Quaternion operator/=(const fixed& other) {
-        return *this = *this / other;
-    };
-
     FORCE_INLINE constexpr static Quaternion RotateAround(const vec3f& axis, fixed angle) {
         float halfAngle = SCAST<float>(angle) * 0.5f / 180.0f * PI;
         fixed sinHalfAngle = sin(halfAngle);
@@ -193,9 +170,13 @@ struct Quaternion {
         );
     };
 
-    // Converts to quaternion from euler angles, with rotation order yxz (yaw, pitch roll)
+    // Converts to quaternion from euler angles, with rotation order yxz (yaw, pitch, roll)
     constexpr static Quaternion Euler(const vec3f& euler) {
-        vec3f e = euler * 0.5f / 180.0f * PI;
+        vec3f e = euler;
+        e.x() = (e.x() + 180.0fp) % 360.0fp - 180.0fp;
+        e.y() = (e.y() + 180.0fp) % 360.0fp - 180.0fp;
+        e.z() = (e.z() + 180.0fp) % 360.0fp - 180.0fp;
+        e = e * 0.5f / 180.0f * PI;
 
         fixed cy = cos(SCAST<float>(e(1))); // Rotation around Y (up)
         fixed sy = sin(SCAST<float>(e(1)));
@@ -222,4 +203,14 @@ struct Quaternion {
         });
     };
 
+    FORCE_INLINE constexpr Quaternion normalize() const {
+        float length = sqrt(SCAST<float>(x * x + y * y + z * z + w * w));
+
+        if(length == 0.0){
+            return Quaternion(0fp, 0fp, 0fp, 0fp);
+        }
+
+        return Quaternion(x / length, y / length, z / length, w / length);
+    }
 };
+*/

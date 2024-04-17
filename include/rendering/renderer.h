@@ -92,9 +92,6 @@ namespace Renderer{
 
     extern Font TextFont;
 
-    extern DepthTest DepthTestMode;
-    extern Culling CullingMode;
-
     extern Color ClearColor;
 
     namespace {
@@ -103,7 +100,7 @@ namespace Renderer{
         mat4f VP = mat4f::identity();
         mat4f RVP = mat4f::identity();
 
-        bool testAndSetDepth(vec2i16 pos, uint16_t val, DepthTest depthTestMode = DepthTestMode){
+        bool testAndSetDepth(vec2i16 pos, uint16_t val, DepthTest depthTestMode){
             if(pos.x() < 0 || pos.x() >= FRAME_WIDTH || pos.y() < 0 || pos.y() >= FRAME_HEIGHT) return false;
 
             switch(depthTestMode){
@@ -145,7 +142,7 @@ namespace Renderer{
     void DrawBox(BoundingBox2D box, Color color);
     void DrawBorder(BoundingBox2D box, uint8_t width, Color color);
     void DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWidth = 1);
-    void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1);
+    void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1, DepthTest depthTestMode = DepthTest::Less);
     void DrawText(const char* text, vec2i16 pos, Color color);
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material, Culling cullingMode = Culling::Back, DepthTest depthTestMode = DepthTest::Less);
     void Blit(const Texture2D& tex, vec2i16 pos);

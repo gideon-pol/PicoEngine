@@ -6,8 +6,6 @@ Camera Renderer::MainCamera = Camera(45fp, 0.1fp, 500fp, FRAME_WIDTH / FRAME_HEI
 Color565 Renderer::FrameBuffer[FRAME_WIDTH * FRAME_HEIGHT];
 uint16_t Renderer::Zbuffer[FRAME_WIDTH * FRAME_HEIGHT];
 Font Renderer::TextFont = Font((uint8_t*)&font_psf);
-DepthTest Renderer::DepthTestMode = DepthTest::Less;
-// Culling Renderer::CullingMode = Culling::Back;
 
 Color Renderer::ClearColor = Color::Black;
 
@@ -249,7 +247,7 @@ void Renderer::DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWid
 }
 
 // 3D Bresenham that respects the camera's frustrum and depth buffer
-void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
+void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth, DepthTest depthTestMode){
     vec3f pv1 = (RVP * vec4f(p1, 1)).homogenize();
     vec3f pv2 = (RVP * vec4f(p2, 1)).homogenize();
 
@@ -294,7 +292,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testAndSetDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0, depthTestMode)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -322,7 +320,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testAndSetDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0, depthTestMode)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -350,7 +348,7 @@ void Renderer::DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth){
                 for(int x = x0 - lineWidth; x < x0 + lineWidth; x++){
                     if(x < 0 || x >= FRAME_WIDTH || y < 0 || y >= FRAME_HEIGHT) continue;
 
-                    if(testAndSetDepth(vec2i16(x, y), z0)){
+                    if(testAndSetDepth(vec2i16(x, y), z0, depthTestMode)){
                         FrameBuffer[y * FRAME_WIDTH + x] = color.ToColor565();
                     }
                 }
@@ -583,9 +581,7 @@ void Renderer::Debug::DrawOrientation(mat4f& modelMat){
     vec3f up = modelMat.col(1).xyz();
     vec3f right = modelMat.col(0).xyz();
 
-    Renderer::DepthTestMode = DepthTest::Never;
-    Renderer::DrawLine(pos, pos + forward, Color::White);
-    Renderer::DrawLine(pos, pos + up, Color::Green);
-    Renderer::DrawLine(pos, pos + right, Color::Red);
-    Renderer::DepthTestMode = DepthTest::Less;
+    Renderer::DrawLine(pos, pos + forward, Color::White, 1, DepthTest::Never);
+    Renderer::DrawLine(pos, pos + up, Color::Green, 1, DepthTest::Never);
+    Renderer::DrawLine(pos, pos + right, Color::Red, 1, DepthTest::Never);
 }

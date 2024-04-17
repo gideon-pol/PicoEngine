@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
+#define UNROLL       __attribute__((optimize("unroll-loops")))
 #define SCAST static_cast
 
 // #define RENDER_DEBUG_FACE_NORMALS   1

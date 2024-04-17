@@ -15,6 +15,7 @@ if(TARGET_NATIVE)
         ${SOURCES}
         ${RESOURCES}
     )
+    target_compile_options(build PRIVATE -Winline)
 
     find_package(SDL2 REQUIRED)
 

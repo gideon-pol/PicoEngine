@@ -41,7 +41,7 @@ class Object {
         mat4f& GetModelMatrix() {
             if (translationUpdated) {
                 // std::cout << "Translating pos: x: " << position.x() << " y: " << position.y() << " z: " << position.z() << std::endl;
-                modelMatrix = mat4f::translate(position) * rotation.ToMatrix() * mat4f::scale(scale);
+                modelMatrix = mat4f::translate(position) * rotation.normalize().ToMatrix() * mat4f::scale(scale);
                 if(Parent != nullptr) modelMatrix = modelMatrix * Parent->GetModelMatrix();
 
                 translationUpdated = false;
@@ -64,12 +64,12 @@ class Object {
         };
 
         FORCE_INLINE constexpr void Rotate(const vec3f& rotation) {
-            this->rotation *= Quaternion::Euler(rotation);
+            this->rotation = Quaternion::Euler(rotation) * this->rotation;
             translationUpdated = true;
         };
 
         FORCE_INLINE constexpr void Rotate(const Quaternion& rotation) {
-            this->rotation *= rotation;
+            this->rotation = rotation * this->rotation;
             translationUpdated = true;
         };
 

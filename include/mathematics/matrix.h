@@ -9,32 +9,32 @@ template<typename T, int C, int R>
 struct mat {
     vec<T, C> data[R]{};
 
-    constexpr mat() {
+    FORCE_INLINE UNROLL constexpr mat() {
         for (int i = 0; i < R; i++) {
             data[i] = vec<T, C>();
         }
     };
 
-    constexpr mat(const T val) {
+    FORCE_INLINE UNROLL constexpr mat(const T val) {
         for (int i = 0; i < R; i++) {
             data[i] = vec<T, C>(val);
         }
     };
 
-    constexpr mat(const mat<T, C, R>& other) {
+    FORCE_INLINE UNROLL constexpr mat(const mat<T, C, R>& other) {
         for (int i = 0; i < R; i++) {
             data[i] = other(i);
         }
     };
 
-    constexpr mat(const T (&arr)[R][C]) {
+    FORCE_INLINE UNROLL constexpr mat(const T (&arr)[R][C]) {
         for (int i = 0; i < R; i++) {
             data[i] = vec<T, C>(arr[i]);
         }
     };
 
     template<typename T2>
-    constexpr mat(const mat<T2, C, R>& other) {
+    FORCE_INLINE UNROLL constexpr mat(const mat<T2, C, R>& other) {
         for (int i = 0; i < R; i++) {
             data[i] = vec<T, C>(other(i));
         }
@@ -52,7 +52,7 @@ struct mat {
         return data[i];
     };
 
-    constexpr vec<T, C> col(int i) const {
+    FORCE_INLINE UNROLL constexpr vec<T, C> col(int i) const {
         vec<T, C> result = vec<T, C>();
         for (int j = 0; j < R; j++) {
             result[j] = data[j](i);
@@ -60,7 +60,7 @@ struct mat {
         return result;
     };
 
-    constexpr mat<T, C, R>& operator=(const mat<T, C, R>& other) {
+    FORCE_INLINE UNROLL constexpr mat<T, C, R>& operator=(const mat<T, C, R>& other) {
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
                 data[i][j] = other(i,j);
@@ -69,7 +69,7 @@ struct mat {
         return *this;
     };
 
-    constexpr mat<T, R, C> operator~() const {
+    FORCE_INLINE UNROLL constexpr mat<T, R, C> operator~() const {
         mat<T, R, C> result = mat<T, R, C>();
         for (int i = 0; i < R; i++) {
             for (int j = 0; j < C; j++) {
@@ -80,7 +80,7 @@ struct mat {
     };
 
     template<int C2>
-    constexpr mat<T, C2, R> operator*(const mat<T, C2, C>& other) const {
+    FORCE_INLINE UNROLL constexpr mat<T, C2, R> operator*(const mat<T, C2, C>& other) const {
         mat<T, C2, R> result = mat<T, C2, R>();
         mat<T, C, C2> trans = ~other;
 
@@ -93,7 +93,7 @@ struct mat {
         return result;
     };
 
-    constexpr vec<T, R> operator*(const vec<T, C>& other) const {
+    FORCE_INLINE UNROLL constexpr vec<T, R> operator*(const vec<T, C>& other) const {
         vec<T, R> result = vec<T, R>();
         for (int i = 0; i < R; i++) {
             result[i] = data[i] * other;
@@ -109,7 +109,7 @@ struct mat {
         return C;
     };
 
-    static constexpr mat<T, C, R> identity() {
+    FORCE_INLINE UNROLL static constexpr mat<T, C, R> identity() {
         mat<T, C, R> result = mat<T, C, R>();
         for (int i = 0; i < R; i++) {
             for(int j = 0; j < C; j++){
@@ -118,8 +118,6 @@ struct mat {
         }
         return result;
     };
-
-
 };
 
 typedef mat<fixed, 2, 2> mat2;
@@ -135,7 +133,7 @@ struct mat4f : public mat<fixed, 4, 4> {
     FORCE_INLINE constexpr fixed operator()(int y, int x) const { return mat<fixed, 4, 4>::operator()(y, x); };
     FORCE_INLINE constexpr vec4f col(int i) const { return mat<fixed, 4, 4>::col(i); };
 
-    constexpr mat4f transpose(){
+    FORCE_INLINE UNROLL constexpr mat4f transpose(){
         mat4f result = mat4f::identity();
         for(int i = 0; i < 4; i++){
             for(int j = 0; j < 4; j++){
@@ -145,7 +143,7 @@ struct mat4f : public mat<fixed, 4, 4> {
         return result;
     }
 
-    constexpr static mat4f translate(const vec<fixed, 3>& v) {
+    FORCE_INLINE constexpr static mat4f translate(const vec<fixed, 3>& v) {
         mat4f result = mat4f::identity();
         result[0][3] = v(0);
         result[1][3] = v(1);
@@ -153,7 +151,7 @@ struct mat4f : public mat<fixed, 4, 4> {
         return result;
     };
 
-    constexpr static mat4f scale(const vec<fixed, 3>& v) {
+    FORCE_INLINE constexpr static mat4f scale(const vec<fixed, 3>& v) {
         mat4f result = mat4f::identity();
         result[0][0] = v(0);
         result[1][1] = v(1);
@@ -161,7 +159,7 @@ struct mat4f : public mat<fixed, 4, 4> {
         return result;
     };
 
-    constexpr static mat4f rotate(fixed angle, const vec<fixed, 3>& axis) {
+    FORCE_INLINE constexpr static mat4f rotate(fixed angle, const vec<fixed, 3>& axis) {
         mat4f result = mat4f::identity();
         float piAngle = (float)angle * PI / 180.0f;
         fixed c = cos(piAngle);
@@ -185,13 +183,13 @@ struct mat4f : public mat<fixed, 4, 4> {
         return result;
     };
 
-    constexpr static mat4f euler(const vec<fixed, 3>& v){
+    FORCE_INLINE constexpr static mat4f euler(const vec<fixed, 3>& v){
         return mat4f::rotate(v(2), vec3f::forward) *
                mat4f::rotate(v(0), vec3f::right) *
                mat4f::rotate(v(1), vec3f::up);
     }
 
-    constexpr static mat4f perspective(fixed fov, fixed aspect, fixed near, fixed far) {
+    FORCE_INLINE constexpr static mat4f perspective(fixed fov, fixed aspect, fixed near, fixed far) {
         mat4f result = mat4f();
         fixed yScale = 1fp / tan((float)fov * 0.5f * PI / 180.0f);
         fixed xScale = yScale * (1fp / aspect);

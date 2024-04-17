@@ -103,12 +103,12 @@ struct Color {
             (hex & 0x000000FF));
     }
 
-    static constexpr Color FromHSV(float h, float s, float v, float a = 1.0f) {
-        float c = v * s;
-        float x = c * (1 - abs(fmod(h / 60.0f, 2) - 1));
-        float m = v - c;
+    static constexpr Color FromHSV(fixed h, fixed s, fixed v, fixed a = 1.0f) {
+        fixed c = v * s;
+        fixed x = c * (1fp - abs((h / 60.0f) % 2 - 1));
+        fixed m = v - c;
 
-        float r = 0, g = 0, b = 0;
+        fixed r = 0, g = 0, b = 0;
 
         if (h >= 0 && h < 60) {
             r = c;
@@ -137,10 +137,10 @@ struct Color {
         }
 
         return Color(
-            (r + m) * 255,
-            (g + m) * 255,
-            (b + m) * 255,
-            a * 255);
+            SCAST<uint8_t>((r + m) * 255),
+            SCAST<uint8_t>((g + m) * 255),
+            SCAST<uint8_t>((b + m) * 255),
+            SCAST<uint8_t>(a * 255));
     }
 
     FORCE_INLINE static constexpr Color Lerp(Color a, Color b, fixed t) {

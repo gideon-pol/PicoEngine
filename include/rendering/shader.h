@@ -84,7 +84,7 @@ public:
 
     inline void TriangleProgram(TriangleShaderData& data, void* parameters){
         Parameters* params = (Parameters*)parameters;
-        vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position).normalize();
+        vec3f normal = (data.v2.Position - data.v1.Position).cross(data.v3.Position - data.v1.Position);
         normal = (data.ModelMatrix * vec4f(normal, 0)).xyz().normalize();
         fixed diff = max(normal.dot(-params->LightDirection), 0fp);
         data.TriangleColor = Color(
@@ -113,7 +113,8 @@ public:
 
     inline void FragmentProgram(FragmentShaderData& data, void* parameters){
         Parameters* params = (Parameters*)parameters;
-        vec3f normal = (data.V1.Normal * data.UVW(0) + data.V2.Normal * data.UVW(1) + data.V3.Normal * data.UVW(2)).normalize();
+        vec3f normal = (data.V1.Normal * data.UVW(0) + data.V2.Normal * data.UVW(1) + data.V3.Normal * data.UVW(2));
+        normal = (data.ModelMatrix * vec4f(normal, 0)).xyz().normalize();
         fixed diff = max(normal.dot(-params->LightDirection), 0fp);
         data.FragmentColor = Color(
                                 SCAST<uint8_t>(fixed(params->LightColor.r) * diff),
@@ -133,11 +134,19 @@ public:
     SHADER_AUTO_ID(RainbowTestShader){
     }
 
-    inline void FragmentProgram(FragmentShaderData& data, void* parameters){
-        vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
-        fixed h = uv(0) * 360fp;
-        data.FragmentColor = Color::FromHSV((float)h, 1, 1);
+    inline void TriangleProgram(TriangleShaderData& data, void* parameters){
+        vec3f w = (data.ModelMatrix * vec4f(data.v1.Position, 1)).xyz();
+        Color c1 = Color::FromHSV(w.x() * 100 % 360, 1, 1);
+        Color c2 = Color::FromHSV(w.y() * 100 % 360, 1, 1);
+        Color c3 = Color::FromHSV(w.z() * 100 % 360, 1, 1);
+        data.TriangleColor = Color(((int)c1.r + c2.r + c3.r) / 3, ((int)c1.g + c2.g + c3.g) / 3, ((int)c1.b + c2.b + c3.b) / 3, 255);
     }
+
+    // inline void FragmentProgram(FragmentShaderData& data, void* parameters){
+    //     vec2f uv = data.FragCoord.xy() / vec2f(data.ScreenSize);
+    //     fixed h = uv(0) * 360fp;
+    //     data.FragmentColor = Color::FromHSV((float)h, 1, 1);
+    // }
 
     void* CreateParameters(){
         return nullptr;
@@ -214,7 +223,3 @@ FORCE_INLINE void executeFragmentProgram(Shader& shader, FragmentShaderData& dat
             break; \
     } \
 }
-
-extern FORCE_INLINE void executeTriangleProgram(Shader& shader, TriangleShaderData& data, void* parameters);
-extern FORCE_INLINE void executeFragmentProgram(Shader& shader, FragmentShaderData& data, void* parameters);
-

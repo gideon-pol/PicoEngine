@@ -86,8 +86,11 @@ void Time::Profiler::Reset(){
 #include <chrono>
 #include <thread>
 
+uint64_t start;
+
 void Time::Init(){
     lastFrameTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    start = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 };
 
 void Time::Tick(){
@@ -114,11 +117,11 @@ uint64_t Time::GetDeltaTimeMicroseconds(){
 };
 
 float Time::Now(){
-    return (float)std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() / MICROSECONDS_IN_SECOND;
+    return (float)Time::NowMicroseconds() / MICROSECONDS_IN_SECOND;
 };
 
 uint64_t Time::NowMicroseconds(){
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() - start;
 };
 
 #endif
