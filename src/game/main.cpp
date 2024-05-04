@@ -9,6 +9,7 @@
 #include "rendering/shader.h"
 #include "rendering/mesh.h"
 #include "rendering/renderer.h"
+#include "rendering/postprocessing.h"
 #include "hardware/input.h"
 #include "ecs/object.h"
 
@@ -16,6 +17,9 @@
 
 extern const Vertex sphere_obj_vertices[1080];
 extern const uint32_t sphere_obj_indices[1080];
+
+extern const Vertex suzanne_obj_vertices[2904];
+extern const uint32_t suzanne_obj_indices[2904];
 
 extern const Color16 mercury_png[80000];
 extern const Color16 venus_png[80000];
@@ -58,6 +62,7 @@ Mesh quad = Mesh((Vertex*)&quadVerts, 4, (uint32_t*)&quadIndices, 2);
 
 Camera& cam = Renderer::MainCamera;
 Mesh sphere = Mesh((Vertex*)&sphere_obj_vertices, 1080, (uint32_t*)&sphere_obj_indices, 1080/3);
+Mesh suzanne = Mesh((Vertex*)&suzanne_obj_vertices, 2904, (uint32_t*)&suzanne_obj_indices, 2904/3);
 
 Texture2D mercury = Texture2D((Color16*)&mercury_png, 400, 200);
 Texture2D venus = Texture2D((Color16*)&venus_png, 400, 200);
@@ -74,6 +79,7 @@ FlatShader debug = FlatShader();
 Texture2D flare = Texture2D((Color16*)&flare_png, 200, 114);
 TextureShader t = TextureShader();
 PlanetShader p = PlanetShader();
+FastPlanetShader f = FastPlanetShader();
 RainbowTestShader r = RainbowTestShader();
 FlatLightingShader l = FlatLightingShader();
 SmoothLightingShader s = SmoothLightingShader();
@@ -89,6 +95,7 @@ Color lightColor = Color(255, 255, 255, 255);
 void game_init(){
     printf("Initializing game\n");
 
+{
     Material* mercuryMat = new Material(p);
     SHADER_PARAMS(PlanetShader, mercuryMat)->_Texture = &mercury;
     SHADER_PARAMS(PlanetShader, mercuryMat)->LightColor = lightColor;
@@ -101,9 +108,9 @@ void game_init(){
     SHADER_PARAMS(PlanetShader, earthMat)->_Texture = &earth;
     SHADER_PARAMS(PlanetShader, earthMat)->LightColor = lightColor;
 
-    Material* moonMat = new Material(p);
-    SHADER_PARAMS(PlanetShader, moonMat)->_Texture = &moon;
-    SHADER_PARAMS(PlanetShader, moonMat)->LightColor = lightColor;
+    Material* moonMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, moonMat)->_Texture = &moon;
+    SHADER_PARAMS(FastPlanetShader, moonMat)->LightColor = lightColor;
 
     Material* marsMat = new Material(p);
     SHADER_PARAMS(PlanetShader, marsMat)->_Texture = &mars;
@@ -124,44 +131,43 @@ void game_init(){
     Material* neptuneMat = new Material(p);
     SHADER_PARAMS(PlanetShader, neptuneMat)->_Texture = &neptune;
     SHADER_PARAMS(PlanetShader, neptuneMat)->LightColor = lightColor;
-
-{
-    Material* mercuryMat = new Material(t);
-    SHADER_PARAMS(TextureShader, mercuryMat)->_Texture = &mercury;
-    SHADER_PARAMS(TextureShader, mercuryMat)->TextureScale = vec2f(1);
-
-    Material* venusMat = new Material(t);
-    SHADER_PARAMS(TextureShader, venusMat)->_Texture = &venus;
-    SHADER_PARAMS(TextureShader, venusMat)->TextureScale = vec2f(1);
-
-    Material* earthMat = new Material(t);
-    SHADER_PARAMS(TextureShader, earthMat)->_Texture = &earth;
-    SHADER_PARAMS(TextureShader, earthMat)->TextureScale = vec2f(1);
-
-    Material* moonMat = new Material(t);
-    SHADER_PARAMS(TextureShader, moonMat)->_Texture = &moon;
-    SHADER_PARAMS(TextureShader, moonMat)->TextureScale = vec2f(1);
-
-    Material* marsMat = new Material(t);
-    SHADER_PARAMS(TextureShader, marsMat)->_Texture = &mars;
-    SHADER_PARAMS(TextureShader, marsMat)->TextureScale = vec2f(1);
-
-    Material* jupiterMat = new Material(t);
-    SHADER_PARAMS(TextureShader, jupiterMat)->_Texture = &jupiter;
-    SHADER_PARAMS(TextureShader, jupiterMat)->TextureScale = vec2f(1);
-
-    Material* saturnMat = new Material(t);
-    SHADER_PARAMS(TextureShader, saturnMat)->_Texture = &saturn;
-    SHADER_PARAMS(TextureShader, saturnMat)->TextureScale = vec2f(1);
-
-    Material* uranusMat = new Material(t);
-    SHADER_PARAMS(TextureShader, uranusMat)->_Texture = &uranus;
-    SHADER_PARAMS(TextureShader, uranusMat)->TextureScale = vec2f(1);
-
-    Material* neptuneMat = new Material(t);
-    SHADER_PARAMS(TextureShader, neptuneMat)->_Texture = &neptune;
-    SHADER_PARAMS(TextureShader, neptuneMat)->TextureScale = vec2f(1);
 }
+        
+    Material* mercuryMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, mercuryMat)->_Texture = &mercury;
+    SHADER_PARAMS(FastPlanetShader, mercuryMat)->LightColor = lightColor;
+
+    Material* venusMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, venusMat)->_Texture = &venus;
+    SHADER_PARAMS(FastPlanetShader, venusMat)->LightColor = lightColor;
+
+    Material* earthMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, earthMat)->_Texture = &earth;
+    SHADER_PARAMS(FastPlanetShader, earthMat)->LightColor = lightColor;
+
+    Material* moonMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, moonMat)->_Texture = &moon;
+    SHADER_PARAMS(FastPlanetShader, moonMat)->LightColor = lightColor;
+
+    Material* marsMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, marsMat)->_Texture = &mars;
+    SHADER_PARAMS(FastPlanetShader, marsMat)->LightColor = lightColor;
+
+    Material* jupiterMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, jupiterMat)->_Texture = &jupiter;
+    SHADER_PARAMS(FastPlanetShader, jupiterMat)->LightColor = lightColor;
+
+    Material* saturnMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, saturnMat)->_Texture = &saturn;
+    SHADER_PARAMS(FastPlanetShader, saturnMat)->LightColor = lightColor;
+
+    Material* uranusMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, uranusMat)->_Texture = &uranus;
+    SHADER_PARAMS(FastPlanetShader, uranusMat)->LightColor = lightColor;
+
+    Material* neptuneMat = new Material(f);
+    SHADER_PARAMS(FastPlanetShader, neptuneMat)->_Texture = &neptune;
+    SHADER_PARAMS(FastPlanetShader, neptuneMat)->LightColor = lightColor;
 
     Material* debugMat = new Material(r);
 
@@ -282,6 +288,19 @@ void game_init(){
         }
     }
 
+    PostProcessing::Bloom* bloom = new PostProcessing::Bloom();
+
+    PostProcessing::Colorize* colorize = new PostProcessing::Colorize(new Color[6]{
+        Color::Black,
+        Color::Blue,
+        Color::Green,
+        Color::Cyan,
+        Color::White
+    }, 6);
+
+    // PostProcessing::Add(colorize);
+    PostProcessing::Add(bloom);
+
     printf("Finished initializing game\n");
 }
 
@@ -294,8 +313,8 @@ enum CameraMode {
 };
 
 CameraMode camMode = CameraMode::Medium;
-fixed camDistance = 3fp;
-fixed targetCamDistance = 3fp;
+fixed camDistance = 2fp;
+fixed targetCamDistance = 2fp;
 
 void game_update(){
     printf("Delta time: %f\n", Time::GetDeltaTime());
@@ -340,7 +359,9 @@ void game_update(){
         if(!planets[i].Enabled || !planets[i].Render) continue;
         if(planets[i]._Material->_Shader._ID == PlanetShader::ID){
             SHADER_PARAMS(PlanetShader, planets[i]._Material)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
-        }
+        } else if(planets[i]._Material->_Shader._ID == FastPlanetShader::ID){
+            SHADER_PARAMS(FastPlanetShader, planets[i]._Material)->DirectionToLight = (planets[0].GetPosition() - planets[i].GetPosition()).normalize();
+        }   
     }
 
     if(Time::GetFrameCount() % 50 == 0){
@@ -360,60 +381,32 @@ void game_update(){
 
     if(Input::GetButtonPress(Input::Button::Stick)){
         while(!planets[(++targetPlanet%=10)].Enabled);
-
-        switch (camMode)
-        {
-            case CameraMode::Close:
-                camDistance = planets[targetPlanet].GetScale().x() * 3fp;
-                break;
-            case CameraMode::Medium:
-                camDistance = planets[targetPlanet].GetScale().x() * 5fp;
-                break;
-            case CameraMode::Far:
-                camDistance = planets[targetPlanet].GetScale().x() * 7.5fp;
-                break;
-        }
-
-        targetCamDistance = camDistance;
     }
 
-    if(Input::GetButtonPress(Input::Button::A)){
-        camMode = (CameraMode)(((int)camMode + 1) % 3);
-
-        switch (camMode)
-        {
-            case CameraMode::Close:
-                targetCamDistance = planets[targetPlanet].GetScale().x() * 3fp;
-                break;
-            case CameraMode::Medium:
-                targetCamDistance = planets[targetPlanet].GetScale().x() * 5fp;
-                break;
-            case CameraMode::Far:
-                targetCamDistance = planets[targetPlanet].GetScale().x() * 10fp;
-                break;
-        }
+    if(Input::GetButtonDown(Input::Button::A)){
+        targetCamDistance = clamp(targetCamDistance - 0.05fp, 1.1fp, 20fp);
     }
 
-    camDistance = lerp(camDistance, targetCamDistance, Time::GetDeltaTime());
+    if(Input::GetButtonDown(Input::Button::B)){
+        targetCamDistance = clamp(targetCamDistance + 0.05fp, 1.1fp, 20fp);
+    }
 
-    cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * camDistance);
+    camDistance = lerp(camDistance, targetCamDistance * targetCamDistance, Time::GetDeltaTime());
+
+    cam.SetPosition(planets[targetPlanet].GetPosition() - camForward * camDistance * planets[targetPlanet].GetScale().x());
 }
 
-void game_render(){
-    {
-    //     Renderer::CullingMode = Culling::Front;
-    //     Renderer::DepthTestMode = DepthTest::Never;
+void game_mesh_render(){
+    // static TextureShader t = TextureShader();
+    // static Material starsMat = Material(t);
+    // ((TextureShader::Parameters*)starsMat.Parameters)->_Texture = &mars;
+    // ((TextureShader::Parameters*)starsMat.Parameters)->TextureScale = vec2f(1);
 
-    //     static TextureShader t = TextureShader();
-    //     static Material starsMat = Material(t);
-    //     ((TextureShader::Parameters*)starsMat.Parameters)->_Texture = &earth;
-    //     ((TextureShader::Parameters*)starsMat.Parameters)->TextureScale = vec2f(1);
+    // Renderer::DrawMesh(sphere, mat4f::translate(cam.GetPosition()) * mat4f::scale(vec3f(100)), starsMat, Culling::Front, DepthTest::Less);
+    // Renderer::Finish();
+    // return;
 
-    //     Renderer::DrawMesh(sphere, mat4f::translate(cam.GetPosition()), starsMat);
-
-    //     Renderer::CullingMode = Culling::Back;
-    //     Renderer::DepthTestMode = DepthTest::Less;
-    }
+    Time::Profiler::Enter("Draw");
 
     vec3f sunPos = Renderer::WorldToScreen(planets[0].GetPosition());
 
@@ -426,38 +419,46 @@ void game_render(){
 
         fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
 
-        if(dst > 200) continue;
+        // if(dst > 200) continue;
 
         Renderer::Submit(DrawCall(sphere, planet.GetModelMatrix(), *planet._Material));
     }
+}
 
-    // Time::Profiler::Enter("DrawMesh");
-    while(Renderer::Render());
-    Renderer::Finish();
-    // Time::Profiler::Exit("DrawMesh");
+void game_ui_render(){
+    for(Body& planet : planets){
+        if(!planet.Enabled || !planet.Render) continue;
+        fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
 
-    // for(Body& planet : planets){
-    //     if(!planet.Enabled || !planet.Render) continue;
-    //     fixed dst = (planet.GetPosition() - cam.GetPosition()).magnitude();
+        if(dst > 200) continue;
 
-    //     if(dst > 200) continue;
+        // Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
+        Renderer::DrawLine(planet.GetPosition(), planet.GetPosition() + planet.D * 5000, Color::Cyan, 1, DepthTest::Never);
 
-    //     // Renderer::Debug::DrawOrientation(planet.GetModelMatrix());
-    //     Renderer::DrawLine(planet.GetPosition(), planet.GetPosition() + planet.D * 5000, Color::Cyan, 1, DepthTest::Never);
-
-    //     Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1, DepthTest::Never);
-    //     for(int i = 0; i < LINE_SIZE-1; i++){
-    //         Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1, DepthTest::Never);
-    //     }
-    // }
+        Renderer::DrawLine(planet.GetPosition(), planet.LinePoints[0], Color::White, 1, DepthTest::Never);
+        for(int i = 0; i < LINE_SIZE-1; i++){
+            Renderer::DrawLine(planet.LinePoints[i], planet.LinePoints[i+1], Color::White, 1, DepthTest::Never);
+        }
+    }
 
     Renderer::DrawText(planets[targetPlanet].Name, vec2i16(0), Color::White);
 
     int fps = 1 / Time::GetDeltaTime();
 
-    char fpsStr[32];
-    sprintf(fpsStr, "FPS: %d", fps);
-    Renderer::DrawText(fpsStr, vec2i16(0, 10), Color::White);
+    char str[32];
+    snprintf(str, 32, "FPS: %d", fps);
+    Renderer::DrawText(str, vec2i16(0, 10), Color::White);
+
+    snprintf(str, 32, "Draw time: %.4f", Time::Profiler::GetSectionMicroseconds("DrawMesh") / 1000000.0f);
+    Renderer::DrawText(str, vec2i16(0, 20), Color::Cyan);
+
+    snprintf(str, 32, "Post proc...: %.4f", Time::Profiler::GetSectionMicroseconds("PostProcessing") / 1000000.0f);
+    Renderer::DrawText(str, vec2i16(0, 30), Color::Yellow);
+
+    snprintf(str, 32, "Cam dst: %.0fk km", SCAST<float>(camDistance * planets[targetPlanet].GetScale().x() * 6.371f));
+    Renderer::DrawText(str, vec2i16(0, 115), Color::White);
+
+    Time::Profiler::Exit("Draw");
 
     Time::Profiler::Print();
     Time::Profiler::Reset();

@@ -14,21 +14,11 @@ Camera::Camera(fixed fov, fixed near, fixed far, fixed aspect){
     this->near = near;
     this->far = far;
 
-    projection = mat4f::perspective(fov, (float)aspect, (float)near, (float)far);
-    updateViewMatrix();
+    projection = mat4f::perspective(fov, aspect, near, far);
 }
 
-mat4f Camera::GetModelMatrix(){
-    return mat4f::translate(position) * rotation.ToMatrix();
-}
-
-// Some internal caching. TODO: measure performance impact of this
-mat4f& Camera::GetViewMatrix(){
-    if(orientationUpdated){
-        updateViewMatrix();
-        orientationUpdated = false;
-    }
-    return view;
+mat4f Camera::GetViewMatrix(){
+    return rotation.ToMatrix() * mat4f::translate(-position);;
 }
 
 // Frustum intersection test that checks if any of the bounding volume's corners
@@ -39,7 +29,6 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
     vec3f corners[8];
     volume.GetCorners(&corners);
 
-    // mat4f MVP = ((mat<float, 4, 4>)GetProjectionMatrix() * (mat<float, 4, 4>)GetViewMatrix() * (mat<float, 4, 4>)translationMat);
     mat4f MVP = GetProjectionMatrix() * GetViewMatrix() * translationMat;
 
     for(int i = 0; i < 8; i++){
@@ -52,10 +41,6 @@ bool Camera::IntersectsFrustrum(const BoundingVolume& volume, const mat4f& trans
     };
 
     return false;
-}
-
-void Camera::updateViewMatrix(){
-    view = rotation.ToMatrix() * mat4f::translate(-position);
 }
 
 #ifdef PLATFORM_PICO
@@ -161,8 +146,6 @@ void Renderer::Prepare(){
     RVP = (mat<float, 4, 4>)rasterizationMat * vp;
 }
 
-
-
 void Renderer::DrawBox(BoundingBox2D box, Color color){
     BoundingBox2D bbi = bounds.Intersect(box);
 
@@ -209,7 +192,7 @@ void Renderer::DrawBorder(BoundingBox2D box, uint8_t width, Color color){
     }
 }
 
-void Renderer::DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWidth){
+void Renderer::DrawLine(vec2i16 start, vec2i16 end, Color color, uint8_t lineWidth){
     int32_t x0 = start.x();
     int32_t y0 = start.y();
     int32_t x1 = end.x();
@@ -410,10 +393,10 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         uint32_t idx = i * 3;
 
         TriangleShaderData t = {
-            modelMat,
             mesh.Vertices[mesh.Indices[idx]],
             mesh.Vertices[mesh.Indices[idx+1]],
             mesh.Vertices[mesh.Indices[idx+2]],
+            modelMat,
             Color::Purple
         };
 
@@ -421,9 +404,9 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         executeTriangleProgram(material._Shader, t, material.Parameters);
         // Time::Profiler::Exit("TriangleProgram");
 
-        vec3f pv1 = (rMVP * vec4f(t.v1.Position, 1)).homogenize();
-        vec3f pv2 = (rMVP * vec4f(t.v2.Position, 1)).homogenize();
-        vec3f pv3 = (rMVP * vec4f(t.v3.Position, 1)).homogenize();
+        vec3f pv1 = (rMVP * vec4f(t.V1.Position, 1)).homogenize();
+        vec3f pv2 = (rMVP * vec4f(t.V2.Position, 1)).homogenize();
+        vec3f pv3 = (rMVP * vec4f(t.V3.Position, 1)).homogenize();
 
         BoundingBox2D bb = BoundingBox2D::FromTriangle(pv1.xy(), pv2.xy(), pv3.xy());
         BoundingBox2D bbi = bounds.Intersect(bb);
@@ -493,7 +476,7 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
                     if(!testAndSetDepth(vec2i16(x, y), z16, depthTestMode)) goto update_baricentric;
 
                     FragmentShaderData data = {
-                        t.v1, t.v2, t.v3,
+                        t.V1, t.V2, t.V3,
                         modelMat,
                         uvw,
                         vec3f(x, y, z),
@@ -523,10 +506,10 @@ void Renderer::DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material&
         //       will overwrite the debug drawings
         render_debug:
         #ifdef RENDER_DEBUG_WIREFRAME
-            Color color = Color::Cyan; // ((WireFrameShader::Parameters*)material.Parameters)->_Color;
-            vec2i32 p1 = vec2i16(SCAST<int32_t>(pv1.x()), SCAST<int32_t>(pv1.y()));
-            vec2i32 p2 = vec2i16(SCAST<int32_t>(pv2.x()), SCAST<int32_t>(pv2.y()));
-            vec2i32 p3 = vec2i16(SCAST<int32_t>(pv3.x()), SCAST<int32_t>(pv3.y()));
+            Color color = Color::Cyan;
+            vec2i16 p1 = vec2i16(SCAST<int>(pv1.x()), SCAST<int>(pv1.y()));
+            vec2i16 p2 = vec2i16(SCAST<int>(pv2.x()), SCAST<int>(pv2.y()));
+            vec2i16 p3 = vec2i16(SCAST<int>(pv3.x()), SCAST<int>(pv3.y()));
 
             DrawLine(p1, p2, color);
             DrawLine(p2, p3, color);

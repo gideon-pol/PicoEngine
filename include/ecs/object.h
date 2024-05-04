@@ -90,7 +90,7 @@ class Object {
             return GetModelMatrix()(2).xyz();
         };
 
-private:
+protected:
     vec3f position;
     Quaternion rotation;
     vec3f scale;

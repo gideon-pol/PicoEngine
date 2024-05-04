@@ -11,12 +11,14 @@
 #include "common.h"
 #include "mathematics.h"
 #include "rendering/renderer.h"
+#include "rendering/postprocessing.h"
 #include "hardware/input.h"
 #include "time.hpp"
 
 extern void game_init();
 extern void game_update();
-extern void game_render();
+extern void game_mesh_render();
+extern void game_ui_render();
 
 SDL_Window* setupWindow(){
     if(SDL_Init(SDL_INIT_VIDEO) == -1)
@@ -43,7 +45,7 @@ void core1(){
     while(true){
         renderStartBarrier.arrive_and_wait();
         while(Renderer::Render());
-        renderDoneBarrier.arrive_and_wait();
+        Renderer::Finish();
     }
 }
 
@@ -94,7 +96,17 @@ int main(int argc, char** argv){
 
         renderStartBarrier.arrive_and_wait();
 
-        game_render();
+        Time::Profiler::Enter("DrawMesh");
+        game_mesh_render();
+        while(Renderer::Render());
+        Renderer::Finish();
+        Time::Profiler::Exit("DrawMesh");
+
+        Time::Profiler::Enter("PostProcessing");
+        PostProcessing::Apply((Color565*)&Renderer::FrameBuffer, vec2i16(120, 120));
+        Time::Profiler::Exit("PostProcessing");
+
+        game_ui_render();
 
         SDL_LockSurface(surface);
         static Color pixels[FRAME_WIDTH * FRAME_HEIGHT];

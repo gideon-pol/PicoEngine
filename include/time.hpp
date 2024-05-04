@@ -23,12 +23,13 @@ namespace Time {
         namespace {
             // int current = 0;
 
-            std::map<std::string, float> times_map;
-            std::map<std::string, float> last_enter_map;
+            std::map<std::string, uint64_t> times_map;
+            std::map<std::string, uint64_t> last_enter_map;
         };
 
         void Enter(std::string name);
         void Exit(std::string name);
+        uint64_t GetSectionMicroseconds(std::string name);
         void Print();
         void Reset();
     };

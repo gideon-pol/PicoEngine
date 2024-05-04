@@ -11,30 +11,11 @@
 
 #include "game/shaders.h"
 
-class Camera {
+class Camera : public Object {
     public:
     Camera(fixed fov, fixed near, fixed far, fixed aspect=1);
 
-    FORCE_INLINE void SetPosition(const vec3f position){
-        this->position = position;
-        orientationUpdated = true;
-    };
-
-    FORCE_INLINE void SetRotation(const Quaternion rotation){
-        this->rotation = rotation;
-        orientationUpdated = true;
-    };
-
-    FORCE_INLINE vec3f GetPosition(){
-        return position;
-    };
-
-    FORCE_INLINE Quaternion GetRotation(){
-        return rotation;
-    };
-
-    mat4f& GetViewMatrix();
-    mat4f GetModelMatrix();
+    mat4f GetViewMatrix();
 
     FORCE_INLINE mat4f& GetProjectionMatrix(){
         return projection;
@@ -43,19 +24,12 @@ class Camera {
     bool IntersectsFrustrum(const BoundingVolume& volume, const mat4f& translationMat);
 
     private:
-        void updateViewMatrix();
-        
         fixed fov;
         fixed near;
         fixed far;
 
-        vec3f position;
-        Quaternion rotation;
-
         mat4f projection;
         mat4f view;
-
-        bool orientationUpdated = false;
 };
 
 enum DepthTest {
@@ -141,7 +115,7 @@ namespace Renderer{
     
     void DrawBox(BoundingBox2D box, Color color);
     void DrawBorder(BoundingBox2D box, uint8_t width, Color color);
-    void DrawLine(vec2i32 start, vec2i32 end, Color color, uint8_t lineWidth = 1);
+    void DrawLine(vec2i16 start, vec2i16 end, Color color, uint8_t lineWidth = 1);
     void DrawLine(vec3f p1, vec3f p2, Color color, uint8_t lineWidth = 1, DepthTest depthTestMode = DepthTest::Less);
     void DrawText(const char* text, vec2i16 pos, Color color);
     void DrawMesh(const Mesh& mesh, const mat4f& modelMat, const Material& material, Culling cullingMode = Culling::Back, DepthTest depthTestMode = DepthTest::Less);

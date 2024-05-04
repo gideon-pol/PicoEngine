@@ -65,16 +65,20 @@ uint64_t Time::NowMicroseconds(){
 // };
 
 void Time::Profiler::Enter(std::string name){
-    last_enter_map[name] = Now();
+    last_enter_map[name] = NowMicroseconds();
 };
 
 void Time::Profiler::Exit(std::string name){
-    times_map[name] += Now() - last_enter_map[name];
+    times_map[name] += NowMicroseconds() - last_enter_map[name];
+};
+
+uint64_t Time::Profiler::GetSectionMicroseconds(std::string name){
+    return times_map[name];
 };
 
 void Time::Profiler::Print(){
     for(auto& [key, value] : times_map){
-        printf("%s: %f\n", key.c_str(), value);
+        printf("%s: %f\n", key.c_str(), (float)value / MICROSECONDS_IN_SECOND);
     }
 };
 

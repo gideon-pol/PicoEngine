@@ -11,19 +11,21 @@
 #include "hardware/input.h"
 
 #include "rendering/renderer.h"
+#include "rendering/postprocessing.h"
 #include "tests/rendering_tests.h"
 
 #include <iostream>
 
 extern void game_init();
 extern void game_update();
-extern void game_render();
+extern void game_mesh_render();
+extern void game_ui_render();
 
 void core1() {
     while (true) {
         multicore_fifo_pop_blocking();
         while (Renderer::Render());
-        multicore_fifo_push_blocking(0);
+        Renderer::Finish();
     }
 }
 
@@ -60,7 +62,15 @@ int main() {
         Renderer::Prepare();
 
         multicore_fifo_push_blocking(0);
-        game_render();
+
+        game_mesh_render();
+
+        while(Renderer::Render());
+        Renderer::Finish();
+
+        PostProcessing::Apply((Color565*)&Renderer::FrameBuffer, vec2i16(120, 120));
+
+        game_ui_render();
 
         ST7789::Flip((Color565*)&Renderer::FrameBuffer);
     }

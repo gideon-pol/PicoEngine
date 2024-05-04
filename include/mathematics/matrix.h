@@ -88,7 +88,6 @@ struct mat {
             for(int j = 0; j < R; j++){
                 result[j][i] = data[j] * trans[i];
             }
-
         }
         return result;
     };
@@ -199,6 +198,21 @@ struct mat4f : public mat<fixed, 4, 4> {
         result[2][3] = (far * near) / (far - near);
         result[3][2] = -1fp;
         
+        return result;
+    };
+
+    FORCE_INLINE constexpr static mat4f orthographic(fixed size, fixed aspect, fixed near, fixed far) {
+        mat4f result = mat4f();
+        fixed right = size * aspect;
+        fixed left = -right;
+        fixed top = size;
+        fixed bottom = -top;
+        result[0][0] = 2fp / (right - left);
+        result[1][1] = 2fp / (top - bottom);
+        result[2][2] = -2fp / (far - near);
+        result[0][3] = -(right + left) / (right - left);
+        result[1][3] = -(top + bottom) / (top - bottom);
+        result[2][3] = -(far + near) / (far - near);
         return result;
     };
 };
